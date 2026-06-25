@@ -188,6 +188,55 @@ export interface Database {
           }
         ];
       };
+      finding_field_references: {
+        Row: {
+          id: string;
+          finding_id: string;
+          document_field_id: string;
+          document_id: string;
+          role: Database['public']['Enums']['finding_field_role'];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          finding_id: string;
+          document_field_id: string;
+          document_id: string;
+          role: Database['public']['Enums']['finding_field_role'];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          finding_id?: string;
+          document_field_id?: string;
+          document_id?: string;
+          role?: Database['public']['Enums']['finding_field_role'];
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "finding_field_references_finding_id_fkey";
+            columns: ["finding_id"];
+            isOneToOne: false;
+            referencedRelation: "findings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "finding_field_references_document_field_id_fkey";
+            columns: ["document_field_id"];
+            isOneToOne: false;
+            referencedRelation: "document_fields";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "finding_field_references_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       generated_drafts: {
         Row: {
           id: string;
@@ -538,6 +587,7 @@ export interface Database {
       finding_severity: 'High' | 'Medium' | 'Low';
       finding_category: 'Name Mismatch' | 'Address Mismatch' | 'Date Mismatch' | 'Age Calculation Issue' | 'School Gap' | 'Missing Information';
       finding_status: 'Open' | 'Accepted' | 'Resolved' | 'Ignored';
+      finding_field_role: 'source_a' | 'source_b' | 'supporting';
       draft_status: 'Draft' | 'Finalized';
       draft_type: 'Affidavit' | 'AddressLetter' | 'GapLetter';
     };

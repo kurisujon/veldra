@@ -54,54 +54,85 @@ export async function analyzeDocuments(caseId: string) {
   // 3. Delete existing findings for this case (reset analysis)
   await supabase.from('findings').delete().eq('case_id', caseId)
 
-  // 4. Mock Analysis Logic
-  if (documents && documents.length >= 2) {
-    // Generate a mock finding
-    const { data: finding, error: insertError } = await supabase
-      .from('findings')
-      .insert({
-        case_id: caseId,
-        title: 'First Name Spelling Mismatch',
-        description: `The first name '${applicants.first_name}' on the application does not match the spelling found in the uploaded documents.`,
-        severity: 'High',
-        category: 'Name Mismatch',
-        status: 'Open'
-      })
-      .select()
-      .single()
+  // 4. Fetch DocumentFields for comparison
+  const { data: fields, error: fieldsError } = await supabase
+    .from('document_fields')
+    .select('*')
+    .eq('case_id', caseId)
 
-    if (insertError) throw new Error(`Failed to insert finding: ${insertError.message}`)
+  if (fieldsError) throw new Error(`Failed to fetch document fields: ${fieldsError.message}`)
 
-    // 5. Link documents to finding
-    const findingDocs = [
-      { finding_id: finding.id, document_id: documents[0].id },
-      { finding_id: finding.id, document_id: documents[1].id }
-    ]
+  let discrepancyFound = false
 
-    const { error: linkError } = await supabase
-      .from('finding_documents')
-      .insert(findingDocs)
+  if (fields && fields.length > 0) {
+    // Group by field_name
+    const fieldsByName = fields.reduce((acc, field) => {
+      if (!acc[field.field_name]) acc[field.field_name] = []
+      acc[field.field_name].push(field)
+      return acc
+    }, {} as Record<string, any[]>)
 
-    if (linkError) throw new Error(`Failed to link documents: ${linkError.message}`)
-    
-    // Log activity
-    await supabase.from('activity_logs').insert({
-      case_id: caseId,
-      user_id: user.id,
-      role: role,
-      action_type: 'ANALYSIS_COMPLETE',
-      description: 'Document analysis completed. Discrepancies found.'
-    })
-  } else {
-    // Log activity
-    await supabase.from('activity_logs').insert({
-      case_id: caseId,
-      user_id: user.id,
-      role: role,
-      action_type: 'ANALYSIS_COMPLETE',
-      description: 'Document analysis completed. No discrepancies found.'
-    })
+    for (const [fieldName, group] of Object.entries(fieldsByName)) {
+      if (group.length < 2) continue
+
+      const firstField = group[0]
+      const firstVal = firstField.final_value || firstField.reviewed_value || firstField.normalized_value || firstField.raw_value
+
+      for (let i = 1; i < group.length; i++) {
+        const otherField = group[i]
+        const otherVal = otherField.final_value || otherField.reviewed_value || otherField.normalized_value || otherField.raw_value
+
+        if (firstVal && otherVal && firstVal !== otherVal) {
+          discrepancyFound = true
+          // Mismatch found
+          let category: 'Name Mismatch' | 'Address Mismatch' | 'Date Mismatch' | 'Age Calculation Issue' | 'School Gap' | 'Missing Information' = 'Missing Information'
+          if (fieldName.toLowerCase().includes('name')) category = 'Name Mismatch'
+          else if (fieldName.toLowerCase().includes('address') || fieldName.toLowerCase().includes('city') || fieldName.toLowerCase().includes('province')) category = 'Address Mismatch'
+          else if (fieldName.toLowerCase().includes('date') || fieldName.toLowerCase().includes('birth')) category = 'Date Mismatch'
+
+          const { data: finding, error: insertError } = await supabase
+            .from('findings')
+            .insert({
+              case_id: caseId,
+              title: `${fieldName} Mismatch`,
+              description: `The '${fieldName}' values do not match across documents ("${firstVal}" vs "${otherVal}").`,
+              severity: 'High',
+              category,
+              status: 'Open'
+            })
+            .select()
+            .single()
+
+          if (insertError) throw new Error(`Failed to insert finding: ${insertError.message}`)
+
+          // Link documents to finding
+          const findingDocs = [
+            { finding_id: finding.id, document_id: firstField.document_id },
+            { finding_id: finding.id, document_id: otherField.document_id }
+          ]
+          await supabase.from('finding_documents').insert(findingDocs)
+
+          // Link document fields to finding
+          const findingFieldRefs = [
+            { finding_id: finding.id, document_field_id: firstField.id, document_id: firstField.document_id, role: 'source_a' },
+            { finding_id: finding.id, document_field_id: otherField.id, document_id: otherField.document_id, role: 'source_b' }
+          ]
+          await supabase.from('finding_field_references').insert(findingFieldRefs as any)
+
+          break // one finding per fieldName
+        }
+      }
+    }
   }
+
+  // Log activity
+  await supabase.from('activity_logs').insert({
+    case_id: caseId,
+    user_id: user.id,
+    role: role,
+    action_type: 'ANALYSIS_COMPLETE',
+    description: discrepancyFound ? 'Document analysis completed. Discrepancies found.' : 'Document analysis completed. No discrepancies found.'
+  })
 
   // Update case status to NeedsReview
   await supabase.from('cases').update({ status: 'NeedsReview' }).eq('id', caseId)
@@ -180,15 +211,29 @@ export async function getFindingsByCase(caseId: string) {
     throw new Error(`Failed to fetch finding documents: ${linksError.message}`)
   }
 
-  // 3. Map linked document IDs back to findings
+  // 3. Fetch finding_field_references
+  const { data: fieldRefs, error: fieldRefsError } = await supabase
+    .from('finding_field_references')
+    .select('*')
+    .in('finding_id', findingIds)
+
+  if (fieldRefsError) {
+    throw new Error(`Failed to fetch finding field references: ${fieldRefsError.message}`)
+  }
+
+  // 4. Map linked document IDs and field refs back to findings
   return findings.map((finding) => {
     const documentIds = (links || [])
       .filter((link) => link.finding_id === finding.id)
       .map((link) => link.document_id)
 
+    const fieldReferences = (fieldRefs || [])
+      .filter((ref) => ref.finding_id === finding.id)
+
     return {
       ...finding,
-      documentIds
+      documentIds,
+      fieldReferences
     }
   })
 }
