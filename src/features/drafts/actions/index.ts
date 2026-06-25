@@ -39,6 +39,17 @@ export async function generateDrafts(caseId: string) {
 
   const role = userRoleData?.role || 'Reviewer'
 
+  // Fetch applicant metadata
+  const { data: applicant, error: applicantError } = await supabase
+    .from('applicants')
+    .select('first_name, last_name')
+    .eq('case_id', parsed.data.caseId)
+    .single()
+
+  if (applicantError) throw new Error(`Failed to fetch applicant: ${applicantError.message}`)
+  
+  const applicantName = `${applicant.first_name} ${applicant.last_name}`
+
   // 1. Fetch all Accepted findings for this case
   const { data: findings, error: findingsError } = await supabase
     .from('findings')
@@ -48,6 +59,68 @@ export async function generateDrafts(caseId: string) {
 
   if (findingsError) throw new Error(`Failed to fetch findings: ${findingsError.message}`)
   if (!findings || findings.length === 0) throw new Error('No accepted findings to generate drafts from')
+
+  // Fetch finding_field_references to get the document_fields for source of truth
+  const findingIds = findings.map(f => f.id)
+  const { data: findingRefsData, error: refsError } = await supabase
+    .from('finding_field_references')
+    .select(`
+      finding_id,
+      document_fields (
+        field_name,
+        raw_value,
+        normalized_value,
+        reviewed_value,
+        final_value,
+        documents (
+          type
+        )
+      )
+    `)
+    .in('finding_id', findingIds)
+
+  if (refsError) throw new Error(`Failed to fetch finding references: ${refsError.message}`)
+
+  // Helper to extract the best source-of-truth value
+  function getFieldValue(field: {
+    final_value?: string | null;
+    reviewed_value?: string | null;
+    normalized_value?: string | null;
+    raw_value?: string | null;
+  }): string {
+    if (field.final_value) return field.final_value
+    if (field.reviewed_value) return field.reviewed_value
+    if (field.normalized_value) return field.normalized_value
+    return field.raw_value || 'Unknown'
+  }
+
+  function getFindingText(finding: { id: string; title: string; description: string }) {
+    if (!findingRefsData) return `<strong>${finding.title}:</strong> ${finding.description}`
+    
+    const refs = findingRefsData.filter(r => r.finding_id === finding.id)
+    if (refs.length > 0) {
+      const details = refs.map(r => {
+        const df = r.document_fields
+        if (!df) return null
+        
+        // Supabase JS might return single object or array depending on relation, though it should be a single object here.
+        const dfObj = Array.isArray(df) ? df[0] : df
+        if (!dfObj) return null
+        
+        const bestVal = getFieldValue(dfObj)
+        const docs = dfObj.documents
+        const docObj = Array.isArray(docs) ? docs[0] : docs
+        const docType = docObj?.type || 'Document'
+        
+        return `"${bestVal}" in ${docType}`
+      }).filter(Boolean)
+
+      if (details.length > 0) {
+        return `<strong>${finding.title}:</strong> ${finding.description} <br/><em>Details:</em> ${details.join(' vs ')}`
+      }
+    }
+    return `<strong>${finding.title}:</strong> ${finding.description}`
+  }
 
   // 2. Delete existing drafts for this case (reset generation)
   await supabase.from('generated_drafts').delete().eq('case_id', parsed.data.caseId)
@@ -69,14 +142,14 @@ export async function generateDrafts(caseId: string) {
   if (nameMismatches.length > 0) {
     const content = `
 <h2>AFFIDAVIT OF DISCREPANCY</h2>
-<p>I, the undersigned applicant, hereby attest and declare the following:</p>
+<p>I, ${applicantName}, hereby attest and declare the following:</p>
 <p>A discrepancy has been identified in the spelling of my name across the submitted documents.</p>
 <ul>
-  ${nameMismatches.map((f) => `<li><strong>${f.title}:</strong> ${f.description}</li>`).join('\n  ')}
+  ${nameMismatches.map((f) => `<li>${getFindingText(f)}</li>`).join('\n  ')}
 </ul>
 <p>I affirm that all discrepancies noted above refer to one and the same person, and that the difference is due to a typographical inconsistency and not a different identity.</p>
 <p>IN WITNESS WHEREOF, I have hereunto set my hand this _____ day of __________, 20____.</p>
-<p>____________________________<br/>Signature of Affiant</p>
+<p>____________________________<br/>${applicantName}<br/>Affiant</p>
 <p>SUBSCRIBED AND SWORN to before me this _____ day of __________, 20____, in _______________.</p>
 <p>____________________________<br/>Notary Public</p>
 `.trim()
@@ -96,14 +169,14 @@ export async function generateDrafts(caseId: string) {
     const content = `
 <h2>EXPLANATION LETTER — ADDRESS DISCREPANCY</h2>
 <p>To Whom It May Concern,</p>
-<p>I am writing to formally explain the discrepancy in the residential address appearing across my submitted documents.</p>
+<p>I, ${applicantName}, am writing to formally explain the discrepancy in the residential address appearing across my submitted documents.</p>
 <ul>
-  ${addressFindings.map((f) => `<li><strong>${f.title}:</strong> ${f.description}</li>`).join('\n  ')}
+  ${addressFindings.map((f) => `<li>${getFindingText(f)}</li>`).join('\n  ')}
 </ul>
 <p>I confirm that the addresses stated in my documents refer to my place of residence at different points in time. The differences are attributable to a change of residence and not a falsification of documents.</p>
 <p>I hope this explanation satisfactorily addresses the noted concern.</p>
 <p>Respectfully yours,</p>
-<p>____________________________<br/>Applicant Signature</p>
+<p>____________________________<br/>${applicantName}</p>
 `.trim()
 
     const { data: draft, error: draftError } = await supabase
@@ -121,13 +194,13 @@ export async function generateDrafts(caseId: string) {
     const content = `
 <h2>EXPLANATION LETTER — ACADEMIC GAP</h2>
 <p>To Whom It May Concern,</p>
-<p>I am writing to explain the gap identified in my academic records as noted in the review of my submitted documents.</p>
+<p>I, ${applicantName}, am writing to explain the gap identified in my academic records as noted in the review of my submitted documents.</p>
 <ul>
-  ${gapFindings.map((f) => `<li><strong>${f.title}:</strong> ${f.description}</li>`).join('\n  ')}
+  ${gapFindings.map((f) => `<li>${getFindingText(f)}</li>`).join('\n  ')}
 </ul>
 <p>The gap in my academic records occurred due to personal circumstances at the time. I was not enrolled during this period, and I hereby affirm that this is an accurate representation of my academic history.</p>
 <p>Respectfully yours,</p>
-<p>____________________________<br/>Applicant Signature</p>
+<p>____________________________<br/>${applicantName}</p>
 `.trim()
 
     const { data: draft, error: draftError } = await supabase
@@ -249,3 +322,4 @@ export async function getDraftsByCase(caseId: string) {
       .map((l) => l.finding_id)
   }))
 }
+

@@ -15,6 +15,7 @@ export interface DocumentComparisonPanelProps {
     description: string
     category: string
     documentIds?: string[]
+    fieldReferences?: any[]
   } | null
   signedUrls: Record<string, string>
   isPendingUrls?: boolean
@@ -168,6 +169,19 @@ export function DocumentComparisonPanel({
             )}
           </div>
         </div>
+        
+        {(() => {
+          const fieldRef = selectedFinding?.fieldReferences?.find(r => r.document_id === leftDocId)
+          if (!fieldRef?.document_fields) return null
+          const val = fieldRef.document_fields.final_value || fieldRef.document_fields.reviewed_value || fieldRef.document_fields.normalized_value || fieldRef.document_fields.raw_value
+          return (
+            <div className="p-md bg-error/10 border-b border-error/20 flex flex-col gap-xs">
+              <span className="text-small font-semibold text-error uppercase">{fieldRef.document_fields.field_name} (Extracted)</span>
+              <span className="text-body font-medium text-text-primary">"{val}"</span>
+            </div>
+          )
+        })()}
+
         <div className="flex-1 min-h-0 bg-background p-sm relative">
           {renderDocumentViewer(leftDoc, leftUrl)}
         </div>
@@ -198,6 +212,19 @@ export function DocumentComparisonPanel({
             )}
           </div>
         </div>
+
+        {(() => {
+          const fieldRef = selectedFinding?.fieldReferences?.find(r => r.document_id === rightDocId)
+          if (!fieldRef?.document_fields) return null
+          const val = fieldRef.document_fields.final_value || fieldRef.document_fields.reviewed_value || fieldRef.document_fields.normalized_value || fieldRef.document_fields.raw_value
+          return (
+            <div className="p-md bg-error/10 border-b border-error/20 flex flex-col gap-xs">
+              <span className="text-small font-semibold text-error uppercase">{fieldRef.document_fields.field_name} (Extracted)</span>
+              <span className="text-body font-medium text-text-primary">"{val}"</span>
+            </div>
+          )
+        })()}
+
         <div className="flex-1 min-h-0 bg-background p-sm relative">
           {renderDocumentViewer(rightDoc, rightUrl)}
         </div>

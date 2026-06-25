@@ -9,6 +9,7 @@ import type { Database } from '@/types/database'
 
 type FindingWithDocIds = Database['public']['Tables']['findings']['Row'] & {
   documentIds: string[]
+  fieldReferences?: any[]
 }
 type DocumentRow = Database['public']['Tables']['documents']['Row']
 

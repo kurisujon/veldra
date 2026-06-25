@@ -72,7 +72,8 @@ export async function analyzeDocuments(caseId: string) {
       return acc
     }, {} as Record<string, any[]>)
 
-    for (const [fieldName, group] of Object.entries(fieldsByName)) {
+    for (const fieldName of Object.keys(fieldsByName)) {
+      const group = fieldsByName[fieldName]
       if (group.length < 2) continue
 
       const firstField = group[0]
@@ -211,10 +212,10 @@ export async function getFindingsByCase(caseId: string) {
     throw new Error(`Failed to fetch finding documents: ${linksError.message}`)
   }
 
-  // 3. Fetch finding_field_references
+  // 3. Fetch finding_field_references joined with document_fields
   const { data: fieldRefs, error: fieldRefsError } = await supabase
     .from('finding_field_references')
-    .select('*')
+    .select('*, document_fields(*)')
     .in('finding_id', findingIds)
 
   if (fieldRefsError) {
