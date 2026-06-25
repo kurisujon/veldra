@@ -38,20 +38,22 @@ Create, run and pass Playwright E2E tests for the newly implemented dashboard pa
 - **Code layout**: E2E tests in `tests/`.
 
 ## Key Decisions Made
-- Created `tests/dashboard.e2e.spec.ts`.
-- Running local Supabase instance to satisfy programmatic database auth/user creation in E2E tests.
+- Created `tests/dashboard.e2e.spec.ts` verifying all dashboard sections.
+- Configured ESLint flat config `eslint.config.mjs` for Next.js 16/ESLint 8 support.
+- Configured `turbopack.root` in `next.config.mjs` to bypass WSL workspace lockfile issues.
 
 ## Artifact Index
 - `tests/dashboard.e2e.spec.ts` — New E2E test suite for Dashboard page.
+- `eslint.config.mjs` — Flat ESLint configuration.
 
 ## Change Tracker
-- **Files modified**: `tests/dashboard.e2e.spec.ts`
-- **Build status**: Pending database startup
-- **Pending issues**: Supabase starting up
+- **Files modified**: `tests/dashboard.e2e.spec.ts`, `eslint.config.mjs`, `next.config.mjs`, `package.json`
+- **Build status**: Clean
+- **Pending issues**: E2E test execution blocked by Docker daemon being down
 
 ## Quality Status
-- **Build/test result**: Playwright run pending local DB startup.
-- **Lint status**: TBD
+- **Build/test result**: build/lint successful, Playwright E2E compiles clean but fails execution due to missing database.
+- **Lint status**: 0 errors
 - **Tests added/modified**: `tests/dashboard.e2e.spec.ts` (added 1 new spec)
 
 ## Loaded Skills

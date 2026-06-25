@@ -1,4 +1,4 @@
-# BRIEFING — 2026-06-24T13:51:15Z
+# BRIEFING — 2026-06-25T02:31:15Z
 
 ## Mission
 Orchestrate, monitor, and audit the implementation of Phase 8 (Dashboard & Analytics) and fixing the Supabase RPC Next.js type check bug.
@@ -9,7 +9,7 @@ Orchestrate, monitor, and audit the implementation of Phase 8 (Dashboard & Analy
 - Orchestrator: d616355c-fc7a-4954-9851-f6ae7a5429a1
 - Victory Auditor: TBD
 - Active Orchestrator (Phase 8): 644de6a0-b7d7-4e21-8c48-fa6da18894bb
-- Active Victory Auditor (Phase 8): TBD
+- Active Victory Auditor (Phase 8): eb180475-37e7-4bb6-ae06-59a75c9de22c
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -22,10 +22,10 @@ Orchestrate, monitor, and audit the implementation of Phase 8 (Dashboard & Analy
 - **Delivered results**: [none]
 
 ## Project Status
-- **Phase**: in progress
+- **Phase**: auditing
 
 ## Victory Audit Status
-- **Triggered**: no
+- **Triggered**: yes
 - **Verdict**: pending
 - **Retry count**: 0
 

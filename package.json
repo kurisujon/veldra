@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "ESLINT_USE_FLAT_CONFIG=true eslint src",
     "restore-db": "git restore src/types/database.ts",
     "gen-types": "npx supabase gen types typescript --linked > src/types/database.ts"
   },
