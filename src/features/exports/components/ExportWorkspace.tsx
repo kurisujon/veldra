@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { FileText, Download, Loader2 } from 'lucide-react'
-import { generateExport } from '../actions'
+import { ConfirmDeleteModal } from '@/components/ui/Modal/ConfirmDeleteModal'
+import { FileText, Download, Loader2, Trash2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { generateExport, deleteExport } from '../actions'
 
 type ExportPackage = {
   id: string
@@ -21,6 +23,9 @@ interface ExportWorkspaceProps {
 
 export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
   const [isGenerating, setIsGenerating] = useState(false)
+  const [exportToDelete, setExportToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [animatingOutId, setAnimatingOutId] = useState<string | null>(null)
 
   const handleGenerate = async (format: 'PDF' | 'ZIP') => {
     try {
@@ -68,7 +73,13 @@ export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
           <h3 className="text-body font-medium text-text-primary mb-md">Generated Exports</h3>
           <div className="flex flex-col gap-sm">
             {exports.map((exp) => (
-              <div key={exp.id} className="flex items-center justify-between p-md border border-border-default rounded-md hover:border-brand-primary transition-colors">
+              <div 
+                key={exp.id} 
+                className={cn(
+                  "flex items-center justify-between p-md border border-border-default rounded-md hover:border-brand-primary group transition-all duration-300 origin-top",
+                  animatingOutId === exp.id ? "opacity-0 scale-95 h-0 overflow-hidden mb-[-16px] py-0 border-0" : "opacity-100 scale-100"
+                )}
+              >
                 <div className="flex items-center gap-md">
                   <div className="p-sm bg-surface-secondary rounded-md text-text-secondary">
                     {exp.format === 'PDF' ? <FileText size={20} /> : <Download size={20} />}
@@ -82,16 +93,53 @@ export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
                     </p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" asChild>
-                  <a href={exp.package_url} target="_blank" rel="noopener noreferrer">
+                <div className="flex items-center gap-sm">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => window.open(exp.package_url, '_blank')}
+                  >
                     Download
-                  </a>
-                </Button>
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setExportToDelete(exp.id)}
+                    className="text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Delete Report"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         </Card>
       )}
+
+      <ConfirmDeleteModal 
+        isOpen={!!exportToDelete}
+        onClose={() => setExportToDelete(null)}
+        title="Delete Report"
+        message="Are you sure you want to delete this generated report? This action cannot be undone."
+        isDeleting={isDeleting}
+        onConfirm={async () => {
+          if (!exportToDelete) return;
+          setIsDeleting(true);
+          try {
+            const idToDelete = exportToDelete;
+            setAnimatingOutId(idToDelete);
+            await new Promise(res => setTimeout(res, 300));
+            await deleteExport(idToDelete, caseId);
+            setIsDeleting(false);
+            setExportToDelete(null);
+            setAnimatingOutId(null);
+          } catch (err) {
+            console.error(err);
+            setIsDeleting(false);
+            setAnimatingOutId(null);
+            alert('Failed to delete report. You might not have permission.');
+          }
+        }}
+      />
     </div>
   )
 }

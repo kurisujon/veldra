@@ -27,7 +27,8 @@ When operating within the Veldra project, the division of labor is strictly defi
 
 ## 3. Current System State
 
-*   **Phase 7 (Export & Reporting) is Complete.** The `export_packages` schema, Zod-validated server actions (`generateExport`, `getExportsByCase`), and the `ExportWorkspace` UI component are fully implemented and integrated into the Case Detail page.
+*   **Phase 7 (Export & Reporting) is Complete.** The `export_packages` schema, Zod-validated server actions (`generateExport`, `getExportsByCase`), and the `ExportWorkspace` UI component are fully implemented and integrated.
+*   **Gemini 2.5 Flash Document Extraction Integration is Complete.** Structured AI document extraction (covering PSA Birth Certificates, PSA Marriage Certificates, TOR, SF10, Diplomas) is fully operational with automatic API key rotation on failover. The split-screen `ExtractionWorkspace` responsive UI has been updated to support custom status badge variants, robust failure and error reporting, and on-demand "Re-run Extraction" options.
 *   **Next Phase:** Phase 8 - Dashboard & Analytics.
 *   **Build Status:** Clean. Both `next build` and `next lint` pass with zero warnings. Keep it this way.
 

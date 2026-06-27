@@ -1,80 +1,51 @@
-# Project: Veldra - Phase 5 (Document Analysis and Findings Engine UI)
+# Project: Veldra - Gemini 2.5 Flash Document Extraction Integration
 
 ## Architecture
-Veldra is built on Next.js 14 App Router, TypeScript, Tailwind CSS, and Supabase.
-Phase 5 implements the Frontend UI for the Document Analysis and Findings Engine, allowing reviewers to trigger document analysis, view findings, compare documents side-by-side, and resolve discrepancies.
+Veldra is built on Next.js 16 (App Router), TypeScript, Tailwind CSS, and Supabase.
+This project replaces the heuristic and limited regex/OCR-first document extraction flow with a robust Gemini 2.5 Flash multimodal extraction engine.
 
 ### Data Flow
-1. User clicks "Run Analysis" on the Case Detail page (when case is in `Uploaded` or `NeedsReview` state).
-2. The UI invokes `analyzeDocuments(caseId)` server action.
-3. The server action deletes old findings, generates new mock findings, links documents via `finding_documents`, updates case status to `NeedsReview`, and calls `revalidatePath`.
-4. The Case Detail page reloads. If the status is `NeedsReview`, a split-screen workspace is displayed.
-5. The workspace fetches findings via `getFindingsByCase(caseId)` (a new server action to be added to `src/features/findings/actions/index.ts`) and displays them in a findings list using the `FindingCard` component.
-6. Selecting a Finding in the list updates the state to show the linked documents in the `DocumentComparisonPanel`.
-7. Reviewers can update a finding's status (Open, Accepted, Resolved, Ignored) using the status dropdown/controls on `FindingCard`, which invokes `updateFindingStatus` server action and triggers a page revalidate.
+1. **Document Upload**: Users upload birth certificates, marriage certificates, TORs, SF10s, or diplomas.
+2. **AI Extraction Call**: The `runExtraction` server action reads the file from Supabase storage and invokes `extractDocumentWithAI(input)`.
+3. **Structured Gemini Call**: `extractDocumentWithAI` reads `GEMINI_API_KEY` and `GEMINI_MODEL`, formats the document prompt based on its type, and calls the Gemini 2.5 Flash API with the document file as a base64 inlineData.
+4. **Zod Validation**: The extraction layer receives a structured JSON response, validates it against the Zod schema for that document type, and maps missing fields to `null`.
+5. **Database Persistence**: The raw JSON response is saved in the `document_extractions` record. Individual fields are flattened and inserted into `document_fields` as `NeedsReview`.
+6. **Review & Edit**: Reviewers open the document workspace to accept or correct values. Accepted values are stored and utilized downstream for discrepancy detection.
 
 ## Code Layout
-- `src/features/findings/`
-  - `components/`
-    - `FindingCard.tsx` - Displays finding title, description, category, severity, status, and allows updating status.
-    - `CaseFindingsWorkspace.tsx` - Layout container that coordinates the list of findings and the active document comparison panel.
-  - `actions/`
-    - `index.ts` - Added `getFindingsByCase(caseId)` server action. Includes existing `analyzeDocuments` and `updateFindingStatus`.
-- `src/components/review/`
-  - `DocumentComparisonPanel.tsx` - Displays two selected source documents side-by-side.
-- `src/app/(dashboard)/cases/[id]/page.tsx` - Case Detail page integration.
+- `src/lib/ai/`
+  - `gemini.ts` - Centralized Gemini client setup and configuration.
+  - `schemas.ts` - Zod validation schemas for all five document types.
+  - `prompts.ts` - Document-type-aware prompts enforcing structured JSON return.
+  - `extraction.ts` - Single entry point `extractDocumentWithAI()` combining API call, parsing, and schema validation.
+- `src/features/extractions/`
+  - `actions/index.ts` - Updated `runExtraction` server action to trigger Gemini extraction and persist fields.
+  - `components/ExtractionWorkspace.tsx` - UI component for side-by-side view, status badges, and manual extraction triggers.
 
 ## Interface Contracts
-
-### 1. Database Schema
-#### Table: `findings`
-- `id` UUID PRIMARY KEY
-- `case_id` UUID NOT NULL REFERENCES cases(id)
-- `title` TEXT NOT NULL
-- `description` TEXT NOT NULL
-- `severity` ENUM ('High', 'Medium', 'Low')
-- `category` ENUM ('Name Mismatch', 'Address Mismatch', 'Date Mismatch', 'Age Calculation Issue', 'School Gap', 'Missing Information')
-- `status` ENUM ('Open', 'Accepted', 'Resolved', 'Ignored')
-
-#### Table: `finding_documents`
-- `finding_id` UUID REFERENCES findings(id)
-- `document_id` UUID REFERENCES documents(id)
-
-### 2. Server Actions
-- `analyzeDocuments(caseId: string): Promise<{ success: boolean }>`
-- `updateFindingStatus(findingId: string, caseId: string, status: 'Open' | 'Accepted' | 'Resolved' | 'Ignored'): Promise<{ success: boolean }>`
-- `getFindingsByCase(caseId: string): Promise<any[]>` - New server action to fetch case findings and linked documents.
+- `extractDocumentWithAI(params)`: Validates document inputs and returns structured fields matching the document-type schema.
+- `runExtraction(documentId, caseId, documentType)`: Orchestrates files, calls extraction, and writes database records.
 
 ---
 
 ## Milestones
 
-### M1. Test Track - Phase 5 E2E Test Suite (E2E Track)
-- **Scope**: Write E2E Playwright tests to verify the document analysis triggers, status changes, finding updates, and split-screen comparison layout.
-- **Dependencies**: None
+### M1. Central Gemini Client Setup (Claude)
+- **Objective**: Implement centralized client configuration and environment support in `src/lib/ai/gemini.ts`.
 - **Status**: PLANNED
 
-### M2. Backend - Server Action for Findings Fetch (Claude/Gemini)
-- **Scope**: Implement `getFindingsByCase(caseId)` in `src/features/findings/actions/index.ts` to retrieve findings and their linked document details.
-- **Dependencies**: M1
+### M2. Zod Schemas & Prompts (Claude)
+- **Objective**: Define Zod schemas and structured prompt templates for the 5 document types.
 - **Status**: PLANNED
 
-### M3. Frontend - UI Components Implementation (Gemini)
-- **Scope**: Implement `FindingCard` and `DocumentComparisonPanel` components using established design tokens. Ensure zero typescript errors.
-- **Dependencies**: M2
+### M3. Extraction Core & Database Persistence (Claude)
+- **Objective**: Implement `extractDocumentWithAI()` and integrate database persistence in the `runExtraction` server action.
 - **Status**: PLANNED
 
-### M4. Frontend - Case Detail Integration & Workspace (Gemini)
-- **Scope**: Create `CaseFindingsWorkspace` to coordinate client-side selection state, and integrate "Run Analysis" + workspace into the Case Detail view page.
-- **Dependencies**: M3
+### M4. UI Integration & Manual Trigger (Gemini)
+- **Objective**: Update the extraction review workspace UI to invoke extraction and support editing.
 - **Status**: PLANNED
 
-### M5. Verification & Testing (Gemini)
-- **Scope**: Verify build, type safety, linting rules, and run Playwright E2E tests to ensure everything compiles and runs correctly.
-- **Dependencies**: M4
-- **Status**: PLANNED
-
-### M6. Documentation Update (Gemini)
-- **Scope**: Update `GEMINI.md`, `AGENTS.md`, and any relevant developer guides to reflect Phase 5 completion.
-- **Dependencies**: M5
+### M5. Verification & Documentation (Claude & Gemini)
+- **Objective**: Validate the full build, linting status, and update markdown documentation.
 - **Status**: PLANNED

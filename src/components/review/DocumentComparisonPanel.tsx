@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { Maximize, X } from 'lucide-react'
 import type { Database } from '@/types/database'
 
 type DocumentRow = Database['public']['Tables']['documents']['Row']
@@ -29,6 +30,16 @@ export function DocumentComparisonPanel({
 }: DocumentComparisonPanelProps) {
   const [leftDocId, setLeftDocId] = useState<string>('')
   const [rightDocId, setRightDocId] = useState<string>('')
+  
+  const [fullscreenUrl, setFullscreenUrl] = useState<string | null>(null)
+  const [fullscreenDoc, setFullscreenDoc] = useState<DocumentRow | null>(null)
+
+  const formatFieldName = (fieldName: string) => {
+    return fieldName
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
+  }
 
   // Filter documents linked to the selected finding
   const linkedDocs = useMemo(() => documents.filter((doc) =>
@@ -100,8 +111,6 @@ export function DocumentComparisonPanel({
     }
 
     const isPdf = doc.mime_type === 'application/pdf'
-    const isImage = doc.mime_type?.startsWith('image/')
-
     if (isPdf) {
       return (
         <iframe
@@ -114,7 +123,10 @@ export function DocumentComparisonPanel({
 
     if (isImage) {
       return (
-        <div className="flex items-center justify-center w-full h-full overflow-auto bg-surface/50 p-md rounded-card">
+        <div 
+          className="flex items-center justify-center w-full h-full overflow-auto bg-surface/50 p-md rounded-card cursor-zoom-in"
+          onClick={() => { setFullscreenUrl(url); setFullscreenDoc(doc); }}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
@@ -148,24 +160,20 @@ export function DocumentComparisonPanel({
       <Card className="flex flex-col h-full overflow-hidden border border-text-secondary/10 bg-surface shadow-sm">
         <div className="flex items-center justify-between p-md border-b border-text-secondary/10 bg-background/50 rounded-t-card">
           <div className="flex flex-col gap-xs max-w-[65%]">
+            {leftDoc && <div className="self-start"><Badge variant="primary">{leftDoc.type}</Badge></div>}
             <span className="font-semibold text-text-primary text-body truncate" title={leftDoc?.file_name}>
               {leftDoc?.file_name || 'Select Document'}
             </span>
           </div>
           <div className="flex items-center gap-sm">
-            {leftDoc && <Badge variant="primary">{leftDoc.type}</Badge>}
-            {linkedDocs.length > 1 && (
-              <select
-                value={leftDocId}
-                onChange={(e) => setLeftDocId(e.target.value)}
-                className="bg-surface border border-text-secondary/20 rounded-input px-sm py-xs text-small font-medium focus:ring-accent focus:border-accent outline-none"
+            {leftUrl && leftDoc && (
+              <button 
+                className="p-xs hover:bg-background rounded-button text-text-secondary hover:text-accent transition-colors"
+                onClick={() => { setFullscreenUrl(leftUrl); setFullscreenDoc(leftDoc); }}
+                title="View Full Screen"
               >
-                {linkedDocs.map((doc) => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.file_name}
-                  </option>
-                ))}
-              </select>
+                <Maximize size={18} />
+              </button>
             )}
           </div>
         </div>
@@ -176,8 +184,8 @@ export function DocumentComparisonPanel({
           const val = fieldRef.document_fields.final_value || fieldRef.document_fields.reviewed_value || fieldRef.document_fields.normalized_value || fieldRef.document_fields.raw_value
           return (
             <div className="p-md bg-error/10 border-b border-error/20 flex flex-col gap-xs">
-              <span className="text-small font-semibold text-error uppercase">{fieldRef.document_fields.field_name} (Extracted)</span>
-              <span className="text-body font-medium text-text-primary">"{val}"</span>
+              <span className="text-small font-semibold text-error tracking-normal">{formatFieldName(fieldRef.document_fields.field_name)} (Extracted)</span>
+              <span className="text-body font-medium text-text-primary">&quot;{val}&quot;</span>
             </div>
           )
         })()}
@@ -191,24 +199,20 @@ export function DocumentComparisonPanel({
       <Card className="flex flex-col h-full overflow-hidden border border-text-secondary/10 bg-surface shadow-sm">
         <div className="flex items-center justify-between p-md border-b border-text-secondary/10 bg-background/50 rounded-t-card">
           <div className="flex flex-col gap-xs max-w-[65%]">
+            {rightDoc && <div className="self-start"><Badge variant="primary">{rightDoc.type}</Badge></div>}
             <span className="font-semibold text-text-primary text-body truncate" title={rightDoc?.file_name}>
               {rightDoc?.file_name || 'Select Document'}
             </span>
           </div>
           <div className="flex items-center gap-sm">
-            {rightDoc && <Badge variant="primary">{rightDoc.type}</Badge>}
-            {linkedDocs.length > 1 && (
-              <select
-                value={rightDocId}
-                onChange={(e) => setRightDocId(e.target.value)}
-                className="bg-surface border border-text-secondary/20 rounded-input px-sm py-xs text-small font-medium focus:ring-accent focus:border-accent outline-none"
+            {rightUrl && rightDoc && (
+              <button 
+                className="p-xs hover:bg-background rounded-button text-text-secondary hover:text-accent transition-colors"
+                onClick={() => { setFullscreenUrl(rightUrl); setFullscreenDoc(rightDoc); }}
+                title="View Full Screen"
               >
-                {linkedDocs.map((doc) => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.file_name}
-                  </option>
-                ))}
-              </select>
+                <Maximize size={18} />
+              </button>
             )}
           </div>
         </div>
@@ -219,8 +223,8 @@ export function DocumentComparisonPanel({
           const val = fieldRef.document_fields.final_value || fieldRef.document_fields.reviewed_value || fieldRef.document_fields.normalized_value || fieldRef.document_fields.raw_value
           return (
             <div className="p-md bg-error/10 border-b border-error/20 flex flex-col gap-xs">
-              <span className="text-small font-semibold text-error uppercase">{fieldRef.document_fields.field_name} (Extracted)</span>
-              <span className="text-body font-medium text-text-primary">"{val}"</span>
+              <span className="text-small font-semibold text-error tracking-normal">{formatFieldName(fieldRef.document_fields.field_name)} (Extracted)</span>
+              <span className="text-body font-medium text-text-primary">&quot;{val}&quot;</span>
             </div>
           )
         })()}
@@ -229,6 +233,39 @@ export function DocumentComparisonPanel({
           {renderDocumentViewer(rightDoc, rightUrl)}
         </div>
       </Card>
+
+      {/* Fullscreen Lightbox Modal */}
+      {fullscreenUrl && fullscreenDoc && (
+        <div 
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center p-2xl bg-black/70 backdrop-blur-sm transition-all"
+          onClick={() => { setFullscreenUrl(null); setFullscreenDoc(null); }}
+        >
+          <button 
+            className="absolute top-xl right-xl p-sm bg-surface rounded-full text-text-primary hover:bg-background transition-colors shadow-lg"
+            onClick={(e) => { e.stopPropagation(); setFullscreenUrl(null); setFullscreenDoc(null); }}
+          >
+            <X size={24} />
+          </button>
+          
+          <div 
+            className="w-full h-full max-w-[90vw] max-h-[90vh] bg-surface rounded-card overflow-hidden shadow-2xl flex flex-col" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-md border-b border-text-secondary/10 flex items-center justify-between bg-background/50">
+              <span className="font-semibold text-text-primary text-heading">{fullscreenDoc.file_name}</span>
+              <Badge variant="primary">{fullscreenDoc.type}</Badge>
+            </div>
+            <div className="flex-1 overflow-auto p-md bg-background relative flex items-center justify-center">
+               {fullscreenDoc.mime_type === 'application/pdf' ? (
+                 <iframe src={fullscreenUrl} className="w-full h-full border-0 rounded-card bg-surface" title={fullscreenDoc.file_name} />
+               ) : fullscreenDoc.mime_type?.startsWith('image/') ? (
+                 // eslint-disable-next-line @next/next/no-img-element
+                 <img src={fullscreenUrl} alt={fullscreenDoc.file_name} className="max-w-full max-h-full object-contain mx-auto" />
+               ) : null}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

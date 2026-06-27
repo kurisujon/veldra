@@ -11,7 +11,7 @@ The following tokens are fixed. No alternatives or arbitrary values are permitte
 - **Surface**: `#FFFFFF`
 - **Primary Text**: `#111827`
 - **Secondary Text**: `#6B7280`
-- **Primary Accent**: `#5B6EF5`
+- **Primary Accent**: `#800000`
 - **Success**: `#16A34A`
 - **Warning**: `#D97706`
 - **Error**: `#DC2626`
@@ -35,3 +35,12 @@ Must use strict values. No deviations.
 
 ## Token Enforcement
 These tokens define the entirety of the Veldra visual language. Do not introduce new colors, radius values, or spacing increments without a formal update to this architecture document.
+
+## Typography Recommendation
+- **Primary UI Font**: Inter
+- **Reading / Draft / Print Font**: Source Serif 4
+- **Fallback strategy**: use system sans-serif and serif stacks if webfont loading fails.
+
+### Usage rule
+- Use `Inter` (`font-sans`) for all product interface elements and structured UI (dashboards, tables, forms, modals).
+- Use `Source Serif 4` (`font-serif`) for document-like reading surfaces, generated drafts, and print-oriented content.

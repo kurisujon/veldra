@@ -7,9 +7,10 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { ExtractionWorkspace } from "@/features/extractions/components/ExtractionWorkspace"
 
-export default async function DocumentReviewPage({ params }: { params: { id: string, documentId: string } }) {
-  const caseData = await getCaseById(params.id)
-  const document = await getDocumentById(params.documentId)
+export default async function DocumentReviewPage({ params }: { params: Promise<{ id: string, documentId: string }> }) {
+  const { id, documentId } = await params;
+  const caseData = await getCaseById(id)
+  const document = await getDocumentById(documentId)
 
   if (!caseData || !document) return notFound()
 

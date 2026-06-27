@@ -9,6 +9,14 @@ import type { Database } from '@/types/database'
 
 type Finding = Database['public']['Tables']['findings']['Row']
 
+const formatCamelCaseTitle = (title: string) => {
+  if (!title) return title;
+  return title
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
+}
+
 export interface FindingCardProps {
   finding: Finding
   isSelected?: boolean
@@ -64,7 +72,7 @@ export function FindingCard({
       data-testid="finding-card"
     >
       <div className="flex justify-between items-center w-full">
-        <span className="text-small font-semibold text-text-secondary uppercase tracking-wider">
+        <span className="text-small font-medium text-text-secondary tracking-normal">
           {finding.category}
         </span>
         <Badge variant={severityVariant}>
@@ -73,7 +81,7 @@ export function FindingCard({
       </div>
 
       <div className="flex flex-col gap-xs">
-        <h4 className="text-heading font-semibold text-text-primary">{finding.title}</h4>
+        <h4 className="text-heading font-semibold text-text-primary">{formatCamelCaseTitle(finding.title)}</h4>
         <p className="text-small text-text-secondary leading-relaxed">{finding.description}</p>
       </div>
 

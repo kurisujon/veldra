@@ -1,17 +1,11 @@
 # Tasks Tracker
 
 ## Backlog
-- [ ] Build Cases Dashboard and Applicant Case overview.
-- [ ] Build Document UploadZone.
-- [ ] Build Document Review split-screen workspace.
-- [ ] Implement data extraction API integration.
-- [ ] Implement Cross-Document Comparison Engine.
-- [ ] Build Findings review system.
-- [ ] Build template generator for Affidavits & Letters.
-- [ ] Implement PDF export feature.
+- [ ] Implement advanced analytics for case processing (Phase 8).
+- [ ] Build supervisor and admin dashboards (Phase 8).
 
 ## In Progress
-- [ ] Phase 3 Design System Implementation.
+- [ ] Phase 8: Dashboard & Analytics.
 
 ## Completed
 - [x] Phase 1 Documentation Foundation.
@@ -21,6 +15,11 @@
 - [x] Configure `tailwind.config.ts` with fixed design system tokens.
 - [x] Build mandatory UI component inventory.
 - [x] Build Layout Foundation (AppShell, Sidebar, TopBar).
+- [x] Phase 3 Design System Implementation.
+- [x] Phase 4 Core Case Management (Cases Dashboard & List Views).
+- [x] Phase 5 Document Uploads & Findings System.
+- [x] Phase 6 Draft Generation Workspace.
+- [x] Phase 7 Export & Reporting Workspace.
 
 ## Decision Log
 - **[2026-06-21]**: Decided to use Next.js App Router for better server-side performance.

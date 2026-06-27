@@ -3,20 +3,25 @@
 @tailwind utilities;
 
 :root {
-  --background: #FAFAF8;
+  /* Rich, softer background, pristine surface */
+  --background: #F4F5F7;
   --surface: #FFFFFF;
 
-  --text-primary: #111827;
-  --text-secondary: #6B7280;
+  /* Modern typography colors */
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
 
-  --accent: #5B6EF5;
+  /* Vibrant, sleek accent */
+  --accent: #800000;
 
-  --success: #16A34A;
-  --warning: #D97706;
-  --error: #DC2626;
+  /* Semantic UI Colors */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
 
-  --radius-button: 12px;
-  --radius-input: 12px;
+  /* Smoother radii */
+  --radius-button: 8px;
+  --radius-input: 10px;
   --radius-card: 16px;
   --radius-modal: 20px;
 }
@@ -25,4 +30,15 @@ body {
   background-color: var(--background);
   color: var(--text-primary);
   font-family: var(--font-inter), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global focus states and micro-animations */
+button, a {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active {
+  transform: scale(0.98);
 }

@@ -68,3 +68,34 @@ export async function getCaseById(id: string): Promise<CaseWithApplicants> {
   if (!data) throw new Error('Not found')
   return data
 }
+
+const UpdateStatusSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(['Draft', 'Uploaded', 'Processing', 'NeedsReview', 'Reviewed', 'DraftGenerated', 'ReadyForExport', 'Exported', 'Archived'])
+})
+
+export async function updateCaseStatus(id: string, status: CaseRow['status']) {
+  const parsed = UpdateStatusSchema.safeParse({ id, status })
+  if (!parsed.success) {
+    throw new Error('Invalid input')
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('cases')
+    .update({ status: parsed.data.status, updated_at: new Date().toISOString() })
+    .eq('id', parsed.data.id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath(`/cases/${id}`)
+  revalidatePath('/cases')
+  return { success: true }
+}
+
+export async function deleteCase(id: string) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('cases').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/cases')
+  return { success: true }
+}

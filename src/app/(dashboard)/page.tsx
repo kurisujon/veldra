@@ -118,12 +118,10 @@ export default async function Dashboard() {
             {displayHighPriority.length > 0 ? (
               displayHighPriority.map((c) => (
                 <Link key={c.id} href={`/cases/${c.id}`}>
-                  <div className="flex items-center justify-between p-md border border-text-secondary/10 rounded-button hover:bg-background transition-colors">
-                    <div>
-                      <p className="text-body font-medium text-text-primary">{c.applicantName}</p>
-                      <p className="text-small text-text-secondary mt-xs">Case ID: {c.id.slice(0, 8)}...</p>
-                    </div>
-                    <CaseStatusBadge status={c.status} />
+                  <div className="flex flex-col p-md border border-text-secondary/10 rounded-button hover:bg-background transition-colors gap-xs">
+                    <p className="text-body font-medium text-text-primary">{c.applicantName}</p>
+                    <div><CaseStatusBadge status={c.status} /></div>
+                    <p className="text-small text-text-secondary mt-xs">Case ID: {c.id.slice(0, 8)}...</p>
                   </div>
                 </Link>
               ))

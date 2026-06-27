@@ -3,7 +3,10 @@
 import React, { useState, useTransition } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { updateDraftContent, finalizeDraft } from '@/features/drafts/actions'
+import { ConfirmDeleteModal } from '@/components/ui/Modal/ConfirmDeleteModal'
+import { cn } from '@/lib/utils'
+import { Trash2 } from 'lucide-react'
+import { updateDraftContent, finalizeDraft, deleteDraft } from '@/features/drafts/actions'
 
 type DraftType = 'Affidavit' | 'AddressLetter' | 'GapLetter'
 type DraftStatus = 'Draft' | 'Finalized'
@@ -38,6 +41,9 @@ export function DraftEditor({ draft, findingCount = 0 }: DraftEditorProps) {
   const [isSaved, setIsSaved] = useState(true)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [isDeletingDraft, setIsDeletingDraft] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false)
 
   const isFinalized = status === 'Finalized'
 
@@ -77,7 +83,11 @@ export function DraftEditor({ draft, findingCount = 0 }: DraftEditorProps) {
   }
 
   return (
-    <Card className="flex flex-col gap-md p-xl border border-text-secondary/10 bg-surface shadow-sm">
+    <>
+    <Card className={cn(
+      "flex flex-col gap-md p-xl border border-text-secondary/10 bg-surface shadow-sm hover:border-brand-primary group transition-all duration-300 origin-top",
+      isAnimatingOut ? "opacity-0 scale-95 h-0 overflow-hidden mb-[-24px] py-0 border-0" : "opacity-100 scale-100"
+    )}>
       {/* Header */}
       <div className="flex items-start justify-between gap-md">
         <div className="flex flex-col gap-xs">
@@ -95,6 +105,15 @@ export function DraftEditor({ draft, findingCount = 0 }: DraftEditorProps) {
           {isFinalized && (
             <Badge variant="success">Finalized</Badge>
           )}
+          <button 
+            type="button" 
+            onClick={() => setShowDeleteModal(true)}
+            disabled={isPending || isDeletingDraft}
+            className="text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity ml-xs disabled:opacity-50"
+            title="Delete Draft"
+          >
+            <Trash2 size={18} />
+          </button>
         </div>
       </div>
 
@@ -161,5 +180,31 @@ export function DraftEditor({ draft, findingCount = 0 }: DraftEditorProps) {
         </div>
       )}
     </Card>
+
+    <ConfirmDeleteModal 
+      isOpen={showDeleteModal}
+      onClose={() => setShowDeleteModal(false)}
+      title="Delete Legal Draft"
+      message="Are you sure you want to delete this draft? This action cannot be undone."
+      isDeleting={isDeletingDraft}
+      onConfirm={async () => {
+        setIsDeletingDraft(true);
+        try {
+          setIsAnimatingOut(true);
+          await new Promise(res => setTimeout(res, 300));
+          await deleteDraft(draft.id, draft.case_id);
+          setIsDeletingDraft(false);
+          setShowDeleteModal(false);
+          // Don't reset isAnimatingOut so it stays hidden before unmount
+        } catch (err) {
+          console.error(err);
+          setIsDeletingDraft(false);
+          setIsAnimatingOut(false);
+          setSaveError(err instanceof Error ? err.message : 'Failed to delete draft. You might not have permission.');
+          setShowDeleteModal(false);
+        }
+      }}
+    />
+    </>
   )
 }

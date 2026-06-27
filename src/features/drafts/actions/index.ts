@@ -95,7 +95,7 @@ export async function generateDrafts(caseId: string) {
   }
 
   function getFindingText(finding: { id: string; title: string; description: string }) {
-    if (!findingRefsData) return `<strong>${finding.title}:</strong> ${finding.description}`
+    if (!findingRefsData) return `${finding.title}: ${finding.description}`
     
     const refs = findingRefsData.filter(r => r.finding_id === finding.id)
     if (refs.length > 0) {
@@ -116,10 +116,10 @@ export async function generateDrafts(caseId: string) {
       }).filter(Boolean)
 
       if (details.length > 0) {
-        return `<strong>${finding.title}:</strong> ${finding.description} <br/><em>Details:</em> ${details.join(' vs ')}`
+        return `${finding.title}: ${finding.description}\n  Details: ${details.join(' vs ')}`
       }
     }
-    return `<strong>${finding.title}:</strong> ${finding.description}`
+    return `${finding.title}: ${finding.description}`
   }
 
   // 2. Delete existing drafts for this case (reset generation)
@@ -140,19 +140,26 @@ export async function generateDrafts(caseId: string) {
 
   // Generate Affidavit for High-severity Name Mismatches
   if (nameMismatches.length > 0) {
-    const content = `
-<h2>AFFIDAVIT OF DISCREPANCY</h2>
-<p>I, ${applicantName}, hereby attest and declare the following:</p>
-<p>A discrepancy has been identified in the spelling of my name across the submitted documents.</p>
-<ul>
-  ${nameMismatches.map((f) => `<li>${getFindingText(f)}</li>`).join('\n  ')}
-</ul>
-<p>I affirm that all discrepancies noted above refer to one and the same person, and that the difference is due to a typographical inconsistency and not a different identity.</p>
-<p>IN WITNESS WHEREOF, I have hereunto set my hand this _____ day of __________, 20____.</p>
-<p>____________________________<br/>${applicantName}<br/>Affiant</p>
-<p>SUBSCRIBED AND SWORN to before me this _____ day of __________, 20____, in _______________.</p>
-<p>____________________________<br/>Notary Public</p>
-`.trim()
+    const content = `AFFIDAVIT OF DISCREPANCY
+
+I, ${applicantName}, hereby attest and declare the following:
+
+A discrepancy has been identified in the spelling of my name across the submitted documents.
+
+${nameMismatches.map((f) => `- ${getFindingText(f)}`).join('\n')}
+
+I affirm that all discrepancies noted above refer to one and the same person, and that the difference is due to a typographical inconsistency and not a different identity.
+
+IN WITNESS WHEREOF, I have hereunto set my hand this _____ day of __________, 20____.
+
+____________________________
+${applicantName}
+Affiant
+
+SUBSCRIBED AND SWORN to before me this _____ day of __________, 20____, in _______________.
+
+____________________________
+Notary Public`.trim()
 
     const { data: draft, error: draftError } = await supabase
       .from('generated_drafts')
@@ -166,18 +173,22 @@ export async function generateDrafts(caseId: string) {
 
   // Generate Address Explanation Letter for Medium-severity Address Mismatches
   if (addressFindings.length > 0) {
-    const content = `
-<h2>EXPLANATION LETTER — ADDRESS DISCREPANCY</h2>
-<p>To Whom It May Concern,</p>
-<p>I, ${applicantName}, am writing to formally explain the discrepancy in the residential address appearing across my submitted documents.</p>
-<ul>
-  ${addressFindings.map((f) => `<li>${getFindingText(f)}</li>`).join('\n  ')}
-</ul>
-<p>I confirm that the addresses stated in my documents refer to my place of residence at different points in time. The differences are attributable to a change of residence and not a falsification of documents.</p>
-<p>I hope this explanation satisfactorily addresses the noted concern.</p>
-<p>Respectfully yours,</p>
-<p>____________________________<br/>${applicantName}</p>
-`.trim()
+    const content = `EXPLANATION LETTER — ADDRESS DISCREPANCY
+
+To Whom It May Concern,
+
+I, ${applicantName}, am writing to formally explain the discrepancy in the residential address appearing across my submitted documents.
+
+${addressFindings.map((f) => `- ${getFindingText(f)}`).join('\n')}
+
+I confirm that the addresses stated in my documents refer to my place of residence at different points in time. The differences are attributable to a change of residence and not a falsification of documents.
+
+I hope this explanation satisfactorily addresses the noted concern.
+
+Respectfully yours,
+
+____________________________
+${applicantName}`.trim()
 
     const { data: draft, error: draftError } = await supabase
       .from('generated_drafts')
@@ -191,17 +202,20 @@ export async function generateDrafts(caseId: string) {
 
   // Generate Gap Explanation Letter for School Gap findings
   if (gapFindings.length > 0) {
-    const content = `
-<h2>EXPLANATION LETTER — ACADEMIC GAP</h2>
-<p>To Whom It May Concern,</p>
-<p>I, ${applicantName}, am writing to explain the gap identified in my academic records as noted in the review of my submitted documents.</p>
-<ul>
-  ${gapFindings.map((f) => `<li>${getFindingText(f)}</li>`).join('\n  ')}
-</ul>
-<p>The gap in my academic records occurred due to personal circumstances at the time. I was not enrolled during this period, and I hereby affirm that this is an accurate representation of my academic history.</p>
-<p>Respectfully yours,</p>
-<p>____________________________<br/>${applicantName}</p>
-`.trim()
+    const content = `EXPLANATION LETTER — ACADEMIC GAP
+
+To Whom It May Concern,
+
+I, ${applicantName}, am writing to explain the gap identified in my academic records as noted in the review of my submitted documents.
+
+${gapFindings.map((f) => `- ${getFindingText(f)}`).join('\n')}
+
+The gap in my academic records occurred due to personal circumstances at the time. I was not enrolled during this period, and I hereby affirm that this is an accurate representation of my academic history.
+
+Respectfully yours,
+
+____________________________
+${applicantName}`.trim()
 
     const { data: draft, error: draftError } = await supabase
       .from('generated_drafts')
@@ -321,5 +335,17 @@ export async function getDraftsByCase(caseId: string) {
       .filter((l) => l.draft_id === draft.id)
       .map((l) => l.finding_id)
   }))
+}
+
+export async function deleteDraft(draftId: string, caseId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { error } = await supabase.from('generated_drafts').delete().eq('id', draftId)
+  if (error) throw new Error(error.message)
+  
+  revalidatePath(`/cases/${caseId}`)
+  return { success: true }
 }
 

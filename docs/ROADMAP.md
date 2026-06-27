@@ -20,23 +20,20 @@
 - Case Dashboard and List Views.
 - Data Models integration.
 
-## Phase 5: Document Upload System
-- UploadZone implementation.
-- Cloud storage integration.
+## Phase 5: Findings & Cross-Document Engine
+- Document Uploads, Extraction & Comparison Engine logic.
+- FindingCard rendering and Case Findings Workspace.
 
-## Phase 6: Document Review Workspace
-- DocumentViewer and DocumentComparisonPanel.
-
-## Phase 7: Findings System
-- Comparison Engine logic.
-- FindingCard rendering and state management.
-
-## Phase 8: Draft Generation
+## Phase 6: Draft Generation
 - DraftEditor integration.
 - Templating logic for Affidavits and Letters.
 
-## Phase 9: Export System
-- PDF generation and bundling.
+## Phase 7: Export & Reporting (Completed)
+- PDF generation, bundling, and Export Workspace.
 
-## Phase 10: Polish & QA
+## Phase 8: Dashboard & Analytics (Next)
+- Overview analytics for Case processing times, resolution rates.
+- Advanced administrative dashboards.
+
+## Phase 9: Polish & QA
 - Performance audits, end-to-end testing, and final refinement.

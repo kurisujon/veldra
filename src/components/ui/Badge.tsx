@@ -11,13 +11,13 @@ export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
       <div
         ref={ref}
         className={cn(
-          "inline-flex items-center rounded-button border px-md py-xs text-small font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-accent",
+          "inline-flex items-center rounded-button border px-sm py-xs text-small font-bold tracking-wide transition-all",
           {
-            "border-transparent bg-background text-text-secondary": variant === 'neutral',
-            "border-transparent bg-accent text-surface": variant === 'primary',
-            "border-transparent bg-success text-surface": variant === 'success',
-            "border-transparent bg-warning text-surface": variant === 'warning',
-            "border-transparent bg-error text-surface": variant === 'error',
+            "border-text-secondary/20 bg-surface text-text-secondary": variant === 'neutral',
+            "border-transparent bg-accent/15 text-accent": variant === 'primary',
+            "border-transparent bg-success/15 text-success": variant === 'success',
+            "border-transparent bg-warning/15 text-warning": variant === 'warning',
+            "border-transparent bg-error/15 text-error": variant === 'error',
           },
           className
         )}

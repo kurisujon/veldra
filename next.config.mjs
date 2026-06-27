@@ -4,6 +4,11 @@ import path from 'path';
 const nextConfig = {
   turbopack: {
     root: path.resolve(process.cwd())
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '20mb'
+    }
   }
 };
 

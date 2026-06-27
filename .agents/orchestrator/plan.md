@@ -1,78 +1,49 @@
-# Plan — Phase 6 (Legal Draft Generation)
+# Plan — Gemini 2.5 Flash Document Extraction Integration
 
-Phase 6 implements the Legal Draft Generation engine and workspace for Veldra, enabling reviewers to automatically generate legal drafts (Affidavits of Discrepancy, Explanation Letters) based on accepted findings, edit them inline, and finalize them.
+This plan outlines the integration of Gemini 2.5 Flash as the primary document extraction engine in Veldra, replacing the unreliable OCR/regex-first approach.
 
 ## Topology & Roles
-- **Orchestrator**: Coordinates tasks, checks progress, runs verification via workers, and synthesizes results.
-- **Claude (Opus/Sonnet) - Backend Specialist**:
-  - Implement Supabase migrations (tables `generated_drafts`, `draft_findings`, and alter `case_status` enum to include `'DraftGenerated'`).
-  - Implement server actions in `src/features/drafts/actions/index.ts` with Zod validation.
-  - Regenerate database TypeScript definitions using the live database.
-- **Gemini - UI & Documentation Specialist**:
-  - Implement E2E Playwright tests (`tests/drafts.e2e.spec.ts`) before code implementation (Dual Track).
-  - Implement `DraftEditor` React component in `src/features/drafts/components/DraftEditor.tsx`.
-  - Integrate Drafts workflow into Case Detail Page (`src/app/(dashboard)/cases/[id]/page.tsx`).
-  - Update project documentation (`GEMINI.md`, `AGENTS.md`, `docs/DATA_MODELS.md`, `docs/COMPONENT_RULES.md`).
+- **Orchestrator**: Coordinates implementation, ensures role splits, and manages verification.
+- **Claude (Opus/Sonnet) - Architect & Backend Developer**:
+  - Central client layer (`src/lib/ai/gemini.ts`) and env config.
+  - Zod schemas for the 5 supported document types (`src/lib/ai/schemas.ts`).
+  - Document-type-aware prompts (`src/lib/ai/prompts.ts`).
+  - Single entry point `extractDocumentWithAI` (`src/lib/ai/extraction.ts`).
+  - Persistence logic updating `document_extractions` and `document_fields`.
+  - Server action `runExtraction` update in `src/features/extractions/actions/index.ts`.
+- **Gemini - UI Developer & Documentarian**:
+  - React UI integration in `ExtractionWorkspace` and case detail page.
+  - Manual test path trigger / button.
+  - Update all project markdown documentation (`GEMINI.md`, `AGENTS.md`, and `docs/`).
 
 ## Milestones
 
-### M1. Test Track - Playwright E2E Test Suite Setup (Tiers 1-4)
-- **Objective**: Design and write E2E Playwright tests to verify the draft generation, editing, and finalization workflows.
-- **Deliverables**: `tests/drafts.e2e.spec.ts` containing Tiers 1-4 tests (happy path, boundary conditions, cross-feature transitions, and real-world scenario).
-- **Assigned to**: Gemini (UI & Testing Worker)
-
-### M2. Backend - Database Schema Migrations & Types (Claude)
-- **Objective**: Implement database changes for generated drafts and draft-findings relationships.
+### M1. Codebase Exploration & Central Client Setup (Claude)
+- **Objective**: Audit existing extraction flows and set up central Gemini client configuration.
 - **Deliverables**:
-  - Migration file in `supabase/migrations/` adding `generated_drafts`, `draft_findings`, and altering `case_status` to add `'DraftGenerated'`.
-  - Regenerated `src/types/database.ts`.
-- **Assigned to**: Claude (Backend Worker)
+  - Central client layer file `src/lib/ai/gemini.ts` reading `GEMINI_API_KEY` and `GEMINI_MODEL` from env.
+  - Verification that the client is isolated and swappable.
 
-### M3. Backend - Server Actions Implementation (Claude)
-- **Objective**: Implement server actions for generating, updating, finalizing, and fetching drafts.
-- **Deliverables**: `src/features/drafts/actions/index.ts` containing:
-  - `generateDrafts(caseId)`
-  - `updateDraftContent(draftId, content)`
-  - `finalizeDraft(draftId, caseId)`
-  - `getDraftsByCase(caseId)`
-- **Assigned to**: Claude (Backend Worker)
-
-### M4. Frontend - UI Components & Integration (Gemini)
-- **Objective**: Build the `DraftEditor` component and integrate it into the Case Detail page.
+### M2. Zod Schemas & Prompt Templates (Claude/Gemini)
+- **Objective**: Create schemas and prompts for Birth Certificate, Marriage Certificate, TOR, SF10, and Diploma.
 - **Deliverables**:
-  - `src/features/drafts/components/DraftEditor.tsx`
-  - Integration in `src/app/(dashboard)/cases/[id]/page.tsx`
-- **Assigned to**: Gemini (UI & Testing Worker)
+  - Zod schemas in `src/lib/ai/schemas.ts`.
+  - Prompt templates in `src/lib/ai/prompts.ts` instructing structured JSON output only.
 
-### M5. Verification & Testing
-- **Objective**: Run builds, lints, and E2E tests to ensure everything is verified and compliant.
-- **Deliverables**: Clean build/lint reports and all passing tests.
-- **Assigned to**: Gemini (UI & Testing Worker) / Challenger / Reviewer
+### M3. Single Entry Point & Extraction Persistence (Claude)
+- **Objective**: Implement `extractDocumentWithAI()` to send documents to Gemini, parse JSON, validate with Zod, and persist in `document_extractions` / `document_fields`.
+- **Deliverables**:
+  - `extractDocumentWithAI()` implementation in `src/lib/ai/extraction.ts`.
+  - Integration with existing `runExtraction` server action.
 
-### M6. Documentation Update (Gemini)
-- **Objective**: Update project docs.
-- **Deliverables**: Updates to `GEMINI.md`, `AGENTS.md`, `docs/DATA_MODELS.md`, and `docs/COMPONENT_RULES.md`.
-- **Assigned to**: Gemini (UI & Testing Worker)
+### M4. UI Integration & Manual Extraction Trigger (Gemini)
+- **Objective**: Connect the extraction to the UI and ensure reviewers can run extraction and edit/review fields.
+- **Deliverables**:
+  - UI updates in `ExtractionWorkspace.tsx` showing status and trigger button.
+  - Correct formatting, handling PDF and images.
 
-## Interface Contracts
-
-### Database Schema
-#### Table: `generated_drafts`
-- `id` UUID PRIMARY KEY DEFAULT gen_random_uuid()
-- `case_id` UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE
-- `type` TEXT NOT NULL (Enum values: 'Affidavit', 'AddressLetter', 'GapLetter')
-- `content` TEXT NOT NULL (HTML/Rich text string)
-- `status` TEXT NOT NULL DEFAULT 'Draft' (Enum values: 'Draft', 'Finalized')
-- `created_at` TIMESTAMPTZ NOT NULL DEFAULT NOW()
-- `updated_at` TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
-#### Table: `draft_findings`
-- `draft_id` UUID REFERENCES generated_drafts(id) ON DELETE CASCADE
-- `finding_id` UUID REFERENCES findings(id) ON DELETE CASCADE
-- PRIMARY KEY (draft_id, finding_id)
-
-### Server Actions
-- `generateDrafts(caseId: string): Promise<{ success: boolean }>`
-- `updateDraftContent(draftId: string, content: string): Promise<{ success: boolean }>`
-- `finalizeDraft(draftId: string, caseId: string): Promise<{ success: boolean }>`
-- `getDraftsByCase(caseId: string): Promise<any[]>`
+### M5. Verification & Documentation (Claude & Gemini)
+- **Objective**: Verify that `npm run build` and `npm run lint` pass cleanly with no type bypasses, and update documents.
+- **Deliverables**:
+  - Clean build output.
+  - Updated `GEMINI.md`, `AGENTS.md`, and new/modified component docs.

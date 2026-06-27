@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react'
 import { FindingCard } from './FindingCard'
+import { CompleteReviewButton } from './CompleteReviewButton'
 import { DocumentComparisonPanel } from '@/components/review/DocumentComparisonPanel'
 import { Card } from '@/components/ui/Card'
 import { getSignedUrlsForDocuments } from '@/features/documents/actions'
@@ -76,7 +77,7 @@ export function CaseFindingsWorkspace({
   return (
     <div className="flex gap-lg w-full h-[calc(100vh-280px)] min-h-[500px]" data-testid="findings-workspace">
       {/* Left Sidebar: Findings List */}
-      <div className="w-[380px] flex flex-col gap-md overflow-y-auto pr-xs border-r border-text-secondary/10">
+      <div className="w-[480px] flex flex-col gap-md overflow-y-auto pr-xs border-r border-text-secondary/10">
         <div className="text-body font-semibold text-text-primary mb-xs">
           Discrepancies ({findings.length})
         </div>
@@ -95,6 +96,15 @@ export function CaseFindingsWorkspace({
                 readOnly={isReadOnly}
               />
             ))}
+          </div>
+        )}
+
+        {!isReadOnly && (
+          <div className="mt-auto pt-md border-t border-text-secondary/10 sticky bottom-0 bg-background pb-md">
+            <CompleteReviewButton 
+              caseId={caseId} 
+              disabled={!sortedFindings.every(f => f.status !== 'Open')} 
+            />
           </div>
         )}
       </div>

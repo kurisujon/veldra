@@ -203,3 +203,692 @@ Write a Playwright E2E test in the `tests/` directory to verify that the Dashboa
 ### Dashboard Verification
 - [ ] A new Playwright E2E test exists for the Dashboard.
 - [ ] Running the Playwright test suite passes and verifies the dashboard renders the mock data correctly.
+
+## Follow-up — 2026-06-25T21:00:00+08:00
+
+Do not keep the old regex extractor as the primary extraction path for supported Veldra document types. Gemini 2.5 Flash must become the main extraction path, while preserving reviewer correction and downstream deterministic comparison.
+# Veldra Implementation Prompt — Integrate Gemini 2.5 Flash as the Primary Document Extraction Engine
+
+You are working on **Veldra**, a **case-centric document verification platform** built with **Next.js + TypeScript + Supabase**.
+
+The system currently has:
+
+* a case-centric architecture
+* document upload support
+* Supabase storage
+* an existing OCR / extraction path that is currently unreliable and only extracts minimal fields
+* a review workflow concept where extracted values can be reviewed and corrected
+* a Gemini API key already placed in `.env`
+
+The current OCR + regex extraction behavior is not good enough for the actual use case because uploaded documents include:
+
+* **PDFs**
+* **JPG / JPEG / PNG**
+* **scanned phone images**
+* documents downloaded from **email / Messenger**
+* variable image quality and inconsistent layouts
+
+The product goal is not just OCR.
+The product goal is:
+
+1. upload applicant documents
+2. extract **full structured data** from each uploaded document
+3. compare extracted data across the case
+4. generate structured findings for discrepancies
+5. generate affidavit / explanation drafts from accepted findings
+6. preserve a human review workflow before final case output
+
+---
+
+# Your Mission
+
+Replace the current **minimal OCR / regex-first extraction path** with a **gemini-powered full document extraction pipeline** using:
+
+# **Gemini 2.5 Flash**
+
+as the **primary extraction model** for Veldra’s supported document types.
+
+The Gemini API key is already present in `.env`.
+You must complete the **model wiring, extraction pipeline, structured validation, persistence, and manual test path** so the feature becomes **usable and testable inside the repo**.
+
+---
+
+# Important Constraint
+
+Veldra is **not** a chatbot and should not behave like one.
+
+The AI integration is for:
+
+* **document extraction**
+* **field normalization**
+* possibly future **draft assistance**
+
+The AI integration is **not** for:
+
+* freeform chat workflows
+* unstructured narrative output
+* replacing deterministic discrepancy logic
+
+The output of extraction must be **strict structured data** that fits the review workflow and later comparison engine.
+
+---
+
+# Model to Use
+
+Use **Gemini 2.5 Flash** as the primary extraction model.
+
+## Required environment support
+
+The model must be configurable through environment variables.
+
+Use or support the following env values:
+
+```env
+GEMINI_API_KEY=your_existing_key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+If the repo already uses a different Gemini env naming convention, align with it cleanly, but the final implementation must clearly support **configuring the Gemini model from env**.
+
+## Requirement
+
+Do **not** hardcode the model name deep inside feature logic.
+The AI provider/model config must be centralized.
+
+---
+
+# High-Level Outcome
+
+After your implementation, Veldra should be able to:
+
+* take an uploaded **Birth Certificate / Marriage Certificate / TOR / SF10 / Diploma**
+* send the file to **Gemini 2.5 Flash**
+* receive a **structured JSON extraction result**
+* validate it with **zod**
+* persist the extraction output in Veldra’s extraction layer
+* expose field-level values for reviewer verification
+* prepare the data for deterministic cross-document comparison and later draft generation
+
+---
+
+# Required Architecture
+
+Create a dedicated AI extraction layer.
+Do **not** scatter Gemini calls throughout random feature files.
+
+## Suggested structure
+
+```text
+src/
+  lib/
+    ai/
+      gemini.ts
+      prompts.ts
+      schemas.ts
+      extraction.ts
+      normalization.ts
+      types.ts
+```
+
+This exact structure is not mandatory, but the responsibilities must be clearly separated.
+
+---
+
+# Step 1 — Audit Existing Extraction Flow
+
+Before implementing, inspect the current extraction / OCR flow in the repo and identify:
+
+* where document extraction is currently triggered
+* what OCR utilities currently exist
+* how extracted values are stored
+* whether there are existing extraction tables / models / types
+* how the review UI currently consumes extracted data
+
+Do not delete architecture-critical code blindly.
+But **Gemini extraction must become the main extraction path for supported document types**.
+
+The old OCR / regex path should no longer be the primary extraction method for the main supported documents.
+
+---
+
+# Step 2 — Create Central Gemini Client Setup
+
+Implement a centralized Gemini client layer for Veldra.
+
+## Requirements
+
+* read API key from env
+* read model name from env
+* expose a reusable Gemini extraction function
+* keep implementation isolated from UI code
+
+Create a central helper such as:
+
+```ts
+getGeminiModel(): string
+```
+
+and a reusable function for calling Gemini for document extraction.
+
+---
+
+# Step 3 — Create a Single Extraction Entry Point
+
+Create a central extraction function such as:
+
+```ts
+extractDocumentWithAI(input: {
+  documentId: string;
+  caseId: string;
+  documentType: DocumentType;
+  fileBuffer: Buffer;
+  mimeType: string;
+  fileName: string;
+})
+```
+
+This function should:
+
+1. receive the uploaded document context
+2. choose the correct extraction prompt based on document type
+3. send the document to Gemini 2.5 Flash
+4. parse the returned JSON
+5. validate the result with zod
+6. persist extraction output
+7. create / update field-level extraction rows
+8. return a structured extraction result for the UI / server action
+
+---
+
+# Step 4 — Gemini Must Return Structured JSON Only
+
+The extraction layer must be built around **strict JSON output**, not prose.
+
+The AI prompt must explicitly instruct Gemini to return **JSON only** matching the expected schema for the specific document type.
+
+Do not rely on freeform natural language extraction results.
+
+---
+
+# Step 5 — Use Zod for Schema Validation
+
+Create explicit zod schemas for the extraction output of each supported document type.
+
+The returned Gemini JSON must be validated before it is trusted or stored.
+
+If Gemini returns:
+
+* malformed JSON
+* incomplete output
+* a schema mismatch
+* empty output
+
+then the system must:
+
+* record the failure state
+* surface a useful error
+* avoid silently trusting invalid extraction output
+
+---
+
+# Supported Document Types
+
+Veldra currently supports these document categories:
+
+* **PSA Birth Certificate**
+* **PSA Marriage Certificate**
+* **TOR**
+* **SF10**
+* **Diploma**
+
+You must implement **document-type-aware extraction** for all of them.
+
+---
+
+# Step 6 — Create Document-Type-Aware Extraction Schemas
+
+Below are the baseline extraction targets.
+If the repo already has richer field definitions, align with them, but do not reduce coverage below these targets.
+
+---
+
+# A. PSA Birth Certificate Extraction Schema
+
+Create a zod schema for a structured birth certificate extraction object.
+
+## Minimum target fields
+
+* `documentType`
+* `certificateNumber`
+* `registryNumber`
+* `firstName`
+* `middleName`
+* `lastName`
+* `suffix`
+* `sex`
+* `dateOfBirth`
+* `placeOfBirth`
+* `fatherFirstName`
+* `fatherMiddleName`
+* `fatherLastName`
+* `motherMaidenFirstName`
+* `motherMaidenMiddleName`
+* `motherMaidenLastName`
+* `dateOfRegistration`
+* `issuingOffice`
+* `remarks`
+
+---
+
+# B. PSA Marriage Certificate Extraction Schema
+
+## Minimum target fields
+
+* `documentType`
+* `certificateNumber`
+* `husbandFirstName`
+* `husbandMiddleName`
+* `husbandLastName`
+* `wifeFirstName`
+* `wifeMiddleName`
+* `wifeLastName`
+* `dateOfMarriage`
+* `placeOfMarriage`
+* `husbandCitizenship`
+* `wifeCitizenship`
+* `issuingOffice`
+* `remarks`
+
+---
+
+# C. TOR Extraction Schema
+
+## Minimum target fields
+
+* `documentType`
+* `studentFirstName`
+* `studentMiddleName`
+* `studentLastName`
+* `studentSuffix`
+* `institutionName`
+* `institutionAddress`
+* `program`
+* `degree`
+* `studentNumber`
+* `dateOfGraduation`
+* `honors`
+* `academicEntries`
+
+## `academicEntries`
+
+This should support an array of academic row objects when possible, for example:
+
+* `schoolYear`
+* `term`
+* `subjectCode`
+* `subjectTitle`
+* `grade`
+* `units`
+
+If the first pass cannot fully and reliably parse all TOR table rows, do **not** fabricate data.
+But the schema and architecture should support future expansion of detailed academic record extraction.
+
+---
+
+# D. SF10 Extraction Schema
+
+## Minimum target fields
+
+* `documentType`
+* `studentFirstName`
+* `studentMiddleName`
+* `studentLastName`
+* `dateOfBirth`
+* `schoolName`
+* `schoolAddress`
+* `lrn`
+* `gradeLevelEntries`
+* `remarks`
+
+## `gradeLevelEntries`
+
+This should support year / grade progression entries when visible in the document.
+
+---
+
+# E. Diploma Extraction Schema
+
+## Minimum target fields
+
+* `documentType`
+* `studentFirstName`
+* `studentMiddleName`
+* `studentLastName`
+* `studentSuffix`
+* `institutionName`
+* `degree`
+* `program`
+* `dateAwarded`
+* `honors`
+* `remarks`
+
+---
+
+# Step 7 — Create Document-Type-Aware Gemini Prompts
+
+Do **not** use one generic prompt for all document types.
+
+Create prompt builders / prompt templates for:
+
+* PSA Birth Certificate
+* PSA Marriage Certificate
+* TOR
+* SF10
+* Diploma
+
+Each prompt must:
+
+1. clearly tell Gemini what document type it is reading
+2. ask it to extract **all relevant structured fields**
+3. instruct it to return **JSON only**
+4. instruct it to use `null` for unreadable or missing fields
+5. instruct it not to hallucinate or invent values
+6. preserve names / dates as faithfully as possible
+7. align with the exact zod schema for that document type
+
+---
+
+# Step 8 — Prompting Rules for Gemini
+
+Every extraction prompt should explicitly instruct Gemini to follow these rules:
+
+## Required prompt rules
+
+* Extract only values visible or strongly inferable from the document
+* Do not invent data
+* Use `null` for missing / unreadable fields
+* Preserve names as written where possible
+* Normalize dates consistently if possible
+* Return **JSON only**
+* Follow the provided schema exactly
+* If the document is partially unreadable, still return the schema with nulls where needed rather than guessing
+
+---
+
+# Step 9 — Implement Extraction Persistence
+
+If the repo already has extraction storage tables, align with them.
+If not, introduce a proper extraction persistence layer that fits Veldra’s architecture.
+
+The system must preserve both:
+
+* the structured extraction result
+* field-level extraction records for review and comparison
+
+## Suggested extraction entity: `DocumentExtraction`
+
+Represents one extraction run for one document.
+
+Suggested fields:
+
+* `id`
+* `case_id`
+* `document_id`
+* `document_type`
+* `status`
+* `provider`
+* `model`
+* `raw_response`
+* `normalized_json`
+* `error_message`
+* `review_status`
+* `created_at`
+* `updated_at`
+
+## Suggested field entity: `DocumentField`
+
+Represents field-level extracted values.
+
+Suggested fields:
+
+* `id`
+* `case_id`
+* `document_id`
+* `document_extraction_id`
+* `field_name`
+* `raw_value`
+* `normalized_value`
+* `reviewed_value`
+* `final_value`
+* `status`
+* `created_at`
+* `updated_at`
+
+If the repo already uses a different schema, preserve the same functional intent:
+
+* one record for extraction runs
+* field-level extracted values
+* reviewable final values
+* storage of raw and normalized outputs
+
+---
+
+# Step 10 — Flatten Structured Extraction into Reviewable Fields
+
+After Gemini returns a valid structured extraction object:
+
+1. store the full normalized JSON
+2. flatten relevant fields into field-level rows
+3. create / update field records tied to the document
+4. mark them as reviewable / pending review
+
+This is critical because Veldra’s review UI and future comparison engine should operate on structured fields, not only a single JSON blob.
+
+---
+
+# Step 11 — Preserve Human Review Workflow
+
+Do not bypass human review.
+
+The intended Veldra flow remains:
+
+1. uploaded document is extracted by Gemini
+2. extracted values are stored
+3. reviewer opens the case
+4. reviewer sees extracted values
+5. reviewer can edit / accept / correct values
+6. approved values become the trusted final values used downstream
+
+The AI layer improves extraction, but reviewers still control the final accepted data.
+
+---
+
+# Step 12 — Keep Cross-Document Comparison Deterministic
+
+Gemini is being introduced to improve extraction quality.
+The discrepancy logic should still remain deterministic and structured.
+
+That means downstream comparison should still be based on extracted / approved values such as:
+
+* first / middle / last names
+* DOB
+* address fields
+* institution names
+* marriage / birth consistency fields
+* academic dates and timeline
+
+Do **not** redesign the comparison engine into a vague AI-only judgment system.
+
+---
+
+# Step 13 — Implement a Manual Extraction Test Path
+
+The Gemini integration has not been tested yet because the model setup was not completed.
+
+You must add a clean way to manually test extraction on an uploaded document.
+
+## Required
+
+Add at least one of the following:
+
+* a “Run Extraction” action/button in the document or review UI
+* a server action that can be triggered for a document
+* a route handler for manual testing inside the app
+
+The important part is that a developer / reviewer can select an uploaded document and trigger Gemini extraction end-to-end.
+
+---
+
+# Step 14 — Supported File Inputs
+
+The extraction flow must support:
+
+* PDF
+* JPG
+* JPEG
+* PNG
+
+Use Gemini in a way that supports document understanding of these file types.
+
+If PDF preprocessing is required for Gemini input, implement it cleanly and document the approach.
+
+Do not reduce the system back to “OCR text blob only” unless absolutely necessary for a fallback path.
+
+---
+
+# Step 15 — Error Handling
+
+Handle the following failure modes:
+
+* unsupported file type
+* missing document buffer
+* Gemini API failure
+* timeout
+* invalid JSON response
+* schema validation failure
+* unreadable document
+* empty extraction result
+
+On failure:
+
+* preserve an extraction failure state if appropriate
+* store the error message
+* avoid crashing the overall case flow
+* allow retry / re-extract later
+
+---
+
+# Step 16 — Keep UI Changes Focused
+
+Do not redesign the whole application.
+
+Only update the UI enough to support:
+
+* triggering extraction
+* showing extraction status
+* showing extracted fields
+* allowing reviewer edits / acceptance
+
+Keep the implementation aligned with the existing Veldra design system and case-centric workspace.
+
+---
+
+# Step 17 — Make the Model Swappable
+
+Even though the initial implementation must use **Gemini 2.5 Flash**, structure the AI layer so the model can be swapped later through env configuration without refactoring the whole extraction system.
+
+The code should be designed so Veldra can later upgrade to:
+
+* another Gemini Flash model
+* Gemini Pro if paid access is added
+* a secondary fallback provider if needed
+
+without rewriting the case workflow.
+
+---
+
+# Step 18 — Deliverables Required From You
+
+When implementation is complete, provide the following:
+
+## 1. Architecture summary
+
+Explain:
+
+* how Gemini 2.5 Flash was integrated
+* where the env config is read
+* how extraction is triggered
+* how JSON is validated
+* how extraction results are stored
+
+## 2. File-by-file summary
+
+List every created / modified file and what it does.
+
+## 3. Env requirements
+
+Explain exactly which env variables are required and how the model is configured.
+
+## 4. Testing instructions
+
+Explain exactly how to run a document extraction test end-to-end in the repo.
+
+## 5. Known limitations
+
+If any part is only partially implemented in the first pass (for example TOR table extraction depth), explain that clearly and honestly.
+
+---
+
+# Implementation Order
+
+Follow this order:
+
+## Step 1
+
+Audit the existing OCR / extraction flow and extraction data model.
+
+## Step 2
+
+Create the centralized Gemini config / client layer.
+
+## Step 3
+
+Create zod schemas for each supported document type.
+
+## Step 4
+
+Create document-type-aware Gemini prompts.
+
+## Step 5
+
+Implement `extractDocumentWithAI()`.
+
+## Step 6
+
+Persist extraction results and field rows.
+
+## Step 7
+
+Wire manual extraction trigger in the app.
+
+## Step 8
+
+Test one full extraction flow and document how it works.
+
+---
+
+# Final Goal
+
+After this implementation, Veldra should no longer behave like a small OCR demo that only extracts a few values.
+
+It should behave like a **document verification platform** that can:
+
+* ingest an uploaded applicant document
+* extract a rich structured record using **Gemini 2.5 Flash**
+* persist extraction output in a reviewable format
+* allow human correction and acceptance
+* prepare the extracted data for discrepancy detection and draft generation
+
+The Gemini API key is already in `.env`.
+Your job is to complete the **Gemini 2.5 Flash model integration, structured extraction pipeline, validation, persistence, and manual test path** so the feature becomes usable inside Veldra.
+

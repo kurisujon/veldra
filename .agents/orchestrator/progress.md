@@ -1,18 +1,16 @@
-# Progress - Phase 6 (Legal Draft Generation)
+# Progress - Gemini 2.5 Flash Document Extraction Integration
 
 ## Current Status
-Last visited: 2026-06-22T19:18:21+08:00
-- [x] Read required documentation sequence
-- [x] Start heartbeat timer and update BRIEFING.md
-- [ ] Milestone 1: Playwright E2E Test Suite Setup (Tiers 1-4)
-- [ ] Milestone 2: Backend Migrations, RLS Policies, Live Db Types (Claude)
-- [ ] Milestone 3: Server Actions with Zod Validation (Claude)
-- [ ] Milestone 4: Frontend UI DraftEditor & Case Detail Page Integration (Gemini)
-- [ ] Milestone 5: Verification (Run verification: build, lint, E2E tests)
-- [ ] Milestone 6: Documentation (GEMINI.md, AGENTS.md, docs/DATA_MODELS.md updates - Gemini)
+Last visited: 2026-06-25T22:08:00+08:00
+- [x] Step 1: Audit existing extraction / OCR flow in the repo.
+- [x] Milestone 1: Central Gemini Client Setup (Claude) - Completed
+- [x] Milestone 2: Zod Schemas & Prompt Templates (Claude) - Completed
+- [x] Milestone 3: Single Entry Point & Extraction Persistence (Claude) - Completed
+- [x] Milestone 4: UI Integration & Manual Trigger (Gemini) - Completed
+- [x] Milestone 5: Verification & Documentation (Claude & Gemini) - Completed (CLEAN Audit Verdict)
 
 ## HANGS & FAILURES
-- HANG: Gemini UI & Testing Developer (ed35e6d8-5030-45b4-8506-8833955854df) crashed during start, replacing.
+None
 
 ## Iteration Status
 Current iteration: 1 / 32

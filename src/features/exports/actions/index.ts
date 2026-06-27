@@ -64,3 +64,17 @@ export async function getExportsByCase(caseId: string) {
 
   return data || []
 }
+
+export async function deleteExport(exportId: string, caseId: string) {
+  const supabase = await createClient()
+  
+  const { error } = await supabase
+    .from('export_packages')
+    .delete()
+    .eq('id', exportId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/cases/${caseId}`)
+  return { success: true }
+}

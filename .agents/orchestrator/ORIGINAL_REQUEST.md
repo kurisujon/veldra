@@ -1,51 +1,33 @@
 # Original User Request
 
-## 2026-06-22T01:46:51Z
+## Initial Request — 2026-06-25T21:00:47+08:00
 
-<USER_REQUEST>
-You are the Project Orchestrator for Phase 4 (Document Uploads and Management) of Veldra.
-Your workspace is `/mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra`.
-Your agent directory is `/mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra/.agents/orchestrator/`.
+You are the Project Orchestrator. Your role is to coordinate and manage the implementation of integrating Gemini 2.5 Flash as the primary document extraction engine in Veldra, as detailed in /mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra/ORIGINAL_REQUEST.md.
 
-Please read the user requirements in `/mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra/ORIGINAL_REQUEST.md` and build a comprehensive execution plan.
-
-Strict Constraints:
-1. This is a split-team execution: Claude (Opus/Sonnet) handles ALL backend work (database, Supabase Storage, RPCs, RLS, server actions), and Gemini handles ALL frontend UI and documentation updates. Neither agent may touch the other's domain.
-2. Read the required files in the exact order specified in ORIGINAL_REQUEST.md before writing any code.
-3. Track your milestones and update `/mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra/.agents/orchestrator/progress.md` regularly.
-4. When all requirements are met and all acceptance criteria are verified, report completion to the Sentinel.
-
-</USER_REQUEST>
-
-## 2026-06-22T18:27:32Z
-
-<USER_REQUEST>
-You are the Project Orchestrator for Phase 5 Frontend UI implementation.
-Your mission is to coordinate the design and implementation of the Phase 5 Frontend UI components for the Veldra Smart Document Verification Platform.
-Please read the verbatim requirements and acceptance criteria in `/mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra/ORIGINAL_REQUEST.md` under the header "Follow-up — 2026-06-22T18:26:39+08:00".
-Note that backend schemas and server actions are already implemented. You only need to implement the frontend components (FindingCard, DocumentComparisonPanel) and integrate them.
-Be sure to adhere to all agent roles & rules in `AGENTS.md`, `GEMINI.md`, and other design system / folder structure guidelines under `docs/`.
-Write your planning/coordination files in `/mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra/.agents/orchestrator/`.
-Once you are done with the implementation and all tests/checks pass, report completion back to the Sentinel.
-</USER_REQUEST>
-
-## 2026-06-22T19:18:21Z
-
-<USER_REQUEST>
-You are the Project Orchestrator for Phase 6 (Legal Draft Generation) of Veldra.
-Your workspace is /mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra.
-Your configuration directory is /mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra/.agents/orchestrator/.
-
-Your task is to coordinate and implement Phase 6 according to ORIGINAL_REQUEST.md.
-You MUST strictly follow the critical role split:
-- Claude (Opus/Sonnet) - Architect & Backend Developer: database schema migrations, PostgreSQL RPCs, RLS policies, server actions, and database.ts type updates.
-- Gemini - UI Developer & Documentarian: React component UI, page integration, and documentation updates.
-
-Please perform the following steps:
-1. Read the required files in the specified order before beginning.
-2. Decompose the requirements into clear milestones and update plan.md/progress.md.
-3. Dispatch tasks to specialists (e.g., worker, reviewer, challenger) while maintaining strict role enforcement.
-4. Continuously monitor progress and update `.agents/orchestrator/progress.md`.
-5. Run verification (build, lint) to ensure code is clean and error-free.
-6. Once complete, report victory back to the Sentinel.
-</USER_REQUEST>
+Specifically:
+1. Initialize your plan.md, progress.md, and context.md in your dedicated agent directory: `/mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra/.agents/orchestrator/`.
+2. Follow the role-split rules in /mnt/c/Users/CJK_LAPTOP/Personal_Projects/Javascript/veldra/AGENTS.md:
+   - Claude (Architect/Backend Developer) handles all database schema changes, PostgreSQL RPCs, RLS policies, server actions, and type definition updates.
+   - Gemini (UI Developer/Documentarian) handles React UI components, page integration, and markdown documentation updates.
+3. Make sure to adhere to all strict rules in AGENTS.md and GEMINI.md (no type bypasses, no arbitrary tailwind values, etc.).
+4. Implement all steps from Step 1 to Step 18 in the prompt follow-up:
+   - Step 1: Audit existing extraction / OCR flow in the repo.
+   - Step 2: Create central Gemini client layer configuring key and model from env.
+   - Step 3: Create single entry point `extractDocumentWithAI()`.
+   - Step 4: Instruct Gemini to return structured JSON only.
+   - Step 5: Create Zod schemas for validation.
+   - Step 6: Create schemas for PSA Birth Certificate, PSA Marriage Certificate, TOR, SF10, and Diploma.
+   - Step 7: Create document-type-aware prompts.
+   - Step 8: Apply prompting rules.
+   - Step 9: Implement extraction persistence (suggested tables DocumentExtraction, DocumentField, or aligning with existing tables).
+   - Step 10: Flatten JSON into field rows.
+   - Step 11: Preserve human review workflow.
+   - Step 12: Keep cross-document comparison deterministic.
+   - Step 13: Implement manual extraction test path (e.g. Run Extraction button or page).
+   - Step 14: Support PDF, JPG, JPEG, PNG.
+   - Step 15: Handle failures and errors.
+   - Step 16: Keep UI changes focused.
+   - Step 17: Make model swappable.
+   - Step 18: Generate deliverables (Architecture summary, File summary, Env requirements, Testing instructions, Known limitations).
+5. Verify build integrity (`npm run build` and `npm run lint` must pass cleanly).
+6. When all tasks and verification are complete, report victory back to me by claiming that all milestones are complete and providing your handoff.md.

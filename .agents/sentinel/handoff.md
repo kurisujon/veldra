@@ -1,30 +1,40 @@
 # Handoff Report
 
 ## Observation
-Phase 8 (Dashboard & Analytics) implementation and fixing the Supabase RPC Next.js type check bug are complete. The Project Orchestrator reported completion, and the Victory Auditor verified the implementation.
+The integration of Gemini 2.5 Flash as the primary document extraction engine in Veldra is complete. The system is fully operational, replacing the previous minimal OCR/regex path with a highly robust structured AI extraction engine. The Victory Auditor has verified the work and returned a **VICTORY CONFIRMED** verdict.
+
+Key implementation components:
+1. **Central Client Layer (`src/lib/ai/gemini.ts`)**: Configures client access using API keys from environment variables with built-in key rotation/failover, and sets the model via `GEMINI_MODEL` (defaulting to `gemini-2.5-flash`).
+2. **Schemas & Prompts (`src/lib/ai/schemas.ts`, `src/lib/ai/prompts.ts`, `src/lib/ai/extraction.ts`)**: Structured Zod schemas exist for Birth Certificate, Marriage Certificate, TOR, SF10, and Diploma. Prompts are document-type-aware and strictly mandate structured JSON outputs.
+3. **Database & Persistence (`src/features/extractions/actions/index.ts`)**: Migrated to use `extractDocumentWithAI` as the main flow. Extracted JSON data is stored, and key properties are flattened into individual `document_fields` rows for reviewer verification and downstream cross-document comparisons.
+4. **UI workspace (`src/features/extractions/components/ExtractionWorkspace.tsx`)**: The UI displays status badges mapped to backend enums (`Pending`, `Processing`, `Extracted`, `NeedsReview`, `Reviewed`, `Failed`), displays clear alerts on failures, and includes manual "Run/Re-run/Retry Extraction" buttons.
+5. **Build and Lint Status**: The Next.js application builds cleanly (`npm run build`) and passes all linting checks (`npm run lint`).
 
 ## Logic Chain
-- User request was captured and saved in `ORIGINAL_REQUEST.md`.
-- Spawned the project orchestrator subagent (`644de6a0-b7d7-4e21-8c48-fa6da18894bb`) which successfully completed Milestones M1, M2, and M3.
-- The build types issue with the Supabase RPC was resolved cleanly and type-safely via module declaration merging inside `src/types/database.ts` (satisfying the no type bypass constraint).
-- The Dashboard UI was implemented at `src/app/(dashboard)/page.tsx` utilizing strict Design System tokens.
-- Playwright E2E verification tests were added to `tests/dashboard.e2e.spec.ts`.
-- Spawned the victory auditor subagent (`eb180475-37e7-4bb6-ae06-59a75c9de22c`) to perform post-victory verification.
-- The Victory Auditor returned a **VICTORY CONFIRMED** verdict.
-- Sentinel cancelled all background crons (Progress Reporting and Liveness checking) upon victory confirmation.
+- Verbatim user requests were stored in `ORIGINAL_REQUEST.md`.
+- Project Orchestrator subagent (`bac4e0c8-629a-4a9f-9bed-8786dd49b132`) was dispatched and successfully completed all milestones.
+- Independent Victory Auditor (`43d3a09c-b34f-45bb-bec9-5bb42f103e83`) was spawned and completed all phases of the audit (timeline analysis, forensic code check, build/lint checks), resulting in **VICTORY CONFIRMED**.
+- Sentinel crons were cancelled upon confirmation.
 
 ## Caveats
-- Playwright E2E tests require Docker daemon to be running locally in WSL/host environment to support local Supabase DB services (`npx supabase start`).
-- The Victory Auditor noticed that `dbCases` is typed as `any[]` in the Dashboard component rather than custom types, but it compiles successfully.
+- Docker daemon must be running if developer wants to verify database updates via the local Playwright E2E suite (`npx supabase start`).
+- Array data like `academicEntries` (TOR) and `gradeLevelEntries` (SF10) are serialized to JSON strings when flattened into `document_fields`.
 
 ## Conclusion
-The project has successfully completed the implementation of Phase 8 and resolved the TypeScript RPC type bug. The project builds and lints cleanly with zero errors/warnings.
+All requirements have been successfully met. Gemini 2.5 Flash has successfully been integrated as the primary document extraction engine in Veldra. The build compiles with zero errors, and linting checks pass cleanly.
 
 ## Verification Method
-To verify implementation correctness:
-1. Compile and type-check: `npx tsc --noEmit`
-2. Build Next.js application: `npm run build`
-3. Run lint checks: `npm run lint`
-4. Run tests (requires starting Docker and local Supabase):
-   `npx supabase start`
-   `PLAYWRIGHT_TEST_BASE_URL=http://localhost:3088 npx playwright test`
+To verify the implementation:
+1. Run lint checks:
+   ```bash
+   npm run lint
+   ```
+2. Build the application:
+   ```bash
+   npm run build
+   ```
+3. Run extraction test end-to-end:
+   - Navigate to a Case Detail view.
+   - Open the extraction review workspace for a document.
+   - Click "Run Extraction" or "Re-run Extraction" to execute the Gemini 2.5 Flash extraction.
+   - Verify that fields are extracted, flattened, and presented on-screen for review/modification.

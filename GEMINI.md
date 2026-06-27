@@ -4,7 +4,8 @@
 Veldra is a Smart Document Verification Platform tailored for checking student visa application documents. It automates the extraction and cross-referencing of critical data across documents like PSA Birth Certificates, Transcripts, and Diplomas, flagging inconsistencies and generating necessary legal drafts. The product is a review workspace for document verification staff, strictly a tool, NOT a chatbot.
 
 ## Current Phase
-**Export & Reporting (Phase 7 Completed)**
+**Export & Reporting (Phase 7 Completed) & Gemini 2.5 Flash Document Extraction Integration Complete**
+- Gemini 2.5 Flash document extraction is fully operational with structured output validation, multi-key rotation fallback, and full responsive review workspace integration.
 
 **Next Phase:** Phase 8 - Dashboard & Analytics
 
