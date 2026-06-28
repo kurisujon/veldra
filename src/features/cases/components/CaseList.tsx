@@ -121,34 +121,39 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
           No cases found matching your criteria.
         </Card>
       ) : (
-        <div className="grid gap-md">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-lg">
           {paginatedCases.map((c) => (
             <Link 
               key={c.id} 
               href={`/cases/${c.id}`} 
               className={cn(
-                "group transition-all duration-300 origin-top",
+                "group transition-all duration-300 origin-top h-full",
                 animatingOutId === c.id ? "opacity-0 scale-95 h-0 overflow-hidden mb-[-16px]" : "opacity-100 scale-100"
               )}
             >
-              <Card className="flex flex-row items-center justify-between p-lg transition-colors hover:bg-background gap-xs">
-                <div className="flex flex-col items-start gap-xs">
-                  <CaseStatusBadge status={c.status} />
-                  <h3 className="text-heading text-text-primary">
+              <Card className="flex flex-col p-lg transition-all hover:bg-background hover:shadow-md hover:-translate-y-1 gap-md h-full">
+                <div className="flex flex-col items-start gap-xs flex-1">
+                  <div className="flex w-full items-start justify-between">
+                    <CaseStatusBadge status={c.status} />
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity -mt-xs -mr-xs"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCaseToDelete(c.id);
+                      }}
+                    >
+                      <Trash2 size={18} />
+                    </Button>
+                  </div>
+                  <h3 className="text-heading font-semibold text-text-primary mt-sm line-clamp-1">
                     {c.applicants?.[0]?.first_name} {c.applicants?.[0]?.last_name}
                   </h3>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCaseToDelete(c.id);
-                  }}
-                >
-                  <Trash2 size={18} />
-                </Button>
+                <div className="text-small text-text-secondary pt-md border-t border-text-secondary/10 w-full mt-auto">
+                  Created on {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
               </Card>
             </Link>
           ))}

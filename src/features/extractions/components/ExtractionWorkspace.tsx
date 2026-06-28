@@ -55,6 +55,7 @@ export function ExtractionWorkspace({
               <iframe src={`${documentUrl}#toolbar=0`} className="w-full h-full border-none" />
             ) : (
               <div className="w-full h-full flex items-center justify-center overflow-auto p-md">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={documentUrl} alt="Document" className="max-w-full h-auto object-contain" />
               </div>
             )

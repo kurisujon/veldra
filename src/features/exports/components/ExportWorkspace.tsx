@@ -23,24 +23,43 @@ interface ExportWorkspaceProps {
 
 export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
   const [isGenerating, setIsGenerating] = useState(false)
+  const [generatingFormat, setGeneratingFormat] = useState<'PDF' | 'ZIP' | null>(null)
   const [exportToDelete, setExportToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [animatingOutId, setAnimatingOutId] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   const handleGenerate = async (format: 'PDF' | 'ZIP') => {
     try {
-      setIsGenerating(true)
-      await generateExport(caseId, format)
-    } catch (err) {
+      setGeneratingFormat(format)
+      const result = await generateExport(caseId, format)
+      
+      if (result && 'error' in result) {
+        setToastMessage(result.error)
+        setTimeout(() => setToastMessage(null), 5000)
+        return
+      }
+    } catch (err: any) {
       console.error(err)
-      alert('Failed to generate export package.')
+      setToastMessage(err.message || 'Failed to generate export package.')
+      setTimeout(() => setToastMessage(null), 5000)
     } finally {
-      setIsGenerating(false)
+      setGeneratingFormat(null)
     }
   }
 
   return (
-    <div className="flex flex-col gap-xl mb-xl">
+    <div className="flex flex-col gap-xl mb-xl relative">
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-6 right-6 z-50 bg-error px-lg py-md rounded-md shadow-lg animate-in fade-in slide-in-from-top-4 flex items-center gap-sm">
+          <span className="font-medium text-white">{toastMessage}</span>
+          <button onClick={() => setToastMessage(null)} className="text-white/80 hover:text-white ml-md">
+            &times;
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-heading font-semibold text-text-primary">Export Package</h2>
@@ -50,19 +69,11 @@ export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
         </div>
         <div className="flex gap-md">
           <Button 
-            variant="outline" 
-            onClick={() => handleGenerate('ZIP')} 
-            disabled={isGenerating}
-          >
-            {isGenerating ? <Loader2 className="mr-sm h-4 w-4 animate-spin" /> : <Download className="mr-sm h-4 w-4" />}
-            Export as ZIP
-          </Button>
-          <Button 
             variant="primary" 
             onClick={() => handleGenerate('PDF')} 
-            disabled={isGenerating}
+            disabled={generatingFormat !== null}
           >
-            {isGenerating ? <Loader2 className="mr-sm h-4 w-4 animate-spin" /> : <FileText className="mr-sm h-4 w-4" />}
+            {generatingFormat === 'PDF' ? <Loader2 className="mr-sm h-4 w-4 animate-spin" /> : <FileText className="mr-sm h-4 w-4" />}
             Generate PDF Report
           </Button>
         </div>

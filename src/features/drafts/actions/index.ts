@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import type { Database } from '@/types/database'
-
+import { generateDraftContentWithAI } from '@/lib/ai/drafts'
 const GenerateDraftsSchema = z.object({
   caseId: z.string().uuid()
 })
@@ -140,26 +140,8 @@ export async function generateDrafts(caseId: string) {
 
   // Generate Affidavit for High-severity Name Mismatches
   if (nameMismatches.length > 0) {
-    const content = `AFFIDAVIT OF DISCREPANCY
-
-I, ${applicantName}, hereby attest and declare the following:
-
-A discrepancy has been identified in the spelling of my name across the submitted documents.
-
-${nameMismatches.map((f) => `- ${getFindingText(f)}`).join('\n')}
-
-I affirm that all discrepancies noted above refer to one and the same person, and that the difference is due to a typographical inconsistency and not a different identity.
-
-IN WITNESS WHEREOF, I have hereunto set my hand this _____ day of __________, 20____.
-
-____________________________
-${applicantName}
-Affiant
-
-SUBSCRIBED AND SWORN to before me this _____ day of __________, 20____, in _______________.
-
-____________________________
-Notary Public`.trim()
+    const findingsList = nameMismatches.map((f) => getFindingText(f))
+    const content = await generateDraftContentWithAI('Affidavit', applicantName, findingsList)
 
     const { data: draft, error: draftError } = await supabase
       .from('generated_drafts')
@@ -173,22 +155,8 @@ Notary Public`.trim()
 
   // Generate Address Explanation Letter for Medium-severity Address Mismatches
   if (addressFindings.length > 0) {
-    const content = `EXPLANATION LETTER — ADDRESS DISCREPANCY
-
-To Whom It May Concern,
-
-I, ${applicantName}, am writing to formally explain the discrepancy in the residential address appearing across my submitted documents.
-
-${addressFindings.map((f) => `- ${getFindingText(f)}`).join('\n')}
-
-I confirm that the addresses stated in my documents refer to my place of residence at different points in time. The differences are attributable to a change of residence and not a falsification of documents.
-
-I hope this explanation satisfactorily addresses the noted concern.
-
-Respectfully yours,
-
-____________________________
-${applicantName}`.trim()
+    const findingsList = addressFindings.map((f) => getFindingText(f))
+    const content = await generateDraftContentWithAI('AddressLetter', applicantName, findingsList)
 
     const { data: draft, error: draftError } = await supabase
       .from('generated_drafts')
@@ -202,20 +170,8 @@ ${applicantName}`.trim()
 
   // Generate Gap Explanation Letter for School Gap findings
   if (gapFindings.length > 0) {
-    const content = `EXPLANATION LETTER — ACADEMIC GAP
-
-To Whom It May Concern,
-
-I, ${applicantName}, am writing to explain the gap identified in my academic records as noted in the review of my submitted documents.
-
-${gapFindings.map((f) => `- ${getFindingText(f)}`).join('\n')}
-
-The gap in my academic records occurred due to personal circumstances at the time. I was not enrolled during this period, and I hereby affirm that this is an accurate representation of my academic history.
-
-Respectfully yours,
-
-____________________________
-${applicantName}`.trim()
+    const findingsList = gapFindings.map((f) => getFindingText(f))
+    const content = await generateDraftContentWithAI('GapLetter', applicantName, findingsList)
 
     const { data: draft, error: draftError } = await supabase
       .from('generated_drafts')

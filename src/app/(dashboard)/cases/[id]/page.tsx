@@ -61,7 +61,7 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-xs">
             <h1 className="text-title font-semibold text-text-primary">Case Profile</h1>
-            <p className="text-small text-text-secondary">Review and manage the applicant's submission details.</p>
+            <p className="text-small text-text-secondary">Review and manage the applicant&apos;s submission details.</p>
           </div>
           <div className="flex items-center gap-md">
             <RunAnalysisButton caseId={caseData.id} />

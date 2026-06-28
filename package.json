@@ -13,14 +13,17 @@
   "dependencies": {
     "@google/genai": "^2.10.0",
     "@supabase/ssr": "^0.12.0",
+    "@types/uuid": "^10.0.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.312.0",
     "next": "^16.2.9",
     "pdf-parse": "^2.4.5",
+    "puppeteer": "^25.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwind-merge": "^2.2.0",
     "tesseract.js": "^7.0.0",
+    "uuid": "^14.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

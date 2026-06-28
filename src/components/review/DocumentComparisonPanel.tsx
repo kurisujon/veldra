@@ -121,6 +121,7 @@ export function DocumentComparisonPanel({
       )
     }
 
+    const isImage = doc.mime_type?.startsWith('image/')
     if (isImage) {
       return (
         <div 

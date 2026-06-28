@@ -4,6 +4,10 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import type { Database } from '@/types/database'
+import { compareNames } from '@/lib/comparison/compareNames'
+import { compareDates } from '@/lib/comparison/compareDates'
+import { compareAddresses } from '@/lib/comparison/compareAddresses'
+import { compareTimeline } from '@/lib/comparison/compareTimeline'
 
 const AnalyzeDocumentsSchema = z.object({
   caseId: z.string().uuid()
@@ -65,64 +69,44 @@ export async function analyzeDocuments(caseId: string) {
   let discrepancyFound = false
 
   if (fields && fields.length > 0) {
-    // Group by field_name
-    const fieldsByName = fields.reduce((acc, field) => {
-      if (!acc[field.field_name]) acc[field.field_name] = []
-      acc[field.field_name].push(field)
-      return acc
-    }, {} as Record<string, any[]>)
+    const discrepancies = [
+      ...compareNames(fields as any),
+      ...compareDates(fields as any),
+      ...compareAddresses(fields as any),
+      ...compareTimeline(fields as any)
+    ]
 
-    for (const fieldName of Object.keys(fieldsByName)) {
-      const group = fieldsByName[fieldName]
-      if (group.length < 2) continue
+    for (const disc of discrepancies) {
+      discrepancyFound = true
 
-      const firstField = group[0]
-      const firstVal = firstField.final_value || firstField.reviewed_value || firstField.normalized_value || firstField.raw_value
+      const { data: finding, error: insertError } = await supabase
+        .from('findings')
+        .insert({
+          case_id: caseId,
+          title: disc.title,
+          description: disc.description,
+          severity: disc.severity,
+          category: disc.category,
+          status: 'Open'
+        })
+        .select()
+        .single()
 
-      for (let i = 1; i < group.length; i++) {
-        const otherField = group[i]
-        const otherVal = otherField.final_value || otherField.reviewed_value || otherField.normalized_value || otherField.raw_value
+      if (insertError) throw new Error(`Failed to insert finding: ${insertError.message}`)
 
-        if (firstVal && otherVal && firstVal !== otherVal) {
-          discrepancyFound = true
-          // Mismatch found
-          let category: 'Name Mismatch' | 'Address Mismatch' | 'Date Mismatch' | 'Age Calculation Issue' | 'School Gap' | 'Missing Information' = 'Missing Information'
-          if (fieldName.toLowerCase().includes('name')) category = 'Name Mismatch'
-          else if (fieldName.toLowerCase().includes('address') || fieldName.toLowerCase().includes('city') || fieldName.toLowerCase().includes('province')) category = 'Address Mismatch'
-          else if (fieldName.toLowerCase().includes('date') || fieldName.toLowerCase().includes('birth')) category = 'Date Mismatch'
+      // Link documents to finding
+      const findingDocs = [
+        { finding_id: finding.id, document_id: disc.fieldA.document_id },
+        { finding_id: finding.id, document_id: disc.fieldB.document_id }
+      ]
+      await supabase.from('finding_documents').insert(findingDocs)
 
-          const { data: finding, error: insertError } = await supabase
-            .from('findings')
-            .insert({
-              case_id: caseId,
-              title: `${fieldName} Mismatch`,
-              description: `The '${fieldName}' values do not match across documents ("${firstVal}" vs "${otherVal}").`,
-              severity: 'High',
-              category,
-              status: 'Open'
-            })
-            .select()
-            .single()
-
-          if (insertError) throw new Error(`Failed to insert finding: ${insertError.message}`)
-
-          // Link documents to finding
-          const findingDocs = [
-            { finding_id: finding.id, document_id: firstField.document_id },
-            { finding_id: finding.id, document_id: otherField.document_id }
-          ]
-          await supabase.from('finding_documents').insert(findingDocs)
-
-          // Link document fields to finding
-          const findingFieldRefs = [
-            { finding_id: finding.id, document_field_id: firstField.id, document_id: firstField.document_id, role: 'source_a' },
-            { finding_id: finding.id, document_field_id: otherField.id, document_id: otherField.document_id, role: 'source_b' }
-          ]
-          await supabase.from('finding_field_references').insert(findingFieldRefs as any)
-
-          break // one finding per fieldName
-        }
-      }
+      // Link document fields to finding
+      const findingFieldRefs = [
+        { finding_id: finding.id, document_field_id: disc.fieldA.id, document_id: disc.fieldA.document_id, role: 'source_a' },
+        { finding_id: finding.id, document_field_id: disc.fieldB.id, document_id: disc.fieldB.document_id, role: 'source_b' }
+      ]
+      await supabase.from('finding_field_references').insert(findingFieldRefs as any)
     }
   }
 
