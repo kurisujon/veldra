@@ -15,7 +15,7 @@ export interface RecentActivity {
   user: string
   action: string
   time: string
-  created_at: string
+  timestamp: string
 }
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
@@ -43,9 +43,34 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     .eq('status', 'Resolved')
     .gte('updated_at', today.toISOString())
 
-  // Average processing time is complex, we will leave as mock or basic calculation
-  // For now, let's just return a static number until we have full timestamps
-  const avgProcessingTimeMinutes = 14
+  // Calculate average processing time for cases that have progressed past 'Draft'
+  const { data: processedCases } = await supabase
+    .from('cases')
+    .select('created_at, updated_at, status')
+    .in('status', ['NeedsReview', 'Reviewed', 'DraftGenerated', 'ReadyForExport', 'Exported'])
+    
+  let avgProcessingTimeMinutes = 0;
+  if (processedCases && processedCases.length > 0) {
+    let totalMinutes = 0;
+    let count = 0;
+    
+    for (const c of processedCases) {
+      if (c.created_at && c.updated_at) {
+        const start = new Date(c.created_at).getTime();
+        const end = new Date(c.updated_at).getTime();
+        const diffMinutes = (end - start) / (1000 * 60);
+        // Only include if diff is positive and realistic (e.g. less than a year to avoid bad data)
+        if (diffMinutes > 0 && diffMinutes < 525600) {
+          totalMinutes += diffMinutes;
+          count++;
+        }
+      }
+    }
+    
+    if (count > 0) {
+      avgProcessingTimeMinutes = Math.round(totalMinutes / count);
+    }
+  }
 
   return {
     activeCasesCount: activeCount || 0,
@@ -64,10 +89,10 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
       id,
       action_type,
       description,
-      created_at,
+      timestamp,
       user_roles!inner(role)
     `)
-    .order('created_at', { ascending: false })
+    .order('timestamp', { ascending: false })
     .limit(10)
 
   if (error || !data) {
@@ -76,7 +101,7 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
 
   return data.map((log: any) => {
     // Basic relative time formatting
-    const diffMs = new Date().getTime() - new Date(log.created_at).getTime()
+    const diffMs = new Date().getTime() - new Date(log.timestamp).getTime()
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMins / 60)
     const diffDays = Math.floor(diffHours / 24)
@@ -91,7 +116,7 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
       user: log.user_roles?.role || 'System',
       action: log.description,
       time: timeStr,
-      created_at: log.created_at
+      timestamp: log.timestamp
     }
   })
 }

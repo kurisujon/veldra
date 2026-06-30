@@ -173,10 +173,30 @@ export function DraftEditor({ draft, findingCount = 0 }: DraftEditorProps) {
       )}
 
       {isFinalized && (
-        <div className="flex items-center gap-xs pt-xs border-t border-text-secondary/10">
+        <div className="flex items-center justify-between gap-md pt-xs border-t border-text-secondary/10">
           <span className="text-small font-medium text-success">
             ✓ This draft has been finalized and is ready for export.
           </span>
+          <button
+            type="button"
+            onClick={() => {
+              startTransition(async () => {
+                const { generateDraftExport } = await import('@/features/exports/actions')
+                try {
+                  const res = await generateDraftExport(draft.case_id, draft.id)
+                  if (res && 'error' in res) {
+                    setSaveError(res.error as string)
+                  }
+                } catch (e: any) {
+                  setSaveError(e.message || 'Failed to generate export')
+                }
+              })
+            }}
+            disabled={isPending}
+            className="rounded-button px-md py-sm text-small font-semibold bg-accent text-white hover:bg-accent/90 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
+          >
+            {isPending ? 'Generating...' : 'Generate Export'}
+          </button>
         </div>
       )}
     </Card>

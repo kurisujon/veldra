@@ -1,11 +1,12 @@
 import { DocumentField, Discrepancy } from './types'
+import { generateFindingDescription } from './formatters'
 
 export function compareAddresses(fields: DocumentField[]): Discrepancy[] {
   const discrepancies: Discrepancy[] = []
   
   const addressFields = fields.filter(f => {
     const fn = f.field_name.toLowerCase()
-    return fn.includes('address') || fn.includes('city') || fn.includes('province')
+    return fn.includes('address') || fn.includes('city') || fn.includes('province') || fn.includes('office')
   })
   
   const grouped = addressFields.reduce((acc, field) => {
@@ -31,7 +32,7 @@ export function compareAddresses(fields: DocumentField[]): Discrepancy[] {
         if (normalize(firstVal) !== normalize(otherVal)) {
           discrepancies.push({
             title: `${fieldName} Mismatch`,
-            description: `The '${fieldName}' values do not match across documents ("${firstVal}" vs "${otherVal}").`,
+            description: generateFindingDescription(fieldName, firstVal, otherVal, 'Address Mismatch'),
             category: 'Address Mismatch',
             severity: 'Medium',
             fieldA: firstField,

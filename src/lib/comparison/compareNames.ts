@@ -1,4 +1,5 @@
 import { DocumentField, Discrepancy } from './types'
+import { generateFindingDescription } from './formatters'
 
 export function compareNames(fields: DocumentField[]): Discrepancy[] {
   const discrepancies: Discrepancy[] = []
@@ -28,7 +29,7 @@ export function compareNames(fields: DocumentField[]): Discrepancy[] {
         if (normalize(firstVal) !== normalize(otherVal)) {
           discrepancies.push({
             title: `${fieldName} Mismatch`,
-            description: `The '${fieldName}' values do not match across documents ("${firstVal}" vs "${otherVal}").`,
+            description: generateFindingDescription(fieldName, firstVal, otherVal, 'Name Mismatch'),
             category: 'Name Mismatch',
             severity: 'High',
             fieldA: firstField,

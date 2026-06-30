@@ -11,9 +11,13 @@ import { generateExport, deleteExport } from '../actions'
 type ExportPackage = {
   id: string
   case_id: string
-  package_url: string
-  format: string
-  created_at: string | null
+  pdf_path: string | null
+  docx_path: string | null
+  title: string | null
+  status: string | null
+  generated_by: string | null
+  generated_at: string | null
+  created_at: string
 }
 
 interface ExportWorkspaceProps {
@@ -23,19 +27,18 @@ interface ExportWorkspaceProps {
 
 export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
   const [isGenerating, setIsGenerating] = useState(false)
-  const [generatingFormat, setGeneratingFormat] = useState<'PDF' | 'ZIP' | null>(null)
   const [exportToDelete, setExportToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [animatingOutId, setAnimatingOutId] = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
-  const handleGenerate = async (format: 'PDF' | 'ZIP') => {
+  const handleGenerate = async () => {
     try {
-      setGeneratingFormat(format)
-      const result = await generateExport(caseId, format)
+      setIsGenerating(true)
+      const result = await generateExport(caseId)
       
       if (result && 'error' in result) {
-        setToastMessage(result.error)
+        setToastMessage(result.error as string)
         setTimeout(() => setToastMessage(null), 5000)
         return
       }
@@ -44,7 +47,7 @@ export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
       setToastMessage(err.message || 'Failed to generate export package.')
       setTimeout(() => setToastMessage(null), 5000)
     } finally {
-      setGeneratingFormat(null)
+      setIsGenerating(false)
     }
   }
 
@@ -70,11 +73,11 @@ export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
         <div className="flex gap-md">
           <Button 
             variant="primary" 
-            onClick={() => handleGenerate('PDF')} 
-            disabled={generatingFormat !== null}
+            onClick={handleGenerate} 
+            disabled={isGenerating}
           >
-            {generatingFormat === 'PDF' ? <Loader2 className="mr-sm h-4 w-4 animate-spin" /> : <FileText className="mr-sm h-4 w-4" />}
-            Generate PDF Report
+            {isGenerating ? <Loader2 className="mr-sm h-4 w-4 animate-spin" /> : <FileText className="mr-sm h-4 w-4" />}
+            Generate Report
           </Button>
         </div>
       </div>
@@ -93,32 +96,50 @@ export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
               >
                 <div className="flex items-center gap-md">
                   <div className="p-sm bg-surface-secondary rounded-md text-text-secondary">
-                    {exp.format === 'PDF' ? <FileText size={20} /> : <Download size={20} />}
+                    <FileText size={20} />
                   </div>
                   <div>
                     <p className="text-small font-medium text-text-primary">
-                      Verification_Report_{exp.format}.{exp.format.toLowerCase()}
+                      {exp.title || 'Verification Report'}
                     </p>
                     <p className="text-xs text-text-secondary">
-                      Generated on {exp.created_at ? new Date(exp.created_at).toLocaleString() : 'Unknown'}
+                      Generated on: {exp.generated_at ? new Date(exp.generated_at).toLocaleString() : new Date(exp.created_at).toLocaleString()}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-sm">
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => window.open(exp.package_url, '_blank')}
-                  >
-                    Download
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() => setExportToDelete(exp.id)}
-                    className="text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Delete Report"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                
+                <div className="flex flex-col gap-xs items-end">
+                  <div className="text-xs font-medium text-text-secondary mr-sm">
+                    Available Formats:
+                  </div>
+                  <div className="flex items-center gap-sm">
+                    {exp.pdf_path && (
+                      <Button 
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => window.open(exp.pdf_path!, '_blank')}
+                      >
+                        📄 Download PDF
+                      </Button>
+                    )}
+                    {exp.docx_path && (
+                      <Button 
+                        variant="secondary" 
+                        size="sm"
+                        onClick={() => window.open(exp.docx_path!, '_blank')}
+                      >
+                        📝 Download DOCX
+                      </Button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setExportToDelete(exp.id)}
+                      className="text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity ml-sm"
+                      title="Delete Report"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -154,3 +175,4 @@ export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
     </div>
   )
 }
+

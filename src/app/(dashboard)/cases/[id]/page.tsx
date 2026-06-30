@@ -24,7 +24,7 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
   let documents: Awaited<ReturnType<typeof getDocumentsByCase>> = [];
   let findings: Awaited<ReturnType<typeof getFindingsByCase>> = [];
   let drafts: Awaited<ReturnType<typeof getDraftsByCase>> = [];
-  let exports: Awaited<ReturnType<typeof getExportsByCase>> = [];
+  let exports: any[] = [];
   let userRole = 'Reviewer';
 
   try {
@@ -39,7 +39,8 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
       drafts = await getDraftsByCase(id);
     }
     if (caseData && (caseData.status === 'ReadyForExport' || caseData.status === 'Exported' || caseData.status === 'Reviewed' || caseData.status === 'DraftGenerated')) {
-      exports = await getExportsByCase(id);
+      const exportRes = await getExportsByCase(id);
+      exports = Array.isArray(exportRes) ? exportRes : [];
     }
   } catch (e) {
     return notFound();

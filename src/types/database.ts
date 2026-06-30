@@ -457,22 +457,34 @@ export interface Database {
         Row: {
           id: string;
           case_id: string;
-          package_url: string;
-          format: string;
+          pdf_path: string | null;
+          docx_path: string | null;
+          title: string | null;
+          status: string | null;
+          generated_by: string | null;
+          generated_at: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           case_id: string;
-          package_url: string;
-          format: string;
+          pdf_path?: string | null;
+          docx_path?: string | null;
+          title?: string | null;
+          status?: string | null;
+          generated_by?: string | null;
+          generated_at?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           case_id?: string;
-          package_url?: string;
-          format?: string;
+          pdf_path?: string | null;
+          docx_path?: string | null;
+          title?: string | null;
+          status?: string | null;
+          generated_by?: string | null;
+          generated_at?: string | null;
           created_at?: string;
         };
         Relationships: [

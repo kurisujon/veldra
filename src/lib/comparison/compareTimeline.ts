@@ -1,11 +1,12 @@
 import { DocumentField, Discrepancy } from './types'
+import { generateFindingDescription } from './formatters'
 
 export function compareTimeline(fields: DocumentField[]): Discrepancy[] {
   const discrepancies: Discrepancy[] = []
   
   const timelineFields = fields.filter(f => {
     const fn = f.field_name.toLowerCase()
-    return fn.includes('year') || fn.includes('timeline') || fn.includes('graduation')
+    return fn.includes('year') || fn.includes('timeline') || fn.includes('graduation') || fn.includes('institution')
   })
   
   const grouped = timelineFields.reduce((acc, field) => {
@@ -29,7 +30,7 @@ export function compareTimeline(fields: DocumentField[]): Discrepancy[] {
         if (firstVal.trim() !== otherVal.trim()) {
           discrepancies.push({
             title: `${fieldName} Mismatch`,
-            description: `The '${fieldName}' values do not match across documents ("${firstVal}" vs "${otherVal}").`,
+            description: generateFindingDescription(fieldName, firstVal, otherVal, 'School Gap'),
             category: 'School Gap',
             severity: 'Medium',
             fieldA: firstField,

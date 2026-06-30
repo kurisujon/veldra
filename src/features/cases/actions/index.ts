@@ -34,6 +34,24 @@ export async function createCase(formData: FormData) {
   });
 
   if (rpcError) throw new Error(rpcError.message)
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: userRoleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single()
+    const role = userRoleData?.role || 'Reviewer'
+    
+    await supabase.from('activity_logs').insert({
+      case_id: newCaseId,
+      user_id: user.id,
+      role: role,
+      action_type: 'CASE_CREATED',
+      description: `Created new case for ${parsed.data.firstName} ${parsed.data.lastName}`
+    })
+  }
 
   revalidatePath('/cases')
   return { id: newCaseId }
@@ -87,6 +105,25 @@ export async function updateCaseStatus(id: string, status: CaseRow['status']) {
     .eq('id', parsed.data.id)
 
   if (error) throw new Error(error.message)
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: userRoleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single()
+    const role = userRoleData?.role || 'Reviewer'
+    
+    await supabase.from('activity_logs').insert({
+      case_id: parsed.data.id,
+      user_id: user.id,
+      role: role,
+      action_type: 'CASE_STATUS_UPDATED',
+      description: `Case status updated to ${parsed.data.status}`
+    })
+  }
+
   revalidatePath(`/cases/${id}`)
   revalidatePath('/cases')
   return { success: true }

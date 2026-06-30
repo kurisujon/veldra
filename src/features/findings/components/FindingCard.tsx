@@ -82,7 +82,10 @@ export function FindingCard({
 
       <div className="flex flex-col gap-xs">
         <h4 className="text-heading font-semibold text-text-primary">{formatCamelCaseTitle(finding.title)}</h4>
-        <p className="text-small text-text-secondary leading-relaxed">{finding.description}</p>
+        <p 
+          className="text-small text-text-secondary leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: finding.description }}
+        />
       </div>
 
       <div className="flex items-center justify-between mt-xs" onClick={(e) => e.stopPropagation()}>
