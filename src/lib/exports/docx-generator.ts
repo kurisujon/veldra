@@ -43,11 +43,20 @@ export class DocxGenerator {
               new TextRun({ text: ` [${f.severity} Severity]` })
             ],
             spacing: { before: 100 }
-          }),
-          new Paragraph({ text: f.description }),
+          })
+        );
+        
+        // Handle newlines in description
+        f.description.split('\n').forEach(line => {
+          if (line.trim()) {
+            children.push(new Paragraph({ text: line }));
+          }
+        });
+
+        children.push(
           new Paragraph({ 
             text: `Category: ${f.category} | Status: ${f.status}`,
-            spacing: { after: 100 }
+            spacing: { after: 100, before: 50 }
           })
         );
       });
@@ -69,13 +78,15 @@ export class DocxGenerator {
           new Paragraph({
             text: d.type,
             heading: HeadingLevel.HEADING_3,
-            spacing: { before: 100 }
-          }),
-          new Paragraph({
-            text: d.content,
-            spacing: { after: 100 }
+            spacing: { before: 100, after: 100 }
           })
         );
+        
+        // Handle newlines in draft content
+        d.content.split('\n').forEach(line => {
+          // even if empty, we might want an empty paragraph to preserve spacing
+          children.push(new Paragraph({ text: line, spacing: { after: 100 } }));
+        });
       });
     } else {
       children.push(new Paragraph({ text: 'No drafts generated.' }));

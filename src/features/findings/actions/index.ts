@@ -55,8 +55,9 @@ export async function analyzeDocuments(caseId: string) {
 
   if (docsError) throw new Error(`Failed to fetch documents: ${docsError.message}`)
 
-  // 3. Delete existing findings for this case (reset analysis)
-  await supabase.from('findings').delete().eq('case_id', caseId)
+  if (!documents || documents.length === 0) {
+    return { success: false, error: 'No documents uploaded. Please upload documents before running analysis.' }
+  }
 
   // 4. Fetch DocumentFields for comparison
   const { data: fields, error: fieldsError } = await supabase
@@ -65,6 +66,13 @@ export async function analyzeDocuments(caseId: string) {
     .eq('case_id', caseId)
 
   if (fieldsError) throw new Error(`Failed to fetch document fields: ${fieldsError.message}`)
+
+  if (!fields || fields.length === 0) {
+    return { success: false, error: 'Please extract and review the uploaded documents before running analysis.' }
+  }
+
+  // 3. Delete existing findings for this case (reset analysis)
+  await supabase.from('findings').delete().eq('case_id', caseId)
 
   let discrepancyFound = false
 

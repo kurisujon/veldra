@@ -16,12 +16,13 @@ import { DraftEditor } from "@/features/drafts/components/DraftEditor";
 import { GenerateDraftsButton } from "@/features/drafts/components/GenerateDraftsButton";
 import { getExportsByCase } from "@/features/exports/actions";
 import { ExportWorkspace } from "@/features/exports/components/ExportWorkspace";
-
+import { getExtractionsByCaseId } from "@/features/extractions/actions";
 
 export default async function CaseDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   let caseData: Awaited<ReturnType<typeof getCaseById>> | undefined;
   let documents: Awaited<ReturnType<typeof getDocumentsByCase>> = [];
+  let extractions: any[] = [];
   let findings: Awaited<ReturnType<typeof getFindingsByCase>> = [];
   let drafts: Awaited<ReturnType<typeof getDraftsByCase>> = [];
   let exports: any[] = [];
@@ -31,6 +32,7 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
     caseData = await getCaseById(id);
     documents = await getDocumentsByCase(id);
     userRole = await getCurrentUserRole();
+    extractions = await getExtractionsByCaseId(id);
 
     if (caseData && caseData.status === 'NeedsReview') {
       findings = await getFindingsByCase(id);
@@ -146,7 +148,7 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
         !isDraftPhase && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl">
             <DocumentUpload caseId={caseData.id} documents={documents} />
-            <DocumentList documents={documents} caseId={caseData.id} />
+            <DocumentList documents={documents} extractions={extractions} caseId={caseData.id} />
           </div>
         )
       )}

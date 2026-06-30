@@ -293,6 +293,22 @@ export async function getDraftsByCase(caseId: string) {
   }))
 }
 
+export async function getAllDrafts() {
+  const supabase = await createClient()
+
+  const { data: drafts, error } = await supabase
+    .from('generated_drafts')
+    .select('*, cases(applicants(first_name, last_name))')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching all drafts:', error)
+    return []
+  }
+
+  return drafts
+}
+
 export async function deleteDraft(draftId: string, caseId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

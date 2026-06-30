@@ -88,7 +88,60 @@ export async function getExportsByCase(caseId: string) {
     return { error: error.message }
   }
 
-  return data || []
+  if (!data) return []
+
+  const exportsWithUrls = await Promise.all(data.map(async (exp) => {
+    let pdf_url = exp.pdf_path
+    let docx_url = exp.docx_path
+
+    if (exp.pdf_path) {
+      const { data: pdfData } = await supabase.storage.from('exports').createSignedUrl(exp.pdf_path, 3600)
+      if (pdfData?.signedUrl) pdf_url = pdfData.signedUrl
+    }
+    
+    if (exp.docx_path) {
+      const { data: docxData } = await supabase.storage.from('exports').createSignedUrl(exp.docx_path, 3600)
+      if (docxData?.signedUrl) docx_url = docxData.signedUrl
+    }
+
+    return { ...exp, pdf_path: pdf_url, docx_path: docx_url }
+  }))
+
+  return exportsWithUrls
+}
+
+export async function getAllExports() {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('export_packages')
+    .select('*, cases(applicants(first_name, last_name))')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  if (!data) return []
+
+  const exportsWithUrls = await Promise.all(data.map(async (exp) => {
+    let pdf_url = exp.pdf_path
+    let docx_url = exp.docx_path
+
+    if (exp.pdf_path) {
+      const { data: pdfData } = await supabase.storage.from('exports').createSignedUrl(exp.pdf_path, 3600)
+      if (pdfData?.signedUrl) pdf_url = pdfData.signedUrl
+    }
+    
+    if (exp.docx_path) {
+      const { data: docxData } = await supabase.storage.from('exports').createSignedUrl(exp.docx_path, 3600)
+      if (docxData?.signedUrl) docx_url = docxData.signedUrl
+    }
+
+    return { ...exp, pdf_path: pdf_url, docx_path: docx_url }
+  }))
+
+  return exportsWithUrls
 }
 
 export async function deleteExport(exportId: string, caseId: string) {

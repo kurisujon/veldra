@@ -5,6 +5,31 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { extractDocumentWithAI } from '@/lib/ai/extraction'
 
+export async function getExtractionsByCaseId(caseId: string) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('document_extractions')
+    .select('id, document_id, status, review_status')
+    .eq('case_id', caseId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Failed to fetch extractions for case:', error)
+    return []
+  }
+
+  // Group by document_id and keep only the latest one per document
+  const latestExtractions = new Map<string, any>()
+  for (const ext of data) {
+    if (!latestExtractions.has(ext.document_id)) {
+      latestExtractions.set(ext.document_id, ext)
+    }
+  }
+
+  return Array.from(latestExtractions.values())
+}
+
 export async function getExtractionByDocumentId(documentId: string) {
   const supabase = await createClient()
   
