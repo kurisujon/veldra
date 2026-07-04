@@ -272,6 +272,7 @@ export async function getDraftsByCase(caseId: string) {
     .from('generated_drafts')
     .select('*')
     .eq('case_id', parsed.data.caseId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: true })
 
   if (draftsError) throw new Error(`Failed to fetch drafts: ${draftsError.message}`)
@@ -299,6 +300,7 @@ export async function getAllDrafts() {
   const { data: drafts, error } = await supabase
     .from('generated_drafts')
     .select('*, cases(applicants(first_name, last_name))')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -306,8 +308,63 @@ export async function getAllDrafts() {
     return []
   }
 
-  return drafts
+  return drafts || []
 }
+
+export async function getDeletedDrafts() {
+  const supabase = await createClient()
+  const { data: drafts, error } = await supabase
+    .from('generated_drafts')
+    .select('*, cases(applicants(first_name, last_name))')
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching deleted drafts:', error)
+    return []
+  }
+  return drafts || []
+}
+
+export async function moveToTrashDraft(id: string, caseId: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('generated_drafts')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath(`/cases/${caseId}`)
+  revalidatePath('/drafts')
+  return { success: true }
+}
+
+export async function restoreDraft(id: string, caseId: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('generated_drafts')
+    .update({ deleted_at: null })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath(`/cases/${caseId}`)
+  revalidatePath('/drafts')
+  return { success: true }
+}
+
+export async function permanentlyDeleteDraft(id: string, caseId: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('generated_drafts')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath(`/cases/${caseId}`)
+  revalidatePath('/drafts')
+  return { success: true }
+}
+
 
 export async function deleteDraft(draftId: string, caseId: string) {
   const supabase = await createClient()

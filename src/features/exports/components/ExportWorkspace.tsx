@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmDeleteModal } from '@/components/ui/Modal/ConfirmDeleteModal'
 import { FileText, Download, Loader2, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { generateExport, deleteExport } from '../actions'
+import { generateExport, moveToTrashExport } from '../actions'
 
 type ExportPackage = {
   id: string
@@ -160,7 +160,7 @@ export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
             const idToDelete = exportToDelete;
             setAnimatingOutId(idToDelete);
             await new Promise(res => setTimeout(res, 300));
-            await deleteExport(idToDelete, caseId);
+            await moveToTrashExport(idToDelete, caseId);
             setIsDeleting(false);
             setExportToDelete(null);
             setAnimatingOutId(null);

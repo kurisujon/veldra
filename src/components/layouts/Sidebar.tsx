@@ -1,23 +1,40 @@
 'use client'
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { navigation } from '@/config/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, FileText, FileEdit, Download, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, FileEdit, Download, Settings, LogOut, Trash2, Shield } from 'lucide-react';
 
 const iconMap: Record<string, React.ReactNode> = {
   "/": <LayoutDashboard size={20} />,
   "/cases": <FileText size={20} />,
   "/drafts": <FileEdit size={20} />,
   "/exports": <Download size={20} />,
+  "/trash": <Trash2 size={20} />,
   "/settings": <Settings size={20} />,
+  "/admin": <Shield size={20} />,
 };
 
 export function Sidebar() {
   const router = useRouter();
+  const [role, setRole] = useState<string | null>(null);
+  const [roleLoaded, setRoleLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadRole() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.from('user_roles').select('role').eq('user_id', user.id).single();
+        if (data) setRole(data.role);
+      }
+      setRoleLoaded(true);
+    }
+    loadRole();
+  }, []);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -25,6 +42,11 @@ export function Sidebar() {
     router.push('/login');
     router.refresh();
   }
+
+  // Only show admin items if role is confirmed as Admin (not while loading)
+  const visibleNav = roleLoaded
+    ? navigation.filter(item => !item.adminOnly || role === 'Admin')
+    : navigation.filter(item => !item.adminOnly);
 
   return (
     <div className="relative h-full z-30 w-20 flex-shrink-0 group">
@@ -38,7 +60,7 @@ export function Sidebar() {
         </div>
 
         <nav className="flex flex-col py-md gap-xs flex-1 mt-md">
-          {navigation.map((item) => (
+          {visibleNav.map((item) => (
             <Link
               key={item.href}
               href={item.href}

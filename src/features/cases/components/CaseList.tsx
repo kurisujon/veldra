@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChevronLeft, ChevronRight, Search, ChevronDown, Check, Trash2 } from 'lucide-react';
 import { ConfirmDeleteModal } from '@/components/ui/Modal/ConfirmDeleteModal';
+import { moveToTrashCase } from '@/features/cases/actions';
 const ITEMS_PER_PAGE = 10;
 
 export function CaseList({ initialCases }: { initialCases: any[] }) {
@@ -199,17 +200,10 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
           if (!caseToDelete) return;
           setIsDeleting(true);
           try {
-            const idToDelete = caseToDelete;
-            setAnimatingOutId(idToDelete);
-            await new Promise(res => setTimeout(res, 300));
-            const { deleteCase } = await import('@/features/cases/actions');
-            await deleteCase(idToDelete);
-            setIsDeleting(false);
+            await moveToTrashCase(caseToDelete);
             setCaseToDelete(null);
-            setAnimatingOutId(null);
           } catch (err) {
             console.error(err);
-            setIsDeleting(false);
             setAnimatingOutId(null);
             alert('Failed to delete case. You might not have permission.');
           }

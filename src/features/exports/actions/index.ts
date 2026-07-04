@@ -82,6 +82,7 @@ export async function getExportsByCase(caseId: string) {
     .from('export_packages')
     .select('*')
     .eq('case_id', caseId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -116,6 +117,7 @@ export async function getAllExports() {
   const { data, error } = await supabase
     .from('export_packages')
     .select('*, cases(applicants(first_name, last_name))')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -144,6 +146,71 @@ export async function getAllExports() {
   return exportsWithUrls
 }
 
+export async function getDeletedExports() {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('export_packages')
+    .select('*, cases(applicants(first_name, last_name))')
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  if (!data) return []
+
+  const exportsWithUrls = await Promise.all(data.map(async (exp) => {
+    let pdf_url = exp.pdf_path
+    let docx_url = exp.docx_path
+
+    if (exp.pdf_path) {
+      const { data: pdfData } = await supabase.storage.from('exports').createSignedUrl(exp.pdf_path, 3600)
+      if (pdfData?.signedUrl) pdf_url = pdfData.signedUrl
+    }
+    
+    if (exp.docx_path) {
+      const { data: docxData } = await supabase.storage.from('exports').createSignedUrl(exp.docx_path, 3600)
+      if (docxData?.signedUrl) docx_url = docxData.signedUrl
+    }
+
+    return { ...exp, pdf_path: pdf_url, docx_path: docx_url }
+  }))
+
+  return exportsWithUrls
+}
+
+export async function moveToTrashExport(exportId: string, caseId: string) {
+  const supabase = await createClient()
+  
+  const { error } = await supabase
+    .from('export_packages')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', exportId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/cases/${caseId}`)
+  revalidatePath('/exports')
+  return { success: true }
+}
+
+export async function restoreExport(exportId: string, caseId: string) {
+  const supabase = await createClient()
+  
+  const { error } = await supabase
+    .from('export_packages')
+    .update({ deleted_at: null })
+    .eq('id', exportId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/cases/${caseId}`)
+  revalidatePath('/exports')
+  return { success: true }
+}
+
 export async function deleteExport(exportId: string, caseId: string) {
   const supabase = await createClient()
   
@@ -155,5 +222,6 @@ export async function deleteExport(exportId: string, caseId: string) {
   if (error) return { error: error.message }
 
   revalidatePath(`/cases/${caseId}`)
+  revalidatePath('/exports')
   return { success: true }
 }

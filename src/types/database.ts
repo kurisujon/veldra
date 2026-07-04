@@ -11,18 +11,21 @@ export interface Database {
           status: Database['public']['Enums']['case_status'];
           created_at: string;
           updated_at: string;
+          deleted_at: string | null;
         };
         Insert: {
           id?: string;
           status?: Database['public']['Enums']['case_status'];
           created_at?: string;
           updated_at?: string;
+          deleted_at?: string | null;
         };
         Update: {
           id?: string;
           status?: Database['public']['Enums']['case_status'];
           created_at?: string;
           updated_at?: string;
+          deleted_at?: string | null;
         };
         Relationships: [];
       };
@@ -246,6 +249,7 @@ export interface Database {
           status: Database['public']['Enums']['draft_status'];
           created_at: string;
           updated_at: string;
+          deleted_at: string | null;
         };
         Insert: {
           id?: string;
@@ -255,6 +259,7 @@ export interface Database {
           status?: Database['public']['Enums']['draft_status'];
           created_at?: string;
           updated_at?: string;
+          deleted_at?: string | null;
         };
         Update: {
           id?: string;
@@ -264,6 +269,7 @@ export interface Database {
           status?: Database['public']['Enums']['draft_status'];
           created_at?: string;
           updated_at?: string;
+          deleted_at?: string | null;
         };
         Relationships: [
           {
@@ -464,6 +470,7 @@ export interface Database {
           generated_by: string | null;
           generated_at: string | null;
           created_at: string;
+          deleted_at: string | null;
         };
         Insert: {
           id?: string;
@@ -475,6 +482,7 @@ export interface Database {
           generated_by?: string | null;
           generated_at?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
         };
         Update: {
           id?: string;
@@ -486,6 +494,7 @@ export interface Database {
           generated_by?: string | null;
           generated_at?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
         };
         Relationships: [
           {
@@ -501,18 +510,21 @@ export interface Database {
         Row: {
           user_id: string;
           role: 'Admin' | 'Reviewer';
+          username: string;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           user_id: string;
           role: 'Admin' | 'Reviewer';
+          username: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           user_id?: string;
           role?: 'Admin' | 'Reviewer';
+          username?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -564,6 +576,12 @@ export interface Database {
       get_user_role: {
         Args: Record<string, never>;
         Returns: string;
+      };
+      get_email_by_username: {
+        Args: {
+          p_username: string;
+        };
+        Returns: string | null;
       };
       create_case_with_applicant: {
         Args: {

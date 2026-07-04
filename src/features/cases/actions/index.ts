@@ -62,10 +62,26 @@ export async function getCases(): Promise<CaseWithApplicants[]> {
   const { data, error } = await supabase
     .from('cases')
     .select(`
-      id, status, created_at, updated_at,
+      id, status, created_at, updated_at, deleted_at,
       applicants ( id, case_id, first_name, last_name, date_of_birth, created_at, updated_at )
     `)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function getDeletedCases(): Promise<CaseWithApplicants[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('cases')
+    .select(`
+      id, status, created_at, updated_at, deleted_at,
+      applicants ( id, case_id, first_name, last_name, date_of_birth, created_at, updated_at )
+    `)
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false })
 
   if (error) throw new Error(error.message)
   return data || []
@@ -76,15 +92,52 @@ export async function getCaseById(id: string): Promise<CaseWithApplicants> {
   const { data, error } = await supabase
     .from('cases')
     .select(`
-      id, status, created_at, updated_at,
+      id, status, created_at, updated_at, deleted_at,
       applicants ( id, case_id, first_name, last_name, date_of_birth, created_at, updated_at )
     `)
     .eq('id', id)
+    .is('deleted_at', null)
     .single()
 
   if (error) throw new Error(error.message)
   if (!data) throw new Error('Not found')
   return data
+}
+
+export async function moveToTrashCase(id: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('cases')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/cases')
+  return { success: true }
+}
+
+export async function restoreCase(id: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('cases')
+    .update({ deleted_at: null })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/cases')
+  return { success: true }
+}
+
+export async function permanentlyDeleteCase(id: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('cases')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/cases')
+  return { success: true }
 }
 
 const UpdateStatusSchema = z.object({

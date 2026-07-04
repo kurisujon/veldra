@@ -16,7 +16,16 @@ export const navigation = [
     href: "/exports",
   },
   {
+    label: "Trash",
+    href: "/trash",
+  },
+  {
     label: "Settings",
     href: "/settings",
+  },
+  {
+    label: "Admin",
+    href: "/admin",
+    adminOnly: true,
   },
 ];

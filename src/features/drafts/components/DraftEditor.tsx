@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/Badge'
 import { ConfirmDeleteModal } from '@/components/ui/Modal/ConfirmDeleteModal'
 import { cn } from '@/lib/utils'
 import { Trash2 } from 'lucide-react'
-import { updateDraftContent, finalizeDraft, deleteDraft } from '@/features/drafts/actions'
+import { updateDraftContent, finalizeDraft, moveToTrashDraft } from '@/features/drafts/actions'
 
 type DraftType = 'Affidavit' | 'AddressLetter' | 'GapLetter'
 type DraftStatus = 'Draft' | 'Finalized'
@@ -212,7 +212,7 @@ export function DraftEditor({ draft, findingCount = 0 }: DraftEditorProps) {
         try {
           setIsAnimatingOut(true);
           await new Promise(res => setTimeout(res, 300));
-          await deleteDraft(draft.id, draft.case_id);
+          await moveToTrashDraft(draft.id, draft.case_id);
           setIsDeletingDraft(false);
           setShowDeleteModal(false);
           // Don't reset isAnimatingOut so it stays hidden before unmount
