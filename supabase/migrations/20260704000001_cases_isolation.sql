@@ -1,7 +1,7 @@
 -- Migration: Add case isolation (Reviewers only see their own cases, Admins see all)
 
 -- 1. Add created_by column to cases
-ALTER TABLE cases ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id);
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 
 -- 2. Update create_case_with_applicant RPC to insert created_by
 CREATE OR REPLACE FUNCTION public.create_case_with_applicant(p_first_name text, p_last_name text, p_date_of_birth date)
