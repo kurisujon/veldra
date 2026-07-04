@@ -65,7 +65,6 @@ export function AdminWorkspace({ users }: { users: any[] }) {
                 <label className="text-small font-medium">Role</label>
                 <select required name="role" className="border border-border rounded-button px-md py-sm bg-background">
                   <option value="Reviewer">Reviewer</option>
-                  <option value="Admin">Admin</option>
                 </select>
               </div>
             </div>

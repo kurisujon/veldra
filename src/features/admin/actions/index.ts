@@ -65,32 +65,15 @@ export async function createEmployeeAccount(formData: FormData) {
 }
 
 export async function getAllUsers() {
-  const adminClient = createAdminClient()
-  
-  // Get users from user_roles
-  const { data: roles, error } = await adminClient
-    .from('user_roles')
-    .select('*')
-    .neq('role', 'Admin')
-    .order('created_at', { ascending: false })
+  const supabase = await createClient()
+
+  // Use SECURITY DEFINER RPC — no legacy JWT needed, works with new Supabase secret keys
+  const { data, error } = await supabase.rpc('get_all_employees')
 
   if (error) {
-    console.error(error)
+    console.error('getAllUsers error:', error.message)
     return []
   }
 
-  // Since we only store email in auth.users, and it's restricted, we can use adminClient to get them
-  const { data: authUsers, error: authError } = await adminClient.auth.admin.listUsers()
-
-  if (authError) {
-    console.error(authError)
-    return []
-  }
-
-  const usersMap = new Map(authUsers.users.map((u) => [u.id, u.email]))
-
-  return roles.map((r) => ({
-    ...r,
-    email: usersMap.get(r.user_id) || 'Unknown'
-  }))
+  return data ?? []
 }
