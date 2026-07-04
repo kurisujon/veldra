@@ -1,6 +1,9 @@
 -- Migration: Add get_all_employees and create_employee_account RPCs
 -- (Replaces auth.admin.* dependency — works with new Supabase secret key format)
 
+-- Enable pgcrypto for password hashing
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- 1. RPC to list all employees (excludes Admin)
 CREATE OR REPLACE FUNCTION get_all_employees()
 RETURNS TABLE (
