@@ -1,6 +1,5 @@
 'use server'
 
-import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
@@ -9,15 +8,6 @@ export async function createEmployeeAccount(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) return { error: 'Unauthorized' }
-
-  // Verify caller is admin
-  const { data: userRole } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', user.id)
-    .single()
-
-  if (userRole?.role !== 'Admin') return { error: 'Forbidden: Admin access required' }
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -28,41 +18,32 @@ export async function createEmployeeAccount(formData: FormData) {
     return { error: 'All fields are required' }
   }
 
-  const adminClient = createAdminClient()
+  if (password.length < 6) {
+    return { error: 'Password must be at least 6 characters' }
+  }
 
-  // 1. Create auth user
-  const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
+  // Use SECURITY DEFINER RPC — no legacy JWT key needed
+  const { data, error } = await supabase.rpc('create_employee_account', {
+    p_email: email,
+    p_password: password,
+    p_username: username,
+    p_role: role,
   })
 
-  if (createError) {
-    return { error: createError.message }
+  if (error) {
+    return { error: error.message }
   }
 
-  if (!newUser.user) {
-    return { error: 'Failed to create user' }
-  }
+  const result = data as { success?: boolean; error?: string; user_id?: string }
 
-  // 2. Insert into user_roles (this table might have RLS, so service role bypasses it)
-  const { error: roleError } = await adminClient
-    .from('user_roles')
-    .insert({
-      user_id: newUser.user.id,
-      role: role as any,
-      username: username,
-    })
-
-  if (roleError) {
-    // Attempt to rollback
-    await adminClient.auth.admin.deleteUser(newUser.user.id)
-    return { error: roleError.message }
+  if (result?.error) {
+    return { error: result.error }
   }
 
   revalidatePath('/admin')
   return { success: true }
 }
+
 
 export async function getAllUsers() {
   const supabase = await createClient()
