@@ -44,7 +44,7 @@ CREATE OR REPLACE FUNCTION create_employee_account(
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_user_id UUID;
