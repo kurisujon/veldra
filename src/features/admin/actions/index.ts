@@ -58,3 +58,27 @@ export async function getAllUsers() {
 
   return data ?? []
 }
+
+export async function deleteEmployeeAccount(userId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return { error: 'Unauthorized' }
+
+  const { data, error } = await supabase.rpc('delete_employee_account', {
+    p_user_id: userId,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  const result = data as { success?: boolean; error?: string }
+
+  if (result?.error) {
+    return { error: result.error }
+  }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
