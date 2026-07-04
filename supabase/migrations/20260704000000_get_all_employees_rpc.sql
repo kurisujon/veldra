@@ -81,7 +81,9 @@ BEGIN
   );
 
   INSERT INTO user_roles (user_id, role, username)
-  VALUES (v_user_id, p_role, p_username);
+  VALUES (v_user_id, p_role, p_username)
+  ON CONFLICT (user_id) DO UPDATE 
+  SET role = EXCLUDED.role, username = EXCLUDED.username;
 
   RETURN json_build_object('success', true, 'user_id', v_user_id);
 EXCEPTION WHEN OTHERS THEN
