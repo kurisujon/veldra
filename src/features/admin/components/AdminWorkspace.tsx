@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { UserPlus, Shield, User, Trash2 } from 'lucide-react'
+import { UserPlus, Shield, User, Trash2, X, CheckCircle, AlertCircle } from 'lucide-react'
 import { createEmployeeAccount, deleteEmployeeAccount } from '../actions'
 
 export function AdminWorkspace({ users }: { users: any[] }) {
@@ -12,6 +12,17 @@ export function AdminWorkspace({ users }: { users: any[] }) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Auto-dismiss messages
+  useEffect(() => {
+    if (message || error) {
+      const timer = setTimeout(() => {
+        setMessage(null)
+        setError(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [message, error])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -56,7 +67,35 @@ export function AdminWorkspace({ users }: { users: any[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-xl">
+    <div className="flex flex-col gap-xl relative">
+      {/* Floating Notifications */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-sm pointer-events-none">
+        {error && (
+          <div className="bg-white border-l-4 border-error shadow-lg rounded-md p-md flex items-start gap-md animate-in slide-in-from-right-8 pointer-events-auto min-w-[300px]">
+            <AlertCircle className="text-error mt-0.5" size={20} />
+            <div className="flex-1">
+              <h4 className="text-small font-semibold text-text-primary">Error</h4>
+              <p className="text-small text-text-secondary mt-0.5">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-text-secondary hover:text-text-primary">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        {message && (
+          <div className="bg-white border-l-4 border-success shadow-lg rounded-md p-md flex items-start gap-md animate-in slide-in-from-right-8 pointer-events-auto min-w-[300px]">
+            <CheckCircle className="text-success mt-0.5" size={20} />
+            <div className="flex-1">
+              <h4 className="text-small font-semibold text-text-primary">Success</h4>
+              <p className="text-small text-text-secondary mt-0.5">{message}</p>
+            </div>
+            <button onClick={() => setMessage(null)} className="text-text-secondary hover:text-text-primary">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-h3 font-bold text-text-primary">System Users</h2>
@@ -67,9 +106,6 @@ export function AdminWorkspace({ users }: { users: any[] }) {
           Add User
         </Button>
       </div>
-
-      {error && <div className="p-md bg-error/10 border border-error/20 rounded-lg text-small text-error animate-in fade-in">{error}</div>}
-      {message && <div className="p-md bg-brand-primary/10 border border-brand-primary/20 rounded-lg text-small text-brand-primary animate-in fade-in">{message}</div>}
 
       {isCreating && (
         <Card className="p-xl animate-in fade-in slide-in-from-top-4 border border-brand-primary/20 shadow-md">

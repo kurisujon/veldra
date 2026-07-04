@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/layouts/PageContainer'
 import { getAllUsers, createEmployeeAccount } from '@/features/admin/actions'
 import { AdminWorkspace } from '@/features/admin/components/AdminWorkspace'
 import { createClient } from '@/lib/supabase/server'
@@ -24,15 +25,17 @@ export default async function AdminPage() {
   const users = await getAllUsers()
 
   return (
-    <div className="flex flex-col gap-xl">
-      <div className="flex flex-col gap-xs">
-        <h1 className="text-heading font-semibold text-text-primary">Admin Dashboard</h1>
-        <p className="text-body text-text-secondary">
-          Manage user accounts and system access.
-        </p>
-      </div>
+    <PageContainer>
+      <div className="flex flex-col gap-xl">
+        <div className="flex flex-col gap-xs">
+          <h1 className="text-heading font-semibold text-text-primary">Admin Dashboard</h1>
+          <p className="text-body text-text-secondary">
+            Manage user accounts and system access.
+          </p>
+        </div>
 
-      <AdminWorkspace users={users} />
-    </div>
+        <AdminWorkspace users={users} />
+      </div>
+    </PageContainer>
   )
 }
