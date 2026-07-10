@@ -50,6 +50,13 @@ export type Database = {
             referencedRelation: "cases"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles"
+            referencedColumns: ["user_id"]
+          }
         ]
       }
       applicants: {
