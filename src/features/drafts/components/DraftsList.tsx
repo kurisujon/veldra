@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card } from "@/components/ui/Card"
 import { Input } from "@/components/ui/Input"
 import { Badge } from "@/components/ui/Badge"
-import { FileEdit, ArrowRight, Search } from "lucide-react"
+import { FileEdit, ArrowRight, Search, Trash2, X, CheckCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { moveToTrashDraft } from '../actions'
 
 const DRAFT_TYPE_LABELS: Record<string, string> = {
   Affidavit: 'Affidavit of Discrepancy',
@@ -23,6 +24,35 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (message || error) {
+      const timer = setTimeout(() => {
+        setMessage(null)
+        setError(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [message, error])
+
+  async function handleDelete(draftId: string, caseId: string) {
+    if (!confirm('Are you sure you want to move this draft to trash?')) return
+    
+    setDeletingId(draftId)
+    setError(null)
+    setMessage(null)
+
+    try {
+      await moveToTrashDraft(draftId, caseId)
+      setMessage('Draft moved to trash successfully.')
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while deleting.')
+    }
+    setDeletingId(null)
+  }
 
   const filteredDrafts = useMemo(() => {
     return drafts.filter((draft) => {
@@ -51,7 +81,35 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
   }, [drafts, searchQuery, dateFrom, dateTo])
 
   return (
-    <div className="flex flex-col gap-md">
+    <div className="flex flex-col gap-md relative">
+      {/* Floating Notifications */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-sm pointer-events-none">
+        {error && (
+          <div className="bg-white border-l-4 border-error shadow-lg rounded-md p-md flex items-start gap-md animate-in slide-in-from-right-8 pointer-events-auto min-w-[300px]">
+            <AlertCircle className="text-error mt-0.5" size={20} />
+            <div className="flex-1">
+              <h4 className="text-small font-semibold text-text-primary">Error</h4>
+              <p className="text-small text-text-secondary mt-0.5">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-text-secondary hover:text-text-primary">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        {message && (
+          <div className="bg-white border-l-4 border-success shadow-lg rounded-md p-md flex items-start gap-md animate-in slide-in-from-right-8 pointer-events-auto min-w-[300px]">
+            <CheckCircle className="text-success mt-0.5" size={20} />
+            <div className="flex-1">
+              <h4 className="text-small font-semibold text-text-primary">Success</h4>
+              <p className="text-small text-text-secondary mt-0.5">{message}</p>
+            </div>
+            <button onClick={() => setMessage(null)} className="text-text-secondary hover:text-text-primary">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-md mb-md">
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
@@ -105,7 +163,15 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
                     </div>
                   </div>
                   
-                  <div className="flex items-center shrink-0">
+                  <div className="flex items-center shrink-0 gap-sm">
+                    <button 
+                      onClick={() => handleDelete(draft.id, draft.case_id)}
+                      disabled={deletingId === draft.id}
+                      className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                      title="Move to Trash"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                     <Link 
                       href={`/cases/${draft.case_id}`}
                       className="inline-flex items-center justify-center rounded-button px-md py-sm text-small font-semibold border border-text-secondary/20 text-text-secondary hover:bg-surface-secondary transition-colors"

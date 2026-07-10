@@ -1,15 +1,49 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card } from "@/components/ui/Card"
 import { Input } from "@/components/ui/Input"
-import { FileText, Search } from "lucide-react"
+import { FileText, Search, Trash2, X, CheckCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { moveToTrashExport } from '../actions'
 
 export function ExportsList({ exports }: { exports: any[] }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (message || error) {
+      const timer = setTimeout(() => {
+        setMessage(null)
+        setError(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [message, error])
+
+  async function handleDelete(exportId: string, caseId: string) {
+    if (!confirm('Are you sure you want to move this export to trash?')) return
+    
+    setDeletingId(exportId)
+    setError(null)
+    setMessage(null)
+
+    try {
+      const res = await moveToTrashExport(exportId, caseId)
+      if (res?.error) {
+        setError(res.error)
+      } else {
+        setMessage('Export moved to trash successfully.')
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while deleting.')
+    }
+    setDeletingId(null)
+  }
 
   const filteredExports = useMemo(() => {
     return exports.filter((exp) => {
@@ -39,7 +73,35 @@ export function ExportsList({ exports }: { exports: any[] }) {
   }, [exports, searchQuery, dateFrom, dateTo])
 
   return (
-    <div className="flex flex-col gap-md">
+    <div className="flex flex-col gap-md relative">
+      {/* Floating Notifications */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-sm pointer-events-none">
+        {error && (
+          <div className="bg-white border-l-4 border-error shadow-lg rounded-md p-md flex items-start gap-md animate-in slide-in-from-right-8 pointer-events-auto min-w-[300px]">
+            <AlertCircle className="text-error mt-0.5" size={20} />
+            <div className="flex-1">
+              <h4 className="text-small font-semibold text-text-primary">Error</h4>
+              <p className="text-small text-text-secondary mt-0.5">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-text-secondary hover:text-text-primary">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        {message && (
+          <div className="bg-white border-l-4 border-success shadow-lg rounded-md p-md flex items-start gap-md animate-in slide-in-from-right-8 pointer-events-auto min-w-[300px]">
+            <CheckCircle className="text-success mt-0.5" size={20} />
+            <div className="flex-1">
+              <h4 className="text-small font-semibold text-text-primary">Success</h4>
+              <p className="text-small text-text-secondary mt-0.5">{message}</p>
+            </div>
+            <button onClick={() => setMessage(null)} className="text-text-secondary hover:text-text-primary">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-md mb-md">
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
@@ -66,7 +128,7 @@ export function ExportsList({ exports }: { exports: any[] }) {
               const applicantName = applicant ? `${applicant.first_name} ${applicant.last_name}` : "Unknown Applicant";
               
               return (
-                <div key={exp.id} className="flex flex-col md:flex-row md:items-center justify-between p-md border border-text-secondary/10 rounded-button hover:bg-background transition-colors gap-md">
+                <div key={exp.id} className="flex flex-col md:flex-row md:items-center justify-between p-md border border-text-secondary/10 rounded-button hover:bg-background transition-colors gap-md group">
                   <div className="flex items-center gap-md">
                     <div className="p-sm bg-surface-secondary rounded-md text-text-secondary">
                       <FileText size={20} />
@@ -81,7 +143,15 @@ export function ExportsList({ exports }: { exports: any[] }) {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-sm">
+                  <div className="flex items-center gap-sm shrink-0">
+                    <button 
+                      onClick={() => handleDelete(exp.id, exp.case_id)}
+                      disabled={deletingId === exp.id}
+                      className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                      title="Move to Trash"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                     {exp.pdf_path && (
                       <a 
                         href={exp.pdf_path}
@@ -117,3 +187,4 @@ export function ExportsList({ exports }: { exports: any[] }) {
     </div>
   )
 }
+
