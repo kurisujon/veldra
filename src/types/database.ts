@@ -613,6 +613,12 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_employee_account: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       delete_document: { Args: { p_document_id: string }; Returns: undefined }
       get_all_employees: {
         Args: never

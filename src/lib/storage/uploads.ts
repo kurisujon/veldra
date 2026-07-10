@@ -23,8 +23,11 @@ export async function uploadDocument(caseId: string, file: File, documentType: s
     .from('documents')
     .insert({
       case_id: caseId,
-      document_type: documentType,
+      type: documentType,
+      file_name: file.name,
       file_path: filePath,
+      file_size: file.size,
+      mime_type: file.type,
       status: 'Uploaded'
     })
     .select()

@@ -62,7 +62,7 @@ export async function getCases(): Promise<CaseWithApplicants[]> {
   const { data, error } = await supabase
     .from('cases')
     .select(`
-      id, status, created_at, updated_at, deleted_at,
+      id, status, created_by, created_at, updated_at, deleted_at,
       applicants ( id, case_id, first_name, last_name, date_of_birth, created_at, updated_at )
     `)
     .is('deleted_at', null)
@@ -77,7 +77,7 @@ export async function getDeletedCases(): Promise<CaseWithApplicants[]> {
   const { data, error } = await supabase
     .from('cases')
     .select(`
-      id, status, created_at, updated_at, deleted_at,
+      id, status, created_by, created_at, updated_at, deleted_at,
       applicants ( id, case_id, first_name, last_name, date_of_birth, created_at, updated_at )
     `)
     .not('deleted_at', 'is', null)
@@ -92,7 +92,7 @@ export async function getCaseById(id: string): Promise<CaseWithApplicants> {
   const { data, error } = await supabase
     .from('cases')
     .select(`
-      id, status, created_at, updated_at, deleted_at,
+      id, status, created_by, created_at, updated_at, deleted_at,
       applicants ( id, case_id, first_name, last_name, date_of_birth, created_at, updated_at )
     `)
     .eq('id', id)
