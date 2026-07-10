@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/Card';
 import { CaseStatusBadge } from '@/features/cases/components/CaseStatusBadge';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, ChevronRight, Search, ChevronDown, Check, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, ChevronDown, Check, Trash2, AlertCircle, X, CheckCircle } from 'lucide-react';
 import { ConfirmDeleteModal } from '@/components/ui/Modal/ConfirmDeleteModal';
 import { moveToTrashCase } from '@/features/cases/actions';
 const ITEMS_PER_PAGE = 10;
@@ -20,6 +20,8 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
   const [caseToDelete, setCaseToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [animatingOutId, setAnimatingOutId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const statusOptions = [
     { value: 'ALL', label: 'All Statuses' },
@@ -30,8 +32,18 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
     { value: 'Exported', label: 'Exported' }
   ];
 
+  useEffect(() => {
+    if (message || error) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message, error]);
+
   // Close dropdown on outside click
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (!(e.target as Element).closest('.status-dropdown')) {
         setIsDropdownOpen(false);
@@ -57,7 +69,7 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
 
   const totalPages = Math.ceil(filteredCases.length / ITEMS_PER_PAGE) || 1;
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(1);
     }
@@ -69,7 +81,35 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
   );
 
   return (
-    <div className="flex flex-col gap-md">
+    <div className="flex flex-col gap-md relative">
+      {/* Floating Notifications */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-sm pointer-events-none">
+        {error && (
+          <div className="bg-white border-l-4 border-error shadow-lg rounded-md p-md flex items-start gap-md animate-in slide-in-from-right-8 pointer-events-auto min-w-[300px]">
+            <AlertCircle className="text-error mt-0.5" size={20} />
+            <div className="flex-1">
+              <h4 className="text-small font-semibold text-text-primary">Error</h4>
+              <p className="text-small text-text-secondary mt-0.5">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-text-secondary hover:text-text-primary">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        {message && (
+          <div className="bg-white border-l-4 border-success shadow-lg rounded-md p-md flex items-start gap-md animate-in slide-in-from-right-8 pointer-events-auto min-w-[300px]">
+            <CheckCircle className="text-success mt-0.5" size={20} />
+            <div className="flex-1">
+              <h4 className="text-small font-semibold text-text-primary">Success</h4>
+              <p className="text-small text-text-secondary mt-0.5">{message}</p>
+            </div>
+            <button onClick={() => setMessage(null)} className="text-text-secondary hover:text-text-primary">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-between gap-md mb-sm flex-wrap">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
@@ -136,24 +176,23 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
                 <div className="flex flex-col items-start gap-xs flex-1">
                   <div className="flex w-full items-start justify-between">
                     <CaseStatusBadge status={c.status} />
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-text-secondary hover:text-error opacity-0 group-hover:opacity-100 transition-opacity -mt-xs -mr-xs"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCaseToDelete(c.id);
-                      }}
-                    >
-                      <Trash2 size={18} />
-                    </Button>
                   </div>
                   <h3 className="text-heading font-semibold text-text-primary mt-sm line-clamp-1">
                     {c.applicants?.[0]?.first_name} {c.applicants?.[0]?.last_name}
                   </h3>
                 </div>
-                <div className="text-small text-text-secondary pt-md border-t border-text-secondary/10 w-full mt-auto">
-                  Created on {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                <div className="flex items-center justify-between text-small text-text-secondary pt-md border-t border-text-secondary/10 w-full mt-auto">
+                  <span>Created on {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  <button 
+                    className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                    title="Move to Trash"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCaseToDelete(c.id);
+                    }}
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </Card>
             </Link>
@@ -194,18 +233,22 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
         isOpen={!!caseToDelete}
         onClose={() => setCaseToDelete(null)}
         title="Delete Case"
-        message="Are you sure you want to delete this case? This action cannot be undone and will delete all associated documents, findings, drafts, and exports."
+        message="Are you sure you want to move this case to the trash? You can restore it later from the Trash page."
         isDeleting={isDeleting}
         onConfirm={async () => {
           if (!caseToDelete) return;
           setIsDeleting(true);
+          setError(null);
+          setMessage(null);
           try {
             await moveToTrashCase(caseToDelete);
+            setMessage('Case moved to trash successfully.');
             setCaseToDelete(null);
-          } catch (err) {
+          } catch (err: any) {
             console.error(err);
-            setAnimatingOutId(null);
-            alert('Failed to delete case. You might not have permission.');
+            setError(err.message || 'Failed to move case to trash.');
+          } finally {
+            setIsDeleting(false);
           }
         }}
       />

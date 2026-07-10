@@ -5,11 +5,13 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { UserPlus, Shield, User, Trash2, X, CheckCircle, AlertCircle } from 'lucide-react'
 import { createEmployeeAccount, deleteEmployeeAccount } from '../actions'
+import { ConfirmDeleteModal } from '@/components/ui/Modal/ConfirmDeleteModal'
 
 export function AdminWorkspace({ users }: { users: any[] }) {
   const [isCreating, setIsCreating] = useState(false)
   const [loading, setLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [userToDelete, setUserToDelete] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,19 +48,20 @@ export function AdminWorkspace({ users }: { users: any[] }) {
     setLoading(false)
   }
 
-  async function handleDelete(userId: string) {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return
+  async function handleConfirmDelete() {
+    if (!userToDelete) return
     
-    setDeletingId(userId)
+    setDeletingId(userToDelete)
     setError(null)
     setMessage(null)
 
     try {
-      const res = await deleteEmployeeAccount(userId)
+      const res = await deleteEmployeeAccount(userToDelete)
       if (res.error) {
         setError(res.error)
       } else {
         setMessage('User deleted successfully.')
+        setUserToDelete(null)
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred')
@@ -68,6 +71,15 @@ export function AdminWorkspace({ users }: { users: any[] }) {
 
   return (
     <div className="flex flex-col gap-xl relative">
+      <ConfirmDeleteModal
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete User"
+        message="Are you sure you want to delete this user account? This action cannot be undone."
+        isDeleting={!!deletingId}
+      />
+
       {/* Floating Notifications */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-sm pointer-events-none">
         {error && (
@@ -158,25 +170,26 @@ export function AdminWorkspace({ users }: { users: any[] }) {
                   <p className="text-small text-text-secondary mt-1">{u.email}</p>
                 </div>
               </div>
-              
-              <button 
-                onClick={() => handleDelete(u.user_id)}
-                disabled={deletingId === u.user_id}
-                className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                title="Delete User"
-              >
-                <Trash2 size={18} />
-              </button>
             </div>
             
-            <div className="flex items-center justify-between pt-sm border-t border-border/50">
+            <div className="flex items-center justify-between pt-sm border-t border-border/50 w-full mt-auto">
               <div className="px-md py-xs rounded-full bg-surface-secondary text-xs font-medium text-text-primary flex items-center gap-xs">
                 <div className={`w-2 h-2 rounded-full ${u.role === 'Admin' ? 'bg-brand-primary' : 'bg-success'}`}></div>
                 {u.role}
               </div>
-              <p className="text-xs text-text-secondary">
-                Joined {new Date(u.created_at).toLocaleDateString()}
-              </p>
+              <div className="flex items-center gap-sm">
+                <p className="text-xs text-text-secondary">
+                  Joined {new Date(u.created_at).toLocaleDateString()}
+                </p>
+                <button 
+                  onClick={() => setUserToDelete(u.user_id)}
+                  disabled={deletingId === u.user_id}
+                  className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                  title="Delete User"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
             </div>
           </Card>
         ))}
@@ -190,4 +203,5 @@ export function AdminWorkspace({ users }: { users: any[] }) {
     </div>
   )
 }
+
 

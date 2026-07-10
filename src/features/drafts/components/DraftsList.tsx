@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge"
 import { FileEdit, ArrowRight, Search, Trash2, X, CheckCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { moveToTrashDraft } from '../actions'
+import { ConfirmDeleteModal } from '@/components/ui/Modal/ConfirmDeleteModal'
 
 const DRAFT_TYPE_LABELS: Record<string, string> = {
   Affidavit: 'Affidavit of Discrepancy',
@@ -25,6 +26,7 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [draftToDelete, setDraftToDelete] = useState<{ id: string, caseId: string } | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -38,16 +40,17 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
     }
   }, [message, error])
 
-  async function handleDelete(draftId: string, caseId: string) {
-    if (!confirm('Are you sure you want to move this draft to trash?')) return
+  async function handleConfirmDelete() {
+    if (!draftToDelete) return
     
-    setDeletingId(draftId)
+    setDeletingId(draftToDelete.id)
     setError(null)
     setMessage(null)
 
     try {
-      await moveToTrashDraft(draftId, caseId)
+      await moveToTrashDraft(draftToDelete.id, draftToDelete.caseId)
       setMessage('Draft moved to trash successfully.')
+      setDraftToDelete(null)
     } catch (err: any) {
       setError(err.message || 'An error occurred while deleting.')
     }
@@ -82,6 +85,15 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
 
   return (
     <div className="flex flex-col gap-md relative">
+      <ConfirmDeleteModal
+        isOpen={!!draftToDelete}
+        onClose={() => setDraftToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Draft"
+        message="Are you sure you want to move this legal draft to the trash? You can restore it later from the Trash page."
+        isDeleting={!!deletingId}
+      />
+
       {/* Floating Notifications */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-sm pointer-events-none">
         {error && (
@@ -164,20 +176,20 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
                   </div>
                   
                   <div className="flex items-center shrink-0 gap-sm">
-                    <button 
-                      onClick={() => handleDelete(draft.id, draft.case_id)}
-                      disabled={deletingId === draft.id}
-                      className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                      title="Move to Trash"
-                    >
-                      <Trash2 size={18} />
-                    </button>
                     <Link 
                       href={`/cases/${draft.case_id}`}
                       className="inline-flex items-center justify-center rounded-button px-md py-sm text-small font-semibold border border-text-secondary/20 text-text-secondary hover:bg-surface-secondary transition-colors"
                     >
                       View Case <ArrowRight size={16} className="ml-xs" />
                     </Link>
+                    <button 
+                      onClick={() => setDraftToDelete({ id: draft.id, caseId: draft.case_id })}
+                      disabled={deletingId === draft.id}
+                      className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                      title="Move to Trash"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </div>
               );
@@ -193,3 +205,4 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
     </div>
   )
 }
+

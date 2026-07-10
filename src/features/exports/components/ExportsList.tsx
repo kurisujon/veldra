@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/Input"
 import { FileText, Search, Trash2, X, CheckCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { moveToTrashExport } from '../actions'
+import { ConfirmDeleteModal } from '@/components/ui/Modal/ConfirmDeleteModal'
 
 export function ExportsList({ exports }: { exports: any[] }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [exportToDelete, setExportToDelete] = useState<{ id: string, caseId: string } | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -25,19 +27,20 @@ export function ExportsList({ exports }: { exports: any[] }) {
     }
   }, [message, error])
 
-  async function handleDelete(exportId: string, caseId: string) {
-    if (!confirm('Are you sure you want to move this export to trash?')) return
+  async function handleConfirmDelete() {
+    if (!exportToDelete) return
     
-    setDeletingId(exportId)
+    setDeletingId(exportToDelete.id)
     setError(null)
     setMessage(null)
 
     try {
-      const res = await moveToTrashExport(exportId, caseId)
+      const res = await moveToTrashExport(exportToDelete.id, exportToDelete.caseId)
       if (res?.error) {
         setError(res.error)
       } else {
         setMessage('Export moved to trash successfully.')
+        setExportToDelete(null)
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred while deleting.')
@@ -74,6 +77,15 @@ export function ExportsList({ exports }: { exports: any[] }) {
 
   return (
     <div className="flex flex-col gap-md relative">
+      <ConfirmDeleteModal
+        isOpen={!!exportToDelete}
+        onClose={() => setExportToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Export"
+        message="Are you sure you want to move this export package to the trash? You can restore it later from the Trash page."
+        isDeleting={!!deletingId}
+      />
+
       {/* Floating Notifications */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-sm pointer-events-none">
         {error && (
@@ -144,14 +156,6 @@ export function ExportsList({ exports }: { exports: any[] }) {
                   </div>
                   
                   <div className="flex items-center gap-sm shrink-0">
-                    <button 
-                      onClick={() => handleDelete(exp.id, exp.case_id)}
-                      disabled={deletingId === exp.id}
-                      className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                      title="Move to Trash"
-                    >
-                      <Trash2 size={18} />
-                    </button>
                     {exp.pdf_path && (
                       <a 
                         href={exp.pdf_path}
@@ -172,6 +176,14 @@ export function ExportsList({ exports }: { exports: any[] }) {
                         📝 Download DOCX
                       </a>
                     )}
+                    <button 
+                      onClick={() => setExportToDelete({ id: exp.id, caseId: exp.case_id })}
+                      disabled={deletingId === exp.id}
+                      className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50 ml-sm"
+                      title="Move to Trash"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </div>
               );
@@ -187,4 +199,5 @@ export function ExportsList({ exports }: { exports: any[] }) {
     </div>
   )
 }
+
 
