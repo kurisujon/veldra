@@ -1,8 +1,56 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import type { Database } from '@/types/database'
+import { z } from 'zod'
 
+export const DashboardAnalyticsSchema = z.object({
+  total_cases: z.number(),
+  resolved_cases: z.number(),
+  resolved_today_count: z.number(),
+  resolution_rate: z.number(),
+  average_processing_time_hours: z.number(),
+  cases_by_status: z.record(z.string(), z.number()),
+  findings_by_severity: z.record(z.string(), z.number()),
+  findings_by_category: z.record(z.string(), z.number()),
+  recent_activity: z.array(z.object({
+    id: z.string().uuid(),
+    case_id: z.string().uuid().nullable(),
+    action_type: z.string(),
+    description: z.string().nullable(),
+    timestamp: z.string(),
+    applicant_name: z.string().nullable(),
+    username: z.string().nullable()
+  })),
+  employee_stats: z.array(z.object({
+    user_id: z.string().uuid(),
+    username: z.string().nullable(),
+    cases_handled: z.number(),
+    actions_performed: z.number()
+  }))
+});
+
+export type DashboardAnalytics = z.infer<typeof DashboardAnalyticsSchema>;
+
+export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase.rpc('get_dashboard_analytics')
+  
+  if (error) {
+    console.error('Failed to fetch dashboard analytics:', error)
+    throw new Error(`Analytics fetch failed: ${error.message}`)
+  }
+  
+  const parsed = DashboardAnalyticsSchema.safeParse(data);
+  if (!parsed.success) {
+    console.error('Analytics parsing failed:', parsed.error)
+    throw new Error('Analytics response validation failed');
+  }
+  
+  return parsed.data;
+}
+
+// Backward compatibility for existing dashboard components
 export interface DashboardMetrics {
   activeCasesCount: number
   pendingReviewCount: number
@@ -19,87 +67,28 @@ export interface RecentActivity {
 }
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
-  const supabase = await createClient()
-
-  // Active cases (anything not completed/exported)
-  const { count: activeCount } = await supabase
-    .from('cases')
-    .select('*', { count: 'exact', head: true })
-    .neq('status', 'Exported')
-
-  // Pending Review cases
-  const { count: pendingCount } = await supabase
-    .from('cases')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'NeedsReview')
-
-  // Resolved Today (findings resolved today)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const analytics = await getDashboardAnalytics();
   
-  const { count: resolvedToday } = await supabase
-    .from('findings')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'Resolved')
-    .gte('updated_at', today.toISOString())
-
-  // Calculate average processing time for cases that have progressed past 'Draft'
-  const { data: processedCases } = await supabase
-    .from('cases')
-    .select('created_at, updated_at, status')
-    .in('status', ['NeedsReview', 'Reviewed', 'DraftGenerated', 'ReadyForExport', 'Exported'])
-    
-  let avgProcessingTimeMinutes = 0;
-  if (processedCases && processedCases.length > 0) {
-    let totalMinutes = 0;
-    let count = 0;
-    
-    for (const c of processedCases) {
-      if (c.created_at && c.updated_at) {
-        const start = new Date(c.created_at).getTime();
-        const end = new Date(c.updated_at).getTime();
-        const diffMinutes = (end - start) / (1000 * 60);
-        // Only include if diff is positive and realistic (e.g. less than a year to avoid bad data)
-        if (diffMinutes > 0 && diffMinutes < 525600) {
-          totalMinutes += diffMinutes;
-          count++;
-        }
-      }
-    }
-    
-    if (count > 0) {
-      avgProcessingTimeMinutes = Math.round(totalMinutes / count);
-    }
-  }
+  // Calculate active cases (total - Exported - Archived)
+  const activeCount = analytics.total_cases - analytics.resolved_cases;
+  
+  const pendingCount = analytics.cases_by_status['NeedsReview'] || 0;
+  
+  // Convert average_processing_time_hours to minutes
+  const avgProcessingTimeMinutes = Math.round(analytics.average_processing_time_hours * 60);
 
   return {
-    activeCasesCount: activeCount || 0,
-    pendingReviewCount: pendingCount || 0,
-    resolvedTodayCount: resolvedToday || 0,
+    activeCasesCount: activeCount,
+    pendingReviewCount: pendingCount,
+    resolvedTodayCount: analytics.resolved_today_count,
     avgProcessingTimeMinutes
   }
 }
 
 export async function getRecentActivity(): Promise<RecentActivity[]> {
-  const supabase = await createClient()
+  const analytics = await getDashboardAnalytics();
   
-  const { data, error } = await supabase
-    .from('activity_logs')
-    .select(`
-      id,
-      action_type,
-      description,
-      timestamp,
-      user_roles!inner(role)
-    `)
-    .order('timestamp', { ascending: false })
-    .limit(10)
-
-  if (error || !data) {
-    return []
-  }
-
-  return data.map((log: any) => {
+  return analytics.recent_activity.map((log) => {
     // Basic relative time formatting
     const diffMs = new Date().getTime() - new Date(log.timestamp).getTime()
     const diffMins = Math.floor(diffMs / 60000)
@@ -113,8 +102,8 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
 
     return {
       id: log.id,
-      user: log.user_roles?.role || 'System',
-      action: log.description,
+      user: log.username || 'System',
+      action: log.description || log.action_type,
       time: timeStr,
       timestamp: log.timestamp
     }
