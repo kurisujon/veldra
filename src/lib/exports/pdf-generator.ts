@@ -39,17 +39,14 @@ export class PDFGenerator {
               `).join('') 
               : '<p>No findings recorded.</p>'}
           </div>
-          <div class="section">
-            <h2>Generated Drafts</h2>
-            ${data.drafts.length > 0 
+          ${data.drafts.length > 0 
               ? data.drafts.map(d => `
-                <div class="item">
-                  <h3>${d.type}</h3>
+                <div class="draft-item" style="page-break-before: always;">
+                  <h3 style="margin-top: 0; padding-top: 2rem;">${d.type}</h3>
                   <pre style="white-space: pre-wrap; font-family: inherit;">${d.content}</pre>
                 </div>
               `).join('') 
-              : '<p>No drafts generated.</p>'}
-          </div>
+              : ''}
         </body>
       </html>
     `;

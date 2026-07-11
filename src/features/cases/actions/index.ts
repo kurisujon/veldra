@@ -7,6 +7,7 @@ import type { Database } from '@/types/database'
 
 const CreateCaseSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
+  middleName: z.string().optional(),
   lastName: z.string().min(1, 'Last name is required'),
   dateOfBirth: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date format')
 });
@@ -18,6 +19,7 @@ type CaseWithApplicants = CaseRow & { applicants: ApplicantRow[] }
 export async function createCase(formData: FormData) {
   const parsed = CreateCaseSchema.safeParse({
     firstName: formData.get('firstName'),
+    middleName: formData.get('middleName') || null,
     lastName: formData.get('lastName'),
     dateOfBirth: formData.get('dateOfBirth')
   })
@@ -29,6 +31,7 @@ export async function createCase(formData: FormData) {
   const supabase = await createClient()
   const { data: newCaseId, error: rpcError } = await supabase.rpc('create_case_with_applicant', {
     p_first_name: parsed.data.firstName,
+    p_middle_name: parsed.data.middleName,
     p_last_name: parsed.data.lastName,
     p_date_of_birth: parsed.data.dateOfBirth
   });

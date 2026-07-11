@@ -37,6 +37,10 @@ export function CreateCaseModal({ isOpen, onClose }: { isOpen: boolean, onClose:
           <Input name="firstName" required placeholder="Juan" />
         </div>
         <div>
+          <label className="mb-xs block text-small font-medium text-text-secondary">Middle Name / Initial (Optional)</label>
+          <Input name="middleName" placeholder="T." />
+        </div>
+        <div>
           <label className="mb-xs block text-small font-medium text-text-secondary">Last Name</label>
           <Input name="lastName" required placeholder="Dela Cruz" />
         </div>

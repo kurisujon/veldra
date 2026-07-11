@@ -65,6 +65,7 @@ export type Database = {
           created_at: string
           date_of_birth: string
           first_name: string
+          middle_name: string | null
           id: string
           last_name: string
           updated_at: string
@@ -74,6 +75,7 @@ export type Database = {
           created_at?: string
           date_of_birth: string
           first_name: string
+          middle_name?: string | null
           id?: string
           last_name: string
           updated_at?: string
@@ -83,6 +85,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string
           first_name?: string
+          middle_name?: string | null
           id?: string
           last_name?: string
           updated_at?: string
@@ -598,6 +601,7 @@ export type Database = {
               p_date_of_birth: string
               p_first_name: string
               p_last_name: string
+              p_middle_name?: string | null
             }
             Returns: string
           }
@@ -606,6 +610,7 @@ export type Database = {
               p_date_of_birth: string
               p_first_name: string
               p_last_name: string
+              p_middle_name?: string | null
               p_role: string
               p_user_id: string
             }

@@ -46,10 +46,11 @@ export class DocxGenerator {
           })
         );
         
-        // Handle newlines in description
+        // Handle newlines in description and strip HTML tags
         f.description.split('\n').forEach(line => {
-          if (line.trim()) {
-            children.push(new Paragraph({ text: line }));
+          const strippedLine = line.replace(/<[^>]+>/g, '').trim();
+          if (strippedLine) {
+            children.push(new Paragraph({ text: strippedLine }));
           }
         });
 
@@ -64,21 +65,14 @@ export class DocxGenerator {
       children.push(new Paragraph({ text: 'No findings recorded.', spacing: { after: 200 } }));
     }
 
-    children.push(
-      new Paragraph({
-        text: 'Generated Drafts',
-        heading: HeadingLevel.HEADING_2,
-        spacing: { before: 200, after: 100 },
-      })
-    );
-
     if (data.drafts.length > 0) {
       data.drafts.forEach(d => {
         children.push(
           new Paragraph({
             text: d.type,
             heading: HeadingLevel.HEADING_3,
-            spacing: { before: 100, after: 100 }
+            spacing: { before: 100, after: 100 },
+            pageBreakBefore: true
           })
         );
         
@@ -88,8 +82,7 @@ export class DocxGenerator {
           children.push(new Paragraph({ text: line, spacing: { after: 100 } }));
         });
       });
-    } else {
-      children.push(new Paragraph({ text: 'No drafts generated.' }));
+
     }
 
     const doc = new Document({

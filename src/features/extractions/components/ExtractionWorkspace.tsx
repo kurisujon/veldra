@@ -202,7 +202,9 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
   return (
     <div className={`p-md rounded-card border ${isAcceptedOrCorrected ? 'border-accent-muted bg-surface/30' : isRejected ? 'border-error/30 bg-error/5' : 'border-default bg-surface'}`}>
       <div className="flex flex-col gap-xs mb-sm w-full overflow-hidden">
-        <span className="text-small font-medium text-text-secondary uppercase tracking-wider">{field.field_name}</span>
+        <span className="text-small font-medium text-text-secondary capitalize tracking-wider">
+          {field.field_name.replace(/([a-z])([A-Z])/g, '$1 $2')}
+        </span>
         
         {isEditing ? (
           <textarea 

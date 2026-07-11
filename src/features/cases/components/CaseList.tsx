@@ -56,7 +56,7 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
   const filteredCases = useMemo(() => {
     return initialCases.filter((c) => {
       const applicant = c.applicants?.[0] || {};
-      const fullName = `${applicant.first_name || ''} ${applicant.last_name || ''}`.toLowerCase();
+      const fullName = `${applicant.first_name || ''} ${applicant.middle_name ? applicant.middle_name + ' ' : ''}${applicant.last_name || ''}`.toLowerCase();
       const idStr = c.id.toLowerCase();
       const q = searchQuery.toLowerCase();
       
@@ -178,7 +178,7 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
                     <CaseStatusBadge status={c.status} />
                   </div>
                   <h3 className="text-heading font-semibold text-text-primary mt-sm line-clamp-1">
-                    {c.applicants?.[0]?.first_name} {c.applicants?.[0]?.last_name}
+                    {c.applicants?.[0]?.first_name} {c.applicants?.[0]?.middle_name ? c.applicants[0].middle_name + ' ' : ''}{c.applicants?.[0]?.last_name}
                   </h3>
                 </div>
                 <div className="flex items-center justify-between text-small text-text-secondary pt-md border-t border-text-secondary/10 w-full mt-auto">

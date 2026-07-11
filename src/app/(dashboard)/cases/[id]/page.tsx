@@ -75,13 +75,17 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-lg pt-lg border-t border-text-secondary/10 bg-background/30 p-md rounded-md">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-md pt-lg border-t border-text-secondary/10 bg-background/30 p-md rounded-md">
           <div>
-            <p className="text-small font-medium text-text-secondary mb-xs">First Name</p>
+            <p className="text-small text-text-secondary">First Name</p>
             <p className="text-body font-semibold text-text-primary">{applicant?.first_name}</p>
           </div>
           <div>
-            <p className="text-small font-medium text-text-secondary mb-xs">Last Name</p>
+            <p className="text-small text-text-secondary">Middle Name / Initial</p>
+            <p className="text-body font-semibold text-text-primary">{applicant?.middle_name || '-'}</p>
+          </div>
+          <div>
+            <p className="text-small text-text-secondary">Last Name</p>
             <p className="text-body font-semibold text-text-primary">{applicant?.last_name}</p>
           </div>
           <div>
