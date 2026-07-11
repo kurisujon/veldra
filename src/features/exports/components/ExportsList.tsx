@@ -115,24 +115,28 @@ export function ExportsList({ exports }: { exports: any[] }) {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-md mb-md">
-        <div className="relative w-full sm:max-w-xs">
+        <div className="relative w-full sm:max-w-xs shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
           <Input 
             placeholder="Search exports by applicant or title..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 w-full"
           />
         </div>
-        <div className="flex items-center gap-sm">
-          <label className="text-small text-text-secondary">From:</label>
-          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-          <label className="text-small text-text-secondary">To:</label>
-          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-sm w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex items-center gap-sm w-full sm:w-auto">
+            <label className="text-small text-text-secondary whitespace-nowrap min-w-[40px]">From:</label>
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full sm:w-auto" />
+          </div>
+          <div className="flex items-center gap-sm w-full sm:w-auto">
+            <label className="text-small text-text-secondary whitespace-nowrap min-w-[40px]">To:</label>
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full sm:w-auto" />
+          </div>
         </div>
       </div>
 
-      <Card className="p-xl min-h-[400px]">
+      <Card className="p-md sm:p-xl min-h-[400px]">
         {filteredExports.length > 0 ? (
           <div className="flex flex-col gap-md">
             {filteredExports.map((exp: any) => {
@@ -140,46 +144,48 @@ export function ExportsList({ exports }: { exports: any[] }) {
               const applicantName = applicant ? `${applicant.first_name} ${applicant.last_name}` : "Unknown Applicant";
               
               return (
-                <div key={exp.id} className="flex flex-col md:flex-row md:items-center justify-between p-md border border-text-secondary/10 rounded-button hover:bg-background transition-colors gap-md group">
-                  <div className="flex items-center gap-md">
-                    <div className="p-sm bg-surface-secondary rounded-md text-text-secondary">
+                <div key={exp.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-md border border-text-secondary/10 rounded-button hover:bg-background transition-colors gap-md group">
+                  <div className="flex items-start gap-sm sm:gap-md overflow-hidden w-full lg:w-auto">
+                    <div className="p-sm bg-surface-secondary rounded-md text-text-secondary shrink-0">
                       <FileText size={20} />
                     </div>
-                    <div>
-                      <Link href={`/cases/${exp.case_id}`} className="text-body font-medium text-accent hover:underline">
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/cases/${exp.case_id}`} className="text-body font-medium text-accent hover:underline truncate block">
                         {applicantName} - {exp.title || 'Verification Report'}
                       </Link>
-                      <p className="text-small text-text-secondary">
+                      <p className="text-small text-text-secondary mt-xs">
                         Generated on: {exp.generated_at ? new Date(exp.generated_at).toLocaleString() : new Date(exp.created_at).toLocaleString()}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-sm shrink-0">
-                    {exp.pdf_path && (
-                      <a 
-                        href={exp.pdf_path}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-button px-md py-sm text-small font-semibold bg-surface-secondary text-text-primary hover:bg-border-default transition-colors"
-                      >
-                        📄 Download PDF
-                      </a>
-                    )}
-                    {exp.docx_path && (
-                      <a 
-                        href={exp.docx_path}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-button px-md py-sm text-small font-semibold bg-surface-secondary text-text-primary hover:bg-border-default transition-colors"
-                      >
-                        📝 Download DOCX
-                      </a>
-                    )}
+                  <div className="flex flex-col sm:flex-row flex-wrap sm:flex-nowrap items-center gap-sm mt-sm lg:mt-0 w-full lg:w-auto shrink-0">
+                    <div className="flex items-center gap-sm w-full sm:w-auto">
+                      {exp.pdf_path && (
+                        <a 
+                          href={exp.pdf_path}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-button px-md py-sm text-small font-semibold bg-surface-secondary text-text-primary hover:bg-border-default transition-colors w-full sm:w-auto whitespace-nowrap"
+                        >
+                          📄 Download PDF
+                        </a>
+                      )}
+                      {exp.docx_path && (
+                        <a 
+                          href={exp.docx_path}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-button px-md py-sm text-small font-semibold bg-surface-secondary text-text-primary hover:bg-border-default transition-colors w-full sm:w-auto whitespace-nowrap"
+                        >
+                          📝 Download DOCX
+                        </a>
+                      )}
+                    </div>
                     <button 
                       onClick={() => setExportToDelete({ id: exp.id, caseId: exp.case_id })}
                       disabled={deletingId === exp.id}
-                      className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50 ml-sm"
+                      className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors sm:opacity-0 group-hover:opacity-100 disabled:opacity-50 ml-auto sm:ml-sm shrink-0"
                       title="Move to Trash"
                     >
                       <Trash2 size={18} />
@@ -199,5 +205,3 @@ export function ExportsList({ exports }: { exports: any[] }) {
     </div>
   )
 }
-
-

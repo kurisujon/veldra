@@ -28,6 +28,7 @@ export function ExtractionWorkspace({
 }) {
   const [isPending, startTransition] = useTransition()
   const pathname = usePathname()
+  const [mobileTab, setMobileTab] = useState<'document' | 'extraction'>('extraction')
 
   const handleRunExtraction = () => {
     startTransition(async () => {
@@ -42,103 +43,149 @@ export function ExtractionWorkspace({
   const isPdf = document.mime_type === 'application/pdf'
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl lg:h-[800px] h-auto">
-      {/* Left Panel: Document Viewer */}
-      <Card className="flex flex-col overflow-hidden h-[500px] lg:h-full">
-        <div className="p-md border-b border-default bg-surface flex items-center justify-between">
-          <span className="font-semibold text-small text-text-primary">Source Document</span>
-          <Badge variant="primary">{document.type}</Badge>
+    <div className="flex flex-col gap-md">
+      {/* Mobile Header with Tabs and Actions */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-md lg:hidden">
+        <div className="flex bg-surface p-xs rounded-lg border border-default w-full sm:w-auto">
+          <button
+            className={`flex-1 sm:flex-none px-md py-sm text-center text-small font-medium rounded-md transition-colors ${mobileTab === 'document' ? 'bg-background text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+            onClick={() => setMobileTab('document')}
+          >
+            Source Document
+          </button>
+          <button
+            className={`flex-1 sm:flex-none px-md py-sm text-center text-small font-medium rounded-md transition-colors ${mobileTab === 'extraction' ? 'bg-background text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+            onClick={() => setMobileTab('extraction')}
+          >
+            Extracted Fields
+          </button>
         </div>
-        <div className="flex-1 bg-background relative">
-          {documentUrl ? (
-            isPdf ? (
-              <iframe src={`${documentUrl}#toolbar=0`} className="w-full h-full border-none" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center overflow-auto p-md">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={documentUrl} alt="Document" className="max-w-full h-auto object-contain" />
-              </div>
-            )
-          ) : (
-            <div className="flex items-center justify-center h-full text-text-secondary text-small">
-              No preview available
-            </div>
-          )}
-        </div>
-      </Card>
 
-      {/* Right Panel: Extraction Fields */}
-      <Card className="flex flex-col overflow-hidden h-[500px] lg:h-full">
-        <div className="p-md border-b border-default bg-surface flex items-center justify-between">
-          <span className="font-semibold text-small text-text-primary">Extracted Fields</span>
-          {extraction && (
-            <div className="flex items-center gap-sm">
-              <Badge variant={EXTRACTION_STATUS_VARIANTS[extraction.status] || 'neutral'}>
-                {extraction.status}
-              </Badge>
-              <Button 
-                onClick={handleRunExtraction} 
-                disabled={isPending}
-                variant="secondary"
-                className="py-xs px-sm text-small"
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin mr-xs" />
-                    Running...
-                  </>
-                ) : (
-                  extraction.status === 'Failed' ? 'Run Extraction' : 'Re-run Extraction'
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-lg">
-          {!extraction ? (
-            <div className="flex flex-col items-center justify-center h-full gap-md text-center">
-              <p className="text-text-secondary text-body">This document has not been extracted yet.</p>
-              <Button onClick={handleRunExtraction} disabled={isPending}>
-                {isPending ? <><Loader2 size={16} className="animate-spin mr-2" /> Extracting...</> : 'Run Extraction'}
-              </Button>
-            </div>
-          ) : extraction.status === 'Failed' ? (
-            <div className="flex flex-col items-center justify-center h-full gap-md text-center p-xl">
-              <div className="p-md rounded-card bg-error/10 border border-error/20 text-error text-body max-w-md w-full">
-                <p className="font-semibold mb-xs">Extraction Failed</p>
-                <p className="text-small text-error-secondary break-words">{extraction.error_message || 'An unknown error occurred during extraction.'}</p>
-              </div>
-              <Button onClick={handleRunExtraction} disabled={isPending}>
-                {isPending ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin mr-2" />
-                    Extracting...
-                  </>
-                ) : (
-                  'Retry Extraction'
-                )}
-              </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-lg">
-              <div className="text-small text-text-secondary mb-md bg-background p-md rounded-md">
-                Review the extracted values below. Accept correct values or input corrections manually.
-              </div>
-              
-              {extraction.fields && extraction.fields.length > 0 ? (
-                extraction.fields.map((field: any) => (
-                  <FieldReviewRow key={field.id} field={field} path={pathname} />
-                ))
+        {/* Global actions on mobile */}
+        {extraction && (
+           <div className="flex items-center gap-sm w-full sm:w-auto justify-end">
+             <Badge variant={EXTRACTION_STATUS_VARIANTS[extraction.status] || 'neutral'}>
+               {extraction.status}
+             </Badge>
+             <Button 
+               onClick={handleRunExtraction} 
+               disabled={isPending}
+               variant="secondary"
+               className="py-xs px-sm text-small whitespace-nowrap"
+             >
+               {isPending ? (
+                 <>
+                   <Loader2 size={14} className="animate-spin mr-xs" />
+                   Running...
+                 </>
+               ) : (
+                 extraction.status === 'Failed' ? 'Run Extraction' : 'Re-run Extraction'
+               )}
+             </Button>
+           </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl lg:h-[800px] h-auto">
+        {/* Left Panel: Document Viewer */}
+        <Card className={`flex-col overflow-hidden h-[500px] lg:h-full ${mobileTab === 'document' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className="p-md border-b border-default bg-surface flex items-center justify-between">
+            <span className="font-semibold text-small text-text-primary">Source Document</span>
+            <Badge variant="primary">{document.type}</Badge>
+          </div>
+          <div className="flex-1 bg-background relative">
+            {documentUrl ? (
+              isPdf ? (
+                <iframe src={`${documentUrl}#toolbar=0`} className="w-full h-full border-none" />
               ) : (
-                <div className="text-center text-text-secondary text-small py-xl">
-                  No fields extracted.
+                <div className="w-full h-full flex items-center justify-center overflow-auto p-md">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={documentUrl} alt="Document" className="max-w-full h-auto object-contain" />
                 </div>
-              )}
-            </div>
-          )}
-        </div>
-      </Card>
+              )
+            ) : (
+              <div className="flex items-center justify-center h-full text-text-secondary text-small">
+                No preview available
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Right Panel: Extraction Fields */}
+        <Card className={`flex-col overflow-hidden h-[500px] lg:h-full ${mobileTab === 'extraction' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className="p-md border-b border-default bg-surface flex items-center justify-between">
+            <span className="font-semibold text-small text-text-primary">Extracted Fields</span>
+            {/* Desktop only actions */}
+            {extraction && (
+              <div className="hidden lg:flex items-center gap-sm">
+                <Badge variant={EXTRACTION_STATUS_VARIANTS[extraction.status] || 'neutral'}>
+                  {extraction.status}
+                </Badge>
+                <Button 
+                  onClick={handleRunExtraction} 
+                  disabled={isPending}
+                  variant="secondary"
+                  className="py-xs px-sm text-small"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin mr-xs" />
+                      Running...
+                    </>
+                  ) : (
+                    extraction.status === 'Failed' ? 'Run Extraction' : 'Re-run Extraction'
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-lg">
+            {!extraction ? (
+              <div className="flex flex-col items-center justify-center h-full gap-md text-center">
+                <p className="text-text-secondary text-body">This document has not been extracted yet.</p>
+                <Button onClick={handleRunExtraction} disabled={isPending}>
+                  {isPending ? <><Loader2 size={16} className="animate-spin mr-2" /> Extracting...</> : 'Run Extraction'}
+                </Button>
+              </div>
+            ) : extraction.status === 'Failed' ? (
+              <div className="flex flex-col items-center justify-center h-full gap-md text-center p-xl">
+                <div className="p-md rounded-card bg-error/10 border border-error/20 text-error text-body max-w-md w-full">
+                  <p className="font-semibold mb-xs">Extraction Failed</p>
+                  <p className="text-small text-error-secondary break-words">{extraction.error_message || 'An unknown error occurred during extraction.'}</p>
+                </div>
+                {/* On Mobile the button is in the top header, but we keep this here as it's the primary call to action in empty state */}
+                <Button onClick={handleRunExtraction} disabled={isPending}>
+                  {isPending ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin mr-2" />
+                      Extracting...
+                    </>
+                  ) : (
+                    'Retry Extraction'
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-lg">
+                <div className="text-small text-text-secondary mb-md bg-background p-md rounded-md">
+                  Review the extracted values below. Accept correct values or input corrections manually.
+                </div>
+                
+                {extraction.fields && extraction.fields.length > 0 ? (
+                  extraction.fields.map((field: any) => (
+                    <FieldReviewRow key={field.id} field={field} path={pathname} />
+                  ))
+                ) : (
+                  <div className="text-center text-text-secondary text-small py-xl">
+                    No fields extracted.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
     </div>
   )
 }
@@ -242,12 +289,12 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
         )}
       </div>
 
-      <div className="flex items-center justify-between mt-md">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-md gap-sm sm:gap-0">
         <Badge variant={field.status === 'NeedsReview' ? 'warning' : field.status === 'Rejected' ? 'error' : 'success'}>
           {field.status}
         </Badge>
         
-        <div className="flex items-center gap-xs">
+        <div className="flex items-center gap-xs w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
           {isEditing ? (
             <>
               <Button variant="primary" onClick={handleSaveCorrection} disabled={isPending}>Save</Button>

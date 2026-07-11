@@ -110,28 +110,28 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-md mb-sm flex-wrap">
-        <div className="relative w-full max-w-sm">
+      <div className="flex items-center justify-between gap-md mb-sm flex-wrap sm:flex-nowrap">
+        <div className="relative w-full sm:max-w-sm shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
           <Input 
             placeholder="Search cases by name or ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 w-full"
           />
         </div>
-        <div className="relative status-dropdown z-20">
+        <div className="relative status-dropdown z-20 w-full sm:w-auto">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center justify-between min-w-[160px] rounded-input border border-text-secondary/20 bg-surface px-md py-sm text-body transition-all hover:bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+            className="flex items-center justify-between w-full sm:min-w-[160px] rounded-input border border-text-secondary/20 bg-surface px-md py-sm text-body transition-all hover:bg-background focus:outline-none focus:ring-2 focus:ring-accent"
           >
-            <span>{statusOptions.find(opt => opt.value === filterStatus)?.label}</span>
-            <ChevronDown size={16} className={cn("text-text-secondary transition-transform duration-200", isDropdownOpen && "rotate-180")} />
+            <span className="truncate">{statusOptions.find(opt => opt.value === filterStatus)?.label}</span>
+            <ChevronDown size={16} className={cn("text-text-secondary transition-transform duration-200 shrink-0 ml-sm", isDropdownOpen && "rotate-180")} />
           </button>
           
           <div 
             className={cn(
-              "absolute right-0 top-full mt-sm w-full min-w-[180px] origin-top-right rounded-card border border-text-secondary/10 bg-surface shadow-modal transition-all duration-200 ease-out",
+              "absolute right-0 top-full mt-sm w-full sm:min-w-[180px] origin-top-right rounded-card border border-text-secondary/10 bg-surface shadow-modal transition-all duration-200 ease-out z-50",
               isDropdownOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
             )}
           >
@@ -148,8 +148,8 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
                     filterStatus === opt.value ? "bg-accent/10 text-accent font-medium" : "text-text-primary"
                   )}
                 >
-                  {opt.label}
-                  {filterStatus === opt.value && <Check size={16} />}
+                  <span className="truncate pr-sm">{opt.label}</span>
+                  {filterStatus === opt.value && <Check size={16} className="shrink-0" />}
                 </button>
               ))}
             </div>
@@ -158,11 +158,11 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
       </div>
 
       {filteredCases.length === 0 ? (
-        <Card className="p-xl text-center text-text-secondary">
+        <Card className="p-md sm:p-xl text-center text-text-secondary">
           No cases found matching your criteria.
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-md sm:gap-lg overflow-x-hidden">
           {paginatedCases.map((c) => (
             <Link 
               key={c.id} 
@@ -172,19 +172,19 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
                 animatingOutId === c.id ? "opacity-0 scale-95 h-0 overflow-hidden mb-[-16px]" : "opacity-100 scale-100"
               )}
             >
-              <Card className="flex flex-col p-lg transition-all hover:bg-background hover:shadow-md hover:-translate-y-1 gap-md h-full">
-                <div className="flex flex-col items-start gap-xs flex-1">
-                  <div className="flex w-full items-start justify-between">
+              <Card className="flex flex-col p-md sm:p-lg transition-all hover:bg-background hover:shadow-md hover:-translate-y-1 gap-md h-full min-w-0">
+                <div className="flex flex-col items-start gap-xs flex-1 w-full overflow-hidden">
+                  <div className="flex w-full items-start justify-between gap-sm">
                     <CaseStatusBadge status={c.status} />
                   </div>
-                  <h3 className="text-heading font-semibold text-text-primary mt-sm line-clamp-1">
+                  <h3 className="text-heading font-semibold text-text-primary mt-sm truncate w-full">
                     {c.applicants?.[0]?.first_name} {c.applicants?.[0]?.middle_name ? c.applicants[0].middle_name + ' ' : ''}{c.applicants?.[0]?.last_name}
                   </h3>
                 </div>
-                <div className="flex items-center justify-between text-small text-text-secondary pt-md border-t border-text-secondary/10 w-full mt-auto">
-                  <span>Created on {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                <div className="flex items-center justify-between text-small text-text-secondary pt-md border-t border-text-secondary/10 w-full mt-auto gap-sm">
+                  <span className="truncate">Created on {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                   <button 
-                    className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                    className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors sm:opacity-0 group-hover:opacity-100 disabled:opacity-50 shrink-0"
                     title="Move to Trash"
                     onClick={(e) => {
                       e.preventDefault();
@@ -201,8 +201,8 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
       )}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-text-secondary/10 pt-md mt-md">
-          <p className="text-small text-text-secondary">
+        <div className="flex flex-col sm:flex-row items-center justify-between border-t border-text-secondary/10 pt-md mt-md gap-md">
+          <p className="text-small text-text-secondary text-center sm:text-left">
             Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredCases.length)} of {filteredCases.length} entries
           </p>
           <div className="flex items-center gap-sm">

@@ -4,6 +4,10 @@ export const navigation = [
     href: "/",
   },
   {
+    label: "Analytics",
+    href: "/analytics",
+  },
+  {
     label: "Cases",
     href: "/cases",
   },

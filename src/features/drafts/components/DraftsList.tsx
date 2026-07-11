@@ -123,24 +123,28 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-md mb-md">
-        <div className="relative w-full sm:max-w-xs">
+        <div className="relative w-full sm:max-w-xs shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
           <Input 
             placeholder="Search drafts by name or type..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 w-full"
           />
         </div>
-        <div className="flex items-center gap-sm">
-          <label className="text-small text-text-secondary">From:</label>
-          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-          <label className="text-small text-text-secondary">To:</label>
-          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-sm w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex items-center gap-sm w-full sm:w-auto">
+            <label className="text-small text-text-secondary whitespace-nowrap min-w-[40px]">From:</label>
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full sm:w-auto" />
+          </div>
+          <div className="flex items-center gap-sm w-full sm:w-auto">
+            <label className="text-small text-text-secondary whitespace-nowrap min-w-[40px]">To:</label>
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full sm:w-auto" />
+          </div>
         </div>
       </div>
 
-      <Card className="p-xl min-h-[400px]">
+      <Card className="p-md sm:p-xl min-h-[400px]">
         {filteredDrafts.length > 0 ? (
           <div className="flex flex-col gap-md">
             {filteredDrafts.map((draft: any) => {
@@ -149,21 +153,21 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
               const isFinalized = draft.status === 'Finalized';
               
               return (
-                <div key={draft.id} className="flex flex-col md:flex-row md:items-center justify-between p-md border border-text-secondary/10 rounded-button hover:bg-background transition-colors gap-md group">
-                  <div className="flex items-start gap-md">
-                    <div className="p-sm bg-surface-secondary rounded-md text-text-secondary mt-1">
+                <div key={draft.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-md border border-text-secondary/10 rounded-button hover:bg-background transition-colors gap-md group">
+                  <div className="flex items-start gap-sm sm:gap-md overflow-hidden w-full lg:w-auto">
+                    <div className="p-sm bg-surface-secondary rounded-md text-text-secondary mt-1 shrink-0">
                       <FileEdit size={20} />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-sm mb-xs">
-                        <Link href={`/cases/${draft.case_id}`} className="text-body font-medium text-text-primary group-hover:text-accent transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-sm mb-xs flex-wrap">
+                        <Link href={`/cases/${draft.case_id}`} className="text-body font-medium text-text-primary hover:text-accent transition-colors truncate max-w-full block">
                           {applicantName}
                         </Link>
-                        <Badge variant={DRAFT_TYPE_BADGE_COLORS[draft.type] || 'neutral'}>
+                        <Badge variant={DRAFT_TYPE_BADGE_COLORS[draft.type] || 'neutral'} className="whitespace-nowrap">
                           {DRAFT_TYPE_LABELS[draft.type] || draft.type}
                         </Badge>
                         {isFinalized && (
-                          <Badge variant="success">Finalized</Badge>
+                          <Badge variant="success" className="whitespace-nowrap">Finalized</Badge>
                         )}
                       </div>
                       <p className="text-small text-text-secondary line-clamp-2">
@@ -175,17 +179,17 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
                     </div>
                   </div>
                   
-                  <div className="flex items-center shrink-0 gap-sm">
+                  <div className="flex items-center flex-wrap sm:flex-nowrap gap-sm mt-sm lg:mt-0 w-full lg:w-auto shrink-0 justify-end">
                     <Link 
                       href={`/cases/${draft.case_id}`}
-                      className="inline-flex items-center justify-center rounded-button px-md py-sm text-small font-semibold border border-text-secondary/20 text-text-secondary hover:bg-surface-secondary transition-colors"
+                      className="inline-flex items-center justify-center rounded-button px-md py-sm text-small font-semibold border border-text-secondary/20 text-text-secondary hover:bg-surface-secondary transition-colors w-full sm:w-auto whitespace-nowrap"
                     >
                       View Case <ArrowRight size={16} className="ml-xs" />
                     </Link>
                     <button 
                       onClick={() => setDraftToDelete({ id: draft.id, caseId: draft.case_id })}
                       disabled={deletingId === draft.id}
-                      className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                      className="p-sm rounded-md text-text-secondary hover:text-error hover:bg-error/10 transition-colors sm:opacity-0 group-hover:opacity-100 disabled:opacity-50 shrink-0 ml-auto sm:ml-0"
                       title="Move to Trash"
                     >
                       <Trash2 size={18} />
@@ -205,4 +209,3 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
     </div>
   )
 }
-
