@@ -66,7 +66,7 @@ export async function getCases(): Promise<CaseWithApplicants[]> {
     .from('cases')
     .select(`
       id, status, created_by, created_at, updated_at, deleted_at,
-      applicants ( id, case_id, first_name, last_name, date_of_birth, created_at, updated_at )
+      applicants ( id, case_id, first_name, middle_name, last_name, date_of_birth, created_at, updated_at )
     `)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
@@ -81,7 +81,7 @@ export async function getDeletedCases(): Promise<CaseWithApplicants[]> {
     .from('cases')
     .select(`
       id, status, created_by, created_at, updated_at, deleted_at,
-      applicants ( id, case_id, first_name, last_name, date_of_birth, created_at, updated_at )
+      applicants ( id, case_id, first_name, middle_name, last_name, date_of_birth, created_at, updated_at )
     `)
     .not('deleted_at', 'is', null)
     .order('deleted_at', { ascending: false })
@@ -96,7 +96,7 @@ export async function getCaseById(id: string): Promise<CaseWithApplicants> {
     .from('cases')
     .select(`
       id, status, created_by, created_at, updated_at, deleted_at,
-      applicants ( id, case_id, first_name, last_name, date_of_birth, created_at, updated_at )
+      applicants ( id, case_id, first_name, middle_name, last_name, date_of_birth, created_at, updated_at )
     `)
     .eq('id', id)
     .is('deleted_at', null)
