@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
-export const DashboardAnalyticsSchema = z.object({
+const DashboardAnalyticsSchema = z.object({
   total_cases: z.number(),
   resolved_cases: z.number(),
   resolved_today_count: z.number(),
