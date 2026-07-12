@@ -35,6 +35,7 @@ export default function LoginPage() {
     const { data: authData, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password })
     if (error) {
       setError("Invalid login credentials")
+      setLoading(false)
     } else {
       if (authData?.user) {
         const { data: roleData } = await supabase
@@ -53,8 +54,6 @@ export default function LoginPage() {
       }
       router.refresh()
     }
-
-    setLoading(false)
   }
 
   return (

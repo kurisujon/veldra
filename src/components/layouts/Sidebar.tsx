@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { navigation } from '@/config/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { LayoutDashboard, FileText, FileEdit, Download, Settings, LogOut, Trash2, Shield, PieChart } from 'lucide-react';
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -26,6 +26,7 @@ interface SidebarProps {
 
 export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [role, setRole] = useState<string | null>(null);
   const [roleLoaded, setRoleLoaded] = useState(false);
 
@@ -78,12 +79,14 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
           </div>
 
           <nav className="flex flex-col py-md gap-xs flex-1 mt-md">
-            {visibleNav.map((item) => (
+            {visibleNav.map((item) => {
+              const isActive = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href);
+              return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={onClose} // Auto close mobile menu when a link is clicked
-                className="flex items-center gap-sm mx-md px-md py-sm rounded-button hover:bg-background text-text-primary text-body font-medium transition-colors overflow-hidden whitespace-nowrap"
+                className={`flex items-center gap-sm mx-md px-md py-sm rounded-button hover:bg-background text-text-primary text-body font-medium transition-colors overflow-hidden whitespace-nowrap ${isActive ? 'bg-background font-semibold' : ''}`}
                 title={item.label}
                 aria-label={item.label}
               >
@@ -92,7 +95,8 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
                 </div>
                 <span className="md:opacity-0 group-hover:md:opacity-100 transition-opacity duration-300 delay-75">{item.label}</span>
               </Link>
-            ))}
+              );
+            })}
           </nav>
           <div className="py-md border-t border-text-secondary/10 flex flex-col gap-xs">
             <button

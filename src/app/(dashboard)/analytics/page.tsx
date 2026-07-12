@@ -1,9 +1,11 @@
 import { PageContainer } from "@/components/layouts/PageContainer";
-import { Card } from "@/components/ui/Card";
 import { AnalyticsSummary } from "@/features/analytics/components/AnalyticsSummary";
 import { DiscrepancyBreakdown } from "@/features/analytics/components/DiscrepancyBreakdown";
+import { getAnalyticsData } from "@/features/analytics/actions";
 
-export default function AnalyticsPage() {
+export default async function AnalyticsPage() {
+  const data = await getAnalyticsData();
+
   return (
     <PageContainer>
       {/* Header */}
@@ -17,8 +19,16 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="flex flex-col gap-xl">
-        <AnalyticsSummary />
-        <DiscrepancyBreakdown />
+        <AnalyticsSummary 
+          totalFindings={data.totalFindings}
+          criticalDiscrepancies={data.criticalDiscrepancies}
+          resolvedRate={data.resolvedRate}
+          avgResolutionTimeHours={data.avgResolutionTimeHours}
+        />
+        <DiscrepancyBreakdown 
+          categoryCounts={data.categoryCounts}
+          conflictingSources={data.conflictingSources}
+        />
       </div>
     </PageContainer>
   );
