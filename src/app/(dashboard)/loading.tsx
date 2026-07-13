@@ -4,9 +4,13 @@ import { Skeleton, SkeletonRow } from "@/components/ui/Skeleton";
 export default function Loading() {
   return (
     <PageContainer>
-      <div className="flex flex-col gap-sm mb-xl">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-96 max-w-full" />
+      <div className="mb-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-md">
+        <div>
+          <h1 className="text-title font-semibold text-text-primary">Dashboard</h1>
+          <p className="text-body text-text-secondary mt-xs">
+            Overview of active visa verification cases and system status.
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md mb-xl">

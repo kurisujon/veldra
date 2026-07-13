@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChevronLeft, ChevronRight, Search, ChevronDown, Check, Trash2, AlertCircle, X, CheckCircle } from 'lucide-react';
 import { ConfirmDeleteModal } from '@/components/ui/Modal/ConfirmDeleteModal';
-import { moveToTrashCase } from '@/features/cases/actions';
+import { moveToTrashCase, bulkMoveToTrashCases } from '@/features/cases/actions';
+import { Checkbox } from '@/components/ui/Checkbox';
 const ITEMS_PER_PAGE = 10;
 
 export function CaseList({ initialCases }: { initialCases: any[] }) {
@@ -18,6 +19,9 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [caseToDelete, setCaseToDelete] = useState<string | null>(null);
+  const [selectedCases, setSelectedCases] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [animatingOutId, setAnimatingOutId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -157,6 +161,37 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
         </div>
       </div>
 
+      <div className="flex items-center gap-md mb-md">
+        <label className="flex items-center gap-sm cursor-pointer select-none">
+          <Checkbox 
+            checked={paginatedCases.length > 0 && selectedCases.size === paginatedCases.length}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                const newSelected = new Set(selectedCases);
+                paginatedCases.forEach(c => newSelected.add(c.id));
+                setSelectedCases(newSelected);
+              } else {
+                const newSelected = new Set(selectedCases);
+                paginatedCases.forEach(c => newSelected.delete(c.id));
+                setSelectedCases(newSelected);
+              }
+            }}
+          />
+          <span className="text-small font-medium text-text-primary">Select All (This Page)</span>
+        </label>
+        
+        {selectedCases.size > 0 && (
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={() => setShowBulkDeleteModal(true)}
+            className="bg-error text-white hover:bg-error/90 border-none"
+          >
+            <Trash2 size={16} className="mr-xs" /> Delete Selected ({selectedCases.size})
+          </Button>
+        )}
+      </div>
+
       {filteredCases.length === 0 ? (
         <Card className="p-md sm:p-xl text-center text-text-secondary">
           No cases found matching your criteria.
@@ -172,9 +207,26 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
                 animatingOutId === c.id ? "opacity-0 scale-95 h-0 overflow-hidden mb-[-16px]" : "opacity-100 scale-100"
               )}
             >
-              <Card className="flex flex-col p-md sm:p-lg transition-all hover:bg-background hover:shadow-md hover:-translate-y-1 gap-md h-full min-w-0">
-                <div className="flex flex-col items-start gap-xs flex-1 w-full overflow-hidden">
-                  <div className="flex w-full items-start justify-between gap-sm">
+              <Card className="flex flex-col p-md sm:p-lg transition-all hover:bg-background hover:shadow-md hover:-translate-y-1 gap-md h-full min-w-0 relative">
+                <div 
+                  className="absolute top-md right-md z-10"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <Checkbox 
+                    checked={selectedCases.has(c.id)}
+                    onCheckedChange={(checked) => {
+                      const newSelected = new Set(selectedCases);
+                      if (checked) {
+                        newSelected.add(c.id);
+                      } else {
+                        newSelected.delete(c.id);
+                      }
+                      setSelectedCases(newSelected);
+                    }}
+                  />
+                </div>
+                <div className="flex flex-col items-start gap-xs flex-1 w-full overflow-hidden mt-md">
+                  <div className="flex w-full items-start justify-between gap-sm pr-lg">
                     <CaseStatusBadge status={c.status} />
                   </div>
                   <h3 className="text-heading font-semibold text-text-primary mt-sm truncate w-full">
@@ -249,6 +301,31 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
             setError(err.message || 'Failed to move case to trash.');
           } finally {
             setIsDeleting(false);
+          }
+        }}
+      />
+
+      <ConfirmDeleteModal 
+        isOpen={showBulkDeleteModal}
+        onClose={() => setShowBulkDeleteModal(false)}
+        title="Delete Selected Cases"
+        message={`Are you sure you want to move ${selectedCases.size} cases to the trash? You can restore them later from the Trash page.`}
+        isDeleting={isBulkDeleting}
+        onConfirm={async () => {
+          if (selectedCases.size === 0) return;
+          setIsBulkDeleting(true);
+          setError(null);
+          setMessage(null);
+          try {
+            await bulkMoveToTrashCases(Array.from(selectedCases));
+            setMessage(`${selectedCases.size} cases moved to trash successfully.`);
+            setSelectedCases(new Set());
+            setShowBulkDeleteModal(false);
+          } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'Failed to move cases to trash.');
+          } finally {
+            setIsBulkDeleting(false);
           }
         }}
       />

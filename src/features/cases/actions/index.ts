@@ -198,3 +198,14 @@ export async function deleteCase(id: string) {
   revalidatePath('/cases')
   return { success: true }
 }
+
+export async function bulkMoveToTrashCases(ids: string[]) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('cases')
+    .update({ deleted_at: new Date().toISOString() })
+    .in('id', ids)
+  if (error) throw new Error(error.message)
+  revalidatePath('/cases')
+  revalidatePath('/trash')
+}

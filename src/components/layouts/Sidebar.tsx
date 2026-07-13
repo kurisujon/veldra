@@ -31,21 +31,38 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const [role, setRole] = useState<string | null>(null);
   const [roleLoaded, setRoleLoaded] = useState(false);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
-    async function loadRole() {
+    async function loadData() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data } = await supabase.from('user_roles').select('role').eq('user_id', user.id).single();
         if (data) setRole(data.role);
+
+        const [
+          { count: casesCount },
+          { count: draftsCount },
+          { count: trashCount }
+        ] = await Promise.all([
+          supabase.from('cases').select('*', { count: 'exact', head: true }).is('deleted_at', null).in('status', ['NeedsReview']),
+          supabase.from('generated_drafts').select('*', { count: 'exact', head: true }).eq('status', 'Draft'),
+          supabase.from('cases').select('*', { count: 'exact', head: true }).not('deleted_at', 'is', null)
+        ]);
+
+        setCounts({
+          '/cases': casesCount || 0,
+          '/drafts': draftsCount || 0,
+          '/trash': trashCount || 0
+        });
       }
       setRoleLoaded(true);
     }
-    loadRole();
-  }, []);
+    loadData();
+  }, [pathname]);
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -127,6 +144,11 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
                   <span className="md:opacity-0 group-hover:md:opacity-100 transition-opacity duration-300 delay-75">
                     {item.label}
                   </span>
+                  {counts[item.href] > 0 && (
+                    <span className="ml-auto bg-[#800000] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                      {counts[item.href]}
+                    </span>
+                  )}
                 </Link>
               );
             })}
