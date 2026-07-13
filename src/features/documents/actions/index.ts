@@ -7,7 +7,7 @@ import type { Database } from '@/types/database'
 
 const UploadDocumentSchema = z.object({
   caseId: z.string().uuid(),
-  type: z.enum(['PSABirth', 'PSAMarriage', 'TOR', 'SF10', 'Diploma']),
+  type: z.enum(['PSABirth', 'PSAMarriage', 'TOR', 'SF10', 'Diploma', 'ValidID']),
   file: z.instanceof(File, { message: 'Valid file is required' })
     .refine((file) => file.size <= 50 * 1024 * 1024, 'File size must be less than 50MB')
     .refine(
@@ -79,9 +79,25 @@ export async function deleteDocument(documentId: string, caseId: string) {
 
   const supabase = await createClient()
 
-  const { error } = await supabase.rpc('delete_document', {
-    p_document_id: parsed.data.documentId
-  })
+  // 1. Get the document to find its file path
+  const { data: doc, error: fetchError } = await supabase
+    .from('documents')
+    .select('file_path')
+    .eq('id', parsed.data.documentId)
+    .single()
+
+  if (fetchError || !doc) {
+    throw new Error('Document not found')
+  }
+
+  // 2. Delete from storage
+  await supabase.storage.from('documents').remove([doc.file_path])
+
+  // 3. Delete from database
+  const { error } = await supabase
+    .from('documents')
+    .delete()
+    .eq('id', parsed.data.documentId)
 
   if (error) {
     throw new Error(`Delete failed: ${error.message}`)

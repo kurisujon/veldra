@@ -6,7 +6,9 @@ import Image from 'next/image';
 import { navigation } from '@/config/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
-import { LayoutDashboard, FileText, FileEdit, Download, Settings, LogOut, Trash2, Shield, PieChart } from 'lucide-react';
+import { LayoutDashboard, FileText, FileEdit, Download, Settings, LogOut, Trash2, Shield, PieChart, Loader2 } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 
 const iconMap: Record<string, React.ReactNode> = {
   "/dashboard": <LayoutDashboard size={20} />,
@@ -29,6 +31,8 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const [role, setRole] = useState<string | null>(null);
   const [roleLoaded, setRoleLoaded] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     async function loadRole() {
@@ -44,9 +48,10 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
   }, []);
 
   async function handleSignOut() {
+    setIsSigningOut(true);
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push('/login');
+    router.push('/');
     router.refresh();
   }
 
@@ -130,7 +135,7 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
           {/* Sign out */}
           <div className="py-md border-t border-text-secondary/10 flex flex-col gap-xs flex-shrink-0">
             <button
-              onClick={handleSignOut}
+              onClick={() => setShowSignOutModal(true)}
               className="w-[calc(100%-24px)] flex items-center gap-sm mx-md px-md py-sm rounded-button hover:bg-background text-error text-body font-medium text-left transition-colors overflow-hidden whitespace-nowrap"
               title="Sign out"
             >
@@ -142,6 +147,20 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
           </div>
         </aside>
       </div>
+
+      <Modal isOpen={showSignOutModal} onClose={() => !isSigningOut && setShowSignOutModal(false)} title="Sign Out">
+        <div className="flex flex-col gap-md">
+          <p className="text-body text-text-secondary">
+            Are you sure you want to sign out of your account?
+          </p>
+          <div className="flex justify-end gap-sm mt-sm">
+            <Button variant="ghost" onClick={() => setShowSignOutModal(false)} disabled={isSigningOut}>Cancel</Button>
+            <Button variant="primary" onClick={handleSignOut} disabled={isSigningOut} className="bg-error hover:bg-error/90 text-white">
+              {isSigningOut ? <Loader2 size={16} className="animate-spin" /> : 'Sign Out'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

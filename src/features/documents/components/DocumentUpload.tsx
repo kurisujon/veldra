@@ -13,7 +13,8 @@ const DOCUMENT_TYPES = [
   { value: 'PSAMarriage', label: 'PSA Marriage Certificate' },
   { value: 'TOR', label: 'Transcript of Records' },
   { value: 'SF10', label: 'Form 137 / SF10' },
-  { value: 'Diploma', label: 'Diploma' }
+  { value: 'Diploma', label: 'Diploma' },
+  { value: 'ValidID', label: 'Valid Government ID' }
 ] as const
 
 type DocumentType = typeof DOCUMENT_TYPES[number]['value']
@@ -51,10 +52,13 @@ export function DocumentUpload({
       try {
         await uploadDocument(formData)
         setError(null)
+        // Note: Do not clear uploadingType on success. Let useTransition keep it loading until revalidation finishes.
+        if (fileInputRefs.current[type]) {
+          fileInputRefs.current[type]!.value = ''
+        }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : `Failed to upload ${type}`
         setError(msg)
-      } finally {
         setUploadingType(null)
         if (fileInputRefs.current[type]) {
           fileInputRefs.current[type]!.value = ''

@@ -8,20 +8,24 @@ import { Badge } from '@/components/ui/Badge'
 import type { Database } from '@/types/database'
 import { FileText, Image as ImageIcon, File, CheckCircle2, Clock, AlertTriangle, Loader2 } from 'lucide-react'
 import Image from 'next/image'
+import { Modal } from '@/components/ui/Modal'
 
 type DocumentRow = Database['public']['Tables']['documents']['Row']
 
 export function DocumentList({ documents, extractions = [], caseId }: { documents: DocumentRow[], extractions?: any[], caseId: string }) {
   const [isPending, startTransition] = useTransition()
+  const [docToDelete, setDocToDelete] = React.useState<string | null>(null)
 
-  const handleDelete = (documentId: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) return
+  const confirmDelete = () => {
+    if (!docToDelete) return
 
     startTransition(async () => {
       try {
-        await deleteDocument(documentId, caseId)
+        await deleteDocument(docToDelete, caseId)
       } catch (err: any) {
         alert(err.message || 'Failed to delete document')
+      } finally {
+        setDocToDelete(null)
       }
     })
   }
@@ -104,19 +108,32 @@ export function DocumentList({ documents, extractions = [], caseId }: { document
                 <Button 
                   variant="secondary" 
                   className="px-sm py-xs text-[11px] h-auto w-full sm:w-auto flex items-center gap-xs"
-                  onClick={() => handleDelete(doc.id)}
-                  disabled={isPending}
+                  onClick={() => setDocToDelete(doc.id)}
+                  disabled={isPending && docToDelete === doc.id}
                 >
-                  {isPending ? (
+                  {isPending && docToDelete === doc.id ? (
                     <Loader2 size={12} className="animate-spin" />
                   ) : null}
-                  {isPending ? 'Deleting...' : 'Delete'}
+                  {isPending && docToDelete === doc.id ? 'Deleting...' : 'Delete'}
                 </Button>
               </div>
             </div>
           )
         })}
       </div>
+      <Modal isOpen={!!docToDelete} onClose={() => setDocToDelete(null)} title="Confirm Deletion">
+        <div className="flex flex-col gap-md">
+          <p className="text-body text-text-secondary">
+            Are you sure you want to delete this document? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-sm mt-sm">
+            <Button variant="ghost" onClick={() => setDocToDelete(null)} disabled={isPending}>Cancel</Button>
+            <Button variant="primary" onClick={confirmDelete} disabled={isPending} className="bg-error hover:bg-error/90 text-white">
+              {isPending ? <Loader2 size={16} className="animate-spin" /> : 'Delete'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </Card>
   )
 }

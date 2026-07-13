@@ -29,15 +29,16 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Public routes — always accessible
-  const isPublicRoute = pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/auth')
+  const isPublicRoute = pathname === '/' || pathname.startsWith('/auth')
 
   if (!user && !isPublicRoute) {
-    // Not logged in — redirect to login
-    const loginUrl = new URL('/login', request.url)
+    // Not logged in — redirect to landing page
+    const loginUrl = new URL('/', request.url)
+    // append a query param so the landing page knows to open login modal if needed? Not necessary for now.
     return NextResponse.redirect(loginUrl)
   }
 
-  if (user && (pathname === '/login' || pathname === '/')) {
+  if (user && pathname === '/') {
     // Already logged in — redirect to dashboard
     const dashboardUrl = new URL('/dashboard', request.url)
     return NextResponse.redirect(dashboardUrl)
