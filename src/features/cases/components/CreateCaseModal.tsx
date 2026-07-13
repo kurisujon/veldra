@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Loader2 } from 'lucide-react';
 import { createCase } from '../actions';
 import { useRouter } from 'next/navigation';
 
@@ -44,13 +45,11 @@ export function CreateCaseModal({ isOpen, onClose }: { isOpen: boolean, onClose:
           <label className="mb-xs block text-small font-medium text-text-secondary">Last Name</label>
           <Input name="lastName" required placeholder="Dela Cruz" />
         </div>
-        <div>
-          <label className="mb-xs block text-small font-medium text-text-secondary">Date of Birth</label>
-          <Input name="dateOfBirth" type="date" required />
-        </div>
+
         <div className="mt-md flex justify-end gap-sm">
-          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>Cancel</Button>
+          <Button type="submit" disabled={loading} className="flex items-center gap-sm">
+            {loading && <Loader2 size={14} className="animate-spin" />}
             {loading ? 'Creating...' : 'Create Case'}
           </Button>
         </div>

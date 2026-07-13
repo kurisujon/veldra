@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState('')
@@ -116,9 +117,16 @@ export default function LoginPage() {
               id="submit-btn"
               type="submit"
               disabled={loading}
-              className="w-full bg-accent text-white font-medium rounded-button px-md py-sm text-body hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-accent text-white font-medium rounded-button px-md py-sm text-body hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-sm"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign in'
+              )}
             </button>
           </form>
         </div>

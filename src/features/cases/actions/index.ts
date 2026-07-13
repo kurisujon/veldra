@@ -7,10 +7,17 @@ import type { Database } from '@/types/database'
 
 const CreateCaseSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
-  middleName: z.string().optional(),
+  middleName: z.string().optional().nullable().or(z.literal('')),
   lastName: z.string().min(1, 'Last name is required'),
-  dateOfBirth: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date format')
 });
+
+function toTitleCase(str: string) {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
 type CaseRow = Database['public']['Tables']['cases']['Row']
 type ApplicantRow = Database['public']['Tables']['applicants']['Row']
@@ -21,7 +28,6 @@ export async function createCase(formData: FormData) {
     firstName: formData.get('firstName'),
     middleName: formData.get('middleName') || null,
     lastName: formData.get('lastName'),
-    dateOfBirth: formData.get('dateOfBirth')
   })
 
   if (!parsed.success) {
@@ -30,10 +36,10 @@ export async function createCase(formData: FormData) {
 
   const supabase = await createClient()
   const { data: newCaseId, error: rpcError } = await supabase.rpc('create_case_with_applicant', {
-    p_first_name: parsed.data.firstName,
-    p_middle_name: parsed.data.middleName,
-    p_last_name: parsed.data.lastName,
-    p_date_of_birth: parsed.data.dateOfBirth
+    p_first_name: toTitleCase(parsed.data.firstName),
+    p_middle_name: parsed.data.middleName ? toTitleCase(parsed.data.middleName) : null,
+    p_last_name: toTitleCase(parsed.data.lastName),
+    p_date_of_birth: '1900-01-01' // Placeholder since it was removed from UI
   });
 
   if (rpcError) throw new Error(rpcError.message)

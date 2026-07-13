@@ -5,6 +5,8 @@ import { getDocumentsByCase } from "@/features/documents/actions";
 import { CaseStatusBadge } from "@/features/cases/components/CaseStatusBadge";
 import { DocumentUpload } from "@/features/documents/components/DocumentUpload";
 import { DocumentList } from "@/features/documents/components/DocumentList";
+import { ValidIdUpload, type ValidIdType } from "@/features/documents/components/ValidIdUpload";
+import { getValidIdsByCase } from "@/features/documents/actions/validId";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -26,6 +28,7 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
   let findings: Awaited<ReturnType<typeof getFindingsByCase>> = [];
   let drafts: Awaited<ReturnType<typeof getDraftsByCase>> = [];
   let exports: any[] = [];
+  let validIds: Awaited<ReturnType<typeof getValidIdsByCase>> = [];
   let userRole = 'Reviewer';
 
   try {
@@ -33,6 +36,7 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
     documents = await getDocumentsByCase(id);
     userRole = await getCurrentUserRole();
     extractions = await getExtractionsByCaseId(id);
+    validIds = await getValidIdsByCase(id);
 
     if (caseData && caseData.status === 'NeedsReview') {
       findings = await getFindingsByCase(id);
@@ -156,6 +160,17 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
           </div>
         )
       )}
+
+      {/* Valid Government ID Upload — always visible */}
+      <ValidIdUpload
+        caseId={caseData.id}
+        existingIds={validIds.map((v) => ({
+          id: v.filePath,
+          type: v.idType as ValidIdType,
+          file_name: v.fileName,
+          preview_url: v.signedUrl || undefined,
+        }))}
+      />
     </PageContainer>
   );
 }

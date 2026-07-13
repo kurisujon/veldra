@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import type { Database } from '@/types/database'
-import { FileText, Image as ImageIcon, File, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
+import { FileText, Image as ImageIcon, File, CheckCircle2, Clock, AlertTriangle, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 
 type DocumentRow = Database['public']['Tables']['documents']['Row']
@@ -103,11 +103,14 @@ export function DocumentList({ documents, extractions = [], caseId }: { document
                 </Button>
                 <Button 
                   variant="secondary" 
-                  className="px-sm py-xs text-[11px] h-auto w-full sm:w-auto"
+                  className="px-sm py-xs text-[11px] h-auto w-full sm:w-auto flex items-center gap-xs"
                   onClick={() => handleDelete(doc.id)}
                   disabled={isPending}
                 >
-                  Delete
+                  {isPending ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : null}
+                  {isPending ? 'Deleting...' : 'Delete'}
                 </Button>
               </div>
             </div>

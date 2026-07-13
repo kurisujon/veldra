@@ -56,6 +56,7 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
 
   return (
     <>
+      {/* Mobile overlay — only visible on mobile when drawer is open */}
       {isMobileOpen && (
         <div 
           className="fixed inset-0 bg-text-primary/50 z-40 md:hidden" 
@@ -64,41 +65,70 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
         />
       )}
 
-      <div className={`
-        fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out
-        md:relative md:translate-x-0 md:h-full md:z-30 md:w-20 md:flex-shrink-0 group
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      {/* 
+        Mobile: fixed drawer from left, translated off-screen when closed.
+        Desktop: relative, collapsible icon-rail that expands on hover.
+      */}
+      <div
+        className={[
+          // Mobile: fixed drawer that slides in/out
+          'fixed inset-y-0 left-0 z-50 md:relative md:z-auto',
+          // Desktop: collapsed icon-rail with expand-on-hover
+          'md:flex-shrink-0 md:h-full',
+          // Group used for hover-expand on desktop
+          'group',
+          // Mobile slide transition
+          'transition-transform duration-300 ease-in-out',
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+        ].join(' ')}
+      >
         <aside 
-          className="absolute top-0 left-0 h-full flex flex-col bg-surface border-r border-text-secondary/10 transition-all duration-300 ease-in-out overflow-hidden w-sidebar md:w-20 group-hover:md:w-sidebar shadow-none group-hover:md:shadow-card"
+          className={[
+            'h-full flex flex-col bg-surface border-r border-text-secondary/10',
+            'transition-all duration-300 ease-in-out overflow-hidden',
+            // Mobile: always full sidebar width (no icon-only mode needed)
+            'w-sidebar',
+            // Desktop: collapsed to icon-only, expand to full width on hover
+            'md:w-20 group-hover:md:w-sidebar',
+            // Shadow only when expanded on desktop
+            'shadow-none group-hover:md:shadow-card',
+          ].join(' ')}
           aria-label="Sidebar Navigation"
         >
-          <div className="flex items-center pl-[24px] pr-md border-b border-text-secondary/10 h-topbar gap-sm">
+          {/* Logo area */}
+          <div className="flex items-center pl-[24px] pr-md border-b border-text-secondary/10 h-topbar gap-sm flex-shrink-0">
             <Image src="/veldra.png" alt="Veldra Logo" width={32} height={32} className="flex-shrink-0 object-contain" />
             <span className="font-bold text-heading text-text-primary whitespace-nowrap md:opacity-0 group-hover:md:opacity-100 transition-opacity duration-300">Veldra</span>
           </div>
 
-          <nav className="flex flex-col py-md gap-xs flex-1 mt-md">
+          {/* Nav links */}
+          <nav className="flex flex-col py-md gap-xs flex-1 mt-md overflow-y-auto">
             {visibleNav.map((item) => {
-              const isActive = item.href === '/dashboard' ? pathname === '/dashboard' : pathname?.startsWith(item.href);
+              const isActive = item.href === '/dashboard'
+                ? pathname === '/dashboard'
+                : pathname?.startsWith(item.href);
               return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose} // Auto close mobile menu when a link is clicked
-                className={`flex items-center gap-sm mx-md px-md py-sm rounded-button hover:bg-background text-text-primary text-body font-medium transition-colors overflow-hidden whitespace-nowrap ${isActive ? 'bg-background font-semibold' : ''}`}
-                title={item.label}
-                aria-label={item.label}
-              >
-                <div className="flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">
-                  {iconMap[item.href]}
-                </div>
-                <span className="md:opacity-0 group-hover:md:opacity-100 transition-opacity duration-300 delay-75">{item.label}</span>
-              </Link>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className={`flex items-center gap-sm mx-md px-md py-sm rounded-button hover:bg-background text-text-primary text-body font-medium transition-colors overflow-hidden whitespace-nowrap ${isActive ? 'bg-background font-semibold' : ''}`}
+                  title={item.label}
+                  aria-label={item.label}
+                >
+                  <div className="flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">
+                    {iconMap[item.href]}
+                  </div>
+                  <span className="md:opacity-0 group-hover:md:opacity-100 transition-opacity duration-300 delay-75">
+                    {item.label}
+                  </span>
+                </Link>
               );
             })}
           </nav>
-          <div className="py-md border-t border-text-secondary/10 flex flex-col gap-xs">
+
+          {/* Sign out */}
+          <div className="py-md border-t border-text-secondary/10 flex flex-col gap-xs flex-shrink-0">
             <button
               onClick={handleSignOut}
               className="w-[calc(100%-24px)] flex items-center gap-sm mx-md px-md py-sm rounded-button hover:bg-background text-error text-body font-medium text-left transition-colors overflow-hidden whitespace-nowrap"
