@@ -47,10 +47,10 @@ export default function LoginPage() {
         if (roleData?.role === 'Admin') {
           router.push('/admin')
         } else {
-          router.push('/')
+          router.push('/dashboard')
         }
       } else {
-        router.push('/')
+        router.push('/dashboard')
       }
       router.refresh()
     }

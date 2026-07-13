@@ -9,7 +9,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { LayoutDashboard, FileText, FileEdit, Download, Settings, LogOut, Trash2, Shield, PieChart } from 'lucide-react';
 
 const iconMap: Record<string, React.ReactNode> = {
-  "/": <LayoutDashboard size={20} />,
+  "/dashboard": <LayoutDashboard size={20} />,
   "/analytics": <PieChart size={20} />,
   "/cases": <FileText size={20} />,
   "/drafts": <FileEdit size={20} />,
@@ -80,7 +80,7 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
 
           <nav className="flex flex-col py-md gap-xs flex-1 mt-md">
             {visibleNav.map((item) => {
-              const isActive = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href);
+              const isActive = item.href === '/dashboard' ? pathname === '/dashboard' : pathname?.startsWith(item.href);
               return (
               <Link
                 key={item.href}
