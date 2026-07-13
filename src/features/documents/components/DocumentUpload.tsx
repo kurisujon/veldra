@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useRef, useState, useTransition, useCallback, DragEvent } from 'react'
-import { uploadDocument } from '../actions'
+import { saveDocumentRecord } from '../actions'
+import { createClient } from '@/lib/supabase/client'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Upload, CheckCircle, Loader2, File as FileIcon } from 'lucide-react'
@@ -14,7 +15,7 @@ const DOCUMENT_TYPES = [
   { value: 'TOR', label: 'Transcript of Records' },
   { value: 'SF10', label: 'Form 137 / SF10' },
   { value: 'Diploma', label: 'Diploma' },
-  { value: 'ValidID', label: 'Valid Government ID' }
+  { value: 'ValidID', label: 'Valid ID' }
 ] as const
 
 type DocumentType = typeof DOCUMENT_TYPES[number]['value']
@@ -50,7 +51,25 @@ export function DocumentUpload({
 
     startTransition(async () => {
       try {
-        await uploadDocument(formData)
+        const supabase = createClient()
+        const documentId = crypto.randomUUID()
+        const filePath = `cases/${caseId}/${documentId}-${file.name}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, file, { cacheControl: '3600', upsert: false })
+
+        if (uploadError) throw new Error(uploadError.message)
+
+        await saveDocumentRecord({
+          caseId,
+          type,
+          filePath,
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type
+        })
+        
         setError(null)
         // Note: Do not clear uploadingType on success. Let useTransition keep it loading until revalidation finishes.
         if (fileInputRefs.current[type]) {

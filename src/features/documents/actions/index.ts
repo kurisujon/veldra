@@ -16,6 +16,15 @@ const UploadDocumentSchema = z.object({
     )
 })
 
+const SaveDocumentRecordSchema = z.object({
+  caseId: z.string().uuid(),
+  type: z.enum(['PSABirth', 'PSAMarriage', 'TOR', 'SF10', 'Diploma', 'ValidID']),
+  filePath: z.string(),
+  fileName: z.string(),
+  fileSize: z.number(),
+  mimeType: z.string()
+})
+
 const DeleteDocumentSchema = z.object({
   documentId: z.string().uuid(),
   caseId: z.string().uuid()
@@ -62,9 +71,33 @@ export async function uploadDocument(formData: FormData) {
   })
 
   if (rpcError) {
-    // Attempt rollback of file if DB fails
-    await supabase.storage.from('documents').remove([filePath])
-    throw new Error(`Database record failed: ${rpcError.message}`)
+    throw new Error(`Database error: ${rpcError.message}`)
+  }
+
+  revalidatePath(`/cases/${caseId}`)
+  return { success: true, documentId }
+}
+
+export async function saveDocumentRecord(data: z.infer<typeof SaveDocumentRecordSchema>) {
+  const parsed = SaveDocumentRecordSchema.safeParse(data)
+  if (!parsed.success) {
+    throw new Error('Invalid document metadata')
+  }
+
+  const supabase = await createClient()
+  const { caseId, type, filePath, fileName, fileSize, mimeType } = parsed.data
+
+  const { error: rpcError } = await supabase.rpc('upload_document_record', {
+    p_case_id: caseId,
+    p_type: type,
+    p_file_path: filePath,
+    p_file_name: fileName,
+    p_file_size: fileSize,
+    p_mime_type: mimeType
+  })
+
+  if (rpcError) {
+    throw new Error(`Database error: ${rpcError.message}`)
   }
 
   revalidatePath(`/cases/${caseId}`)

@@ -15,6 +15,7 @@ type DocumentRow = Database['public']['Tables']['documents']['Row']
 export function DocumentList({ documents, extractions = [], caseId }: { documents: DocumentRow[], extractions?: any[], caseId: string }) {
   const [isPending, startTransition] = useTransition()
   const [docToDelete, setDocToDelete] = React.useState<string | null>(null)
+  const [deletedDocIds, setDeletedDocIds] = React.useState<Set<string>>(new Set())
 
   const confirmDelete = () => {
     if (!docToDelete) return
@@ -22,6 +23,7 @@ export function DocumentList({ documents, extractions = [], caseId }: { document
     startTransition(async () => {
       try {
         await deleteDocument(docToDelete, caseId)
+        setDeletedDocIds(prev => new Set(prev).add(docToDelete))
       } catch (err: any) {
         alert(err.message || 'Failed to delete document')
       } finally {
@@ -73,7 +75,7 @@ export function DocumentList({ documents, extractions = [], caseId }: { document
     <Card className="p-xl mb-xl">
       <h3 className="text-heading font-semibold text-text-primary mb-lg">Uploaded Documents</h3>
       <div className="flex flex-col gap-md">
-        {documents.map((doc) => {
+        {documents.filter(doc => !deletedDocIds.has(doc.id)).map((doc) => {
           const statusInfo = getExtractionStatusInfo(doc.id)
           
           return (
