@@ -139,6 +139,41 @@ export const DiplomaSchema = z.object({
 export type DiplomaData = z.infer<typeof DiplomaSchema>;
 
 /**
+ * Zod schema for a structured Bank Statement extraction object (Sponsor).
+ * All fields are nullable to handle missing or unreadable values.
+ */
+export const BankStatementSchema = z.object({
+  documentType: z.string().nullish().catch(null).default(null),
+  accountHolderName: z.string().nullish().catch(null).default(null),
+  accountNumber: z.string().nullish().catch(null).default(null),
+  bankName: z.string().nullish().catch(null).default(null),
+  bankAddress: z.string().nullish().catch(null).default(null),
+  statementDate: z.string().nullish().catch(null).default(null),
+  currency: z.string().nullish().catch(null).default(null),
+  closingBalance: z.string().nullish().catch(null).default(null),
+  remarks: z.string().nullish().catch(null).default(null),
+});
+
+export type BankStatementData = z.infer<typeof BankStatementSchema>;
+
+/**
+ * Zod schema for a structured Proof of Billing extraction object (Sponsor).
+ */
+export const ProofOfBillingSchema = z.object({
+  documentType: z.string().nullish().catch(null).default(null),
+  billerName: z.string().nullish().catch(null).default(null),
+  customerName: z.string().nullish().catch(null).default(null),
+  billingAddress: z.string().nullish().catch(null).default(null),
+  accountNumber: z.string().nullish().catch(null).default(null),
+  statementDate: z.string().nullish().catch(null).default(null),
+  dueDate: z.string().nullish().catch(null).default(null),
+  amountDue: z.string().nullish().catch(null).default(null),
+  remarks: z.string().nullish().catch(null).default(null),
+});
+
+export type ProofOfBillingData = z.infer<typeof ProofOfBillingSchema>;
+
+/**
  * Union type for all supported document extraction data structures.
  */
 export type ExtractedDocumentData =
@@ -146,4 +181,6 @@ export type ExtractedDocumentData =
   | MarriageCertificateData
   | TorData
   | Sf10Data
-  | DiplomaData;
+  | DiplomaData
+  | BankStatementData
+  | ProofOfBillingData;

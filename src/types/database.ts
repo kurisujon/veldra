@@ -284,6 +284,8 @@ export type Database = {
           file_size: number
           id: string
           mime_type: string
+          owner_type: string
+          sponsor_id: string | null
           status: string
           type: string
           updated_at: string
@@ -297,6 +299,8 @@ export type Database = {
           file_size: number
           id?: string
           mime_type: string
+          owner_type?: string
+          sponsor_id?: string | null
           status?: string
           type: string
           updated_at?: string
@@ -310,6 +314,8 @@ export type Database = {
           file_size?: number
           id?: string
           mime_type?: string
+          owner_type?: string
+          sponsor_id?: string | null
           status?: string
           type?: string
           updated_at?: string
@@ -318,6 +324,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "documents_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsors: {
+        Row: {
+          id: string
+          case_id: string
+          first_name: string
+          last_name: string
+          relationship: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          case_id: string
+          first_name: string
+          last_name: string
+          relationship: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          case_id?: string
+          first_name?: string
+          last_name?: string
+          relationship?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsors_case_id_fkey"
             columns: ["case_id"]
             isOneToOne: false
             referencedRelation: "cases"
@@ -487,6 +528,7 @@ export type Database = {
           category: Database["public"]["Enums"]["finding_category"]
           created_at: string
           description: string
+          finding_scope: string
           id: string
           severity: Database["public"]["Enums"]["finding_severity"]
           status: Database["public"]["Enums"]["finding_status"]
@@ -498,6 +540,7 @@ export type Database = {
           category: Database["public"]["Enums"]["finding_category"]
           created_at?: string
           description: string
+          finding_scope?: string
           id?: string
           severity: Database["public"]["Enums"]["finding_severity"]
           status?: Database["public"]["Enums"]["finding_status"]
@@ -509,6 +552,7 @@ export type Database = {
           category?: Database["public"]["Enums"]["finding_category"]
           created_at?: string
           description?: string
+          finding_scope?: string
           id?: string
           severity?: Database["public"]["Enums"]["finding_severity"]
           status?: Database["public"]["Enums"]["finding_status"]
@@ -595,6 +639,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_sponsor_to_case: {
+        Args: {
+          p_case_id: string
+          p_first_name: string
+          p_last_name: string
+          p_relationship: string
+        }
+        Returns: string
+      }
       create_case_with_applicant:
         | {
             Args: {
@@ -695,8 +748,9 @@ export type Database = {
         | "Age Calculation Issue"
         | "School Gap"
         | "Missing Information"
+        | "Identity"
       finding_field_role: "source_a" | "source_b" | "supporting"
-      finding_severity: "High" | "Medium" | "Low"
+      finding_severity: "High" | "Medium" | "Low" | "Warning"
       finding_status: "Open" | "Accepted" | "Resolved" | "Ignored"
     }
     CompositeTypes: {

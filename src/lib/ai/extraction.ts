@@ -6,6 +6,8 @@ import {
   TorSchema,
   Sf10Schema,
   DiplomaSchema,
+  BankStatementSchema,
+  ProofOfBillingSchema,
   type ExtractedDocumentData,
 } from './schemas';
 
@@ -43,6 +45,12 @@ function getSchemaForType(documentType: string) {
   }
   if (type.includes('diploma') || type === 'diploma') {
     return DiplomaSchema;
+  }
+  if (type.includes('bank') || type === 'bankstatement') {
+    return BankStatementSchema;
+  }
+  if (type.includes('billing') || type === 'proofofbilling') {
+    return ProofOfBillingSchema;
   }
   throw new Error(`No schema defined for document type: ${documentType}`);
 }

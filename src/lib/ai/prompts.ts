@@ -131,5 +131,41 @@ Schema:
 }`;
   }
 
+  if (type.includes('bank') || type.includes('statement') || type === 'bankstatement') {
+    return `You are a high-precision document extraction agent. Extract structured information from the provided Bank Statement.
+Return a single JSON object matching this schema exactly. Use null for missing, unreadable, or not present values. Do not invent any data. Do not include markdown formatting or backticks.
+
+Schema:
+{
+  "documentType": "BankStatement",
+  "accountHolderName": string or null,
+  "accountNumber": string or null,
+  "bankName": string or null,
+  "bankAddress": string or null,
+  "statementDate": string or null (preferably formatted as YYYY-MM-DD if clear, otherwise verbatim),
+  "currency": string or null,
+  "closingBalance": string or null,
+  "remarks": string or null
+}`;
+  }
+
+  if (type.includes('billing') || type === 'proofofbilling') {
+    return `You are a high-precision document extraction agent. Extract structured information from the provided Proof of Billing (e.g. utility bill).
+Return a single JSON object matching this schema exactly. Use null for missing, unreadable, or not present values. Do not invent any data. Do not include markdown formatting or backticks.
+
+Schema:
+{
+  "documentType": "ProofOfBilling",
+  "billerName": string or null,
+  "customerName": string or null,
+  "billingAddress": string or null,
+  "accountNumber": string or null,
+  "statementDate": string or null (preferably formatted as YYYY-MM-DD if clear, otherwise verbatim),
+  "dueDate": string or null (preferably formatted as YYYY-MM-DD if clear, otherwise verbatim),
+  "amountDue": string or null,
+  "remarks": string or null
+}`;
+  }
+
   throw new Error(`Unsupported document type for prompt template: ${documentType}`);
 }

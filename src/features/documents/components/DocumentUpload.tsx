@@ -15,7 +15,9 @@ const DOCUMENT_TYPES = [
   { value: 'TOR', label: 'Transcript of Records' },
   { value: 'SF10', label: 'Form 137 / SF10' },
   { value: 'Diploma', label: 'Diploma' },
-  { value: 'ValidID', label: 'Valid ID' }
+  { value: 'ValidID', label: 'Valid ID' },
+  { value: 'BankStatement', label: 'Bank Statement (Sponsor)' },
+  { value: 'ProofOfBilling', label: 'Proof of Billing (Sponsor)' }
 ] as const
 
 type DocumentType = typeof DOCUMENT_TYPES[number]['value']

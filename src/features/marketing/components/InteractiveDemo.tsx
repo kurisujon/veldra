@@ -97,7 +97,7 @@ export function InteractiveDemo() {
           <AlertTriangle className="text-warning shrink-0 mt-xs" size={24} />
           <div>
             <h4 className="font-semibold text-text-primary">Discrepancy Detected</h4>
-            <p className="text-body text-text-secondary mt-xs">Name mismatch in Mother's First Name: <strong>MARIA</strong> (PSA) vs <strong>MARY</strong> (TOR).</p>
+            <p className="text-body text-text-secondary mt-xs">Name mismatch in Mother&apos;s First Name: <strong>MARIA</strong> (PSA) vs <strong>MARY</strong> (TOR).</p>
             <div className="mt-md flex items-center gap-sm">
               <button className="text-small bg-accent text-white px-sm py-xs rounded-button flex items-center gap-xs font-medium">
                 Generate Affidavit <ArrowRight size={14} />

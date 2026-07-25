@@ -33,10 +33,10 @@ export function CaseFindingsWorkspace({
 
   const isReadOnly = userRole !== 'Admin' && userRole !== 'Reviewer'
 
-  // Sort findings by severity: High -> Medium -> Low
+  // Sort findings by severity: High -> Medium -> Low -> Warning
   const sortedFindings = [...findings].sort((a, b) => {
-    const severityOrder = { High: 0, Medium: 1, Low: 2 }
-    return severityOrder[a.severity] - severityOrder[b.severity]
+    const severityOrder: Record<string, number> = { High: 0, Medium: 1, Low: 2, Warning: 3 }
+    return (severityOrder[a.severity] ?? 99) - (severityOrder[b.severity] ?? 99)
   })
 
   // Select the first finding by default

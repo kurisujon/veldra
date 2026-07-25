@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { updateFindingStatus } from '../actions'
 import type { Database } from '@/types/database'
 
-type Finding = Database['public']['Tables']['findings']['Row']
+type Finding = Database['public']['Tables']['findings']['Row'] & { finding_scope?: string }
 
 const formatCamelCaseTitle = (title: string) => {
   if (!title) return title;
@@ -52,6 +52,7 @@ export function FindingCard({
   const severityVariant = 
     finding.severity === 'High' ? 'error' : 
     finding.severity === 'Medium' ? 'warning' : 
+    finding.severity === 'Warning' ? 'warning' : 
     'neutral'
 
   // Map status to Badge variants
@@ -75,9 +76,17 @@ export function FindingCard({
         <span className="text-small font-medium text-text-secondary tracking-normal">
           {finding.category}
         </span>
-        <Badge variant={severityVariant}>
-          {finding.severity}
-        </Badge>
+        <div className="flex items-center gap-xs">
+          {finding.finding_scope === 'sponsor_only' && (
+            <Badge variant="warning" className="uppercase text-[10px]">Sponsor</Badge>
+          )}
+          {finding.finding_scope === 'applicant_and_sponsor' && (
+            <Badge variant="warning" className="uppercase text-[10px]">Cross-Entity</Badge>
+          )}
+          <Badge variant={severityVariant}>
+            {finding.severity}
+          </Badge>
+        </div>
       </div>
 
       <div className="flex flex-col gap-xs">
