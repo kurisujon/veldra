@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 const AddSponsorSchema = z.object({
@@ -28,5 +29,21 @@ export async function addSponsor(input: z.infer<typeof AddSponsorSchema>) {
     return { error: error.message }
   }
 
+  revalidatePath(`/cases/${result.data.case_id}`)
   return { data }
+}
+
+export async function getSponsorsByCase(caseId: string) {
+  const parsed = z.string().uuid().safeParse(caseId)
+  if (!parsed.success) throw new Error('Invalid case ID')
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('sponsors')
+    .select('*')
+    .eq('case_id', parsed.data)
+    .order('created_at', { ascending: true })
+
+  if (error) throw new Error(error.message)
+  return data ?? []
 }

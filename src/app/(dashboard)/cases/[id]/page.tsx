@@ -17,11 +17,14 @@ import { GenerateDraftsButton } from "@/features/drafts/components/GenerateDraft
 import { getExportsByCase } from "@/features/exports/actions";
 import { ExportWorkspace } from "@/features/exports/components/ExportWorkspace";
 import { getExtractionsByCaseId } from "@/features/extractions/actions";
+import { getSponsorsByCase } from "@/features/sponsors/actions";
+import { SponsorList } from "@/features/sponsors/components/SponsorList";
 
 export default async function CaseDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   let caseData: Awaited<ReturnType<typeof getCaseById>> | undefined;
   let documents: Awaited<ReturnType<typeof getDocumentsByCase>> = [];
+  let sponsors: Awaited<ReturnType<typeof getSponsorsByCase>> = [];
   let extractions: any[] = [];
   let findings: Awaited<ReturnType<typeof getFindingsByCase>> = [];
   let drafts: Awaited<ReturnType<typeof getDraftsByCase>> = [];
@@ -31,6 +34,7 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
   try {
     caseData = await getCaseById(id);
     documents = await getDocumentsByCase(id);
+    sponsors = await getSponsorsByCase(id);
     userRole = await getCurrentUserRole();
     extractions = await getExtractionsByCaseId(id);
 
@@ -150,9 +154,12 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
         />
       ) : (
         !isDraftPhase && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl">
-            <DocumentUpload caseId={caseData.id} documents={documents} />
-            <DocumentList documents={documents} extractions={extractions} caseId={caseData.id} />
+          <div className="flex flex-col gap-xl">
+            <SponsorList caseId={caseData.id} sponsors={sponsors} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl">
+              <DocumentUpload caseId={caseData.id} documents={documents} />
+              <DocumentList documents={documents} extractions={extractions} caseId={caseData.id} />
+            </div>
           </div>
         )
       )}

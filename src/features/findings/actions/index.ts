@@ -8,6 +8,8 @@ import { compareNames } from '@/lib/comparison/compareNames'
 import { compareDates } from '@/lib/comparison/compareDates'
 import { compareAddresses } from '@/lib/comparison/compareAddresses'
 import { compareTimeline } from '@/lib/comparison/compareTimeline'
+import { runVerificationEngine } from '@/lib/comparison/engine'
+import type { DocumentMetadata, Sponsor } from '@/lib/comparison/types'
 
 const AnalyzeDocumentsSchema = z.object({
   caseId: z.string().uuid()
@@ -59,6 +61,17 @@ export async function analyzeDocuments(caseId: string) {
     return { success: false, error: 'No documents uploaded. Please upload documents before running analysis.' }
   }
 
+  // 3. Fetch Sponsors for this case
+  const { data: sponsorsRaw } = await supabase
+    .from('sponsors')
+    .select('*')
+    .eq('case_id', caseId)
+
+  const sponsors: Sponsor[] = (sponsorsRaw ?? []).map((s) => ({
+    id: s.id,
+    relationship: s.relationship
+  }))
+
   // 4. Fetch DocumentFields for comparison
   const { data: fields, error: fieldsError } = await supabase
     .from('document_fields')
@@ -71,21 +84,51 @@ export async function analyzeDocuments(caseId: string) {
     return { success: false, error: 'Please extract and review the uploaded documents before running analysis.' }
   }
 
-  // 3. Delete existing findings for this case (reset analysis)
+  // Build document metadata map for owner_type and sponsor_id lookup
+  const documentMetadata: DocumentMetadata[] = (documents ?? []).map((d) => ({
+    id: d.id,
+    owner_type: (d.owner_type as 'applicant' | 'sponsor') ?? 'applicant',
+    sponsor_id: d.sponsor_id ?? null
+  }))
+
+  // 5. Delete existing findings for this case (reset analysis)
   await supabase.from('findings').delete().eq('case_id', caseId)
 
   let discrepancyFound = false
 
   if (fields && fields.length > 0) {
-    const discrepancies = [
-      ...compareNames(fields as any),
-      ...compareDates(fields as any),
-      ...compareAddresses(fields as any),
-      ...compareTimeline(fields as any)
+    // Legacy applicant-only comparators
+    const applicantFields = fields.filter((f) => {
+      const meta = documentMetadata.find((d) => d.id === f.document_id)
+      return !meta || meta.owner_type === 'applicant'
+    })
+
+    const legacyDiscrepancies = [
+      ...compareNames(applicantFields as any),
+      ...compareDates(applicantFields as any),
+      ...compareAddresses(applicantFields as any),
+      ...compareTimeline(applicantFields as any)
     ]
+
+    // Sponsor cross-reference engine discrepancies
+    const engineDiscrepancies = sponsors.length > 0
+      ? runVerificationEngine(fields as any, documentMetadata, sponsors)
+      : []
+
+    const discrepancies = [...legacyDiscrepancies, ...engineDiscrepancies]
 
     for (const disc of discrepancies) {
       discrepancyFound = true
+
+      // Determine finding_scope from the owner_type of the two fields
+      const metaA = documentMetadata.find((d) => d.id === disc.fieldA.document_id)
+      const metaB = documentMetadata.find((d) => d.id === disc.fieldB.document_id)
+      const ownerA = metaA?.owner_type ?? 'applicant'
+      const ownerB = metaB?.owner_type ?? 'applicant'
+
+      let finding_scope = 'applicant_only'
+      if (ownerA === 'sponsor' && ownerB === 'sponsor') finding_scope = 'sponsor_only'
+      else if (ownerA !== ownerB) finding_scope = 'applicant_and_sponsor'
 
       const { data: finding, error: insertError } = await supabase
         .from('findings')
@@ -95,6 +138,7 @@ export async function analyzeDocuments(caseId: string) {
           description: disc.description,
           severity: disc.severity,
           category: disc.category,
+          finding_scope,
           status: 'Open'
         })
         .select()
