@@ -6,6 +6,11 @@
 
 ## In Progress
 - [ ] Phase 8: Dashboard & Analytics.
+  - [ ] Wire up existing `get_dashboard_analytics` RPC.
+  - [ ] Build metric cards (Total Cases, Open Findings, Avg. Resolution Time).
+  - [ ] Build charts: Case status distribution, Findings by severity/category.
+  - [ ] Sponsor-aware finding breakdowns.
+  - [ ] Date range filtering.
 
 ## Completed
 - [x] Phase 1 Documentation Foundation.
@@ -20,6 +25,17 @@
 - [x] Phase 5 Document Uploads & Findings System.
 - [x] Phase 6 Draft Generation Workspace.
 - [x] Phase 7 Export & Reporting Workspace.
+- [x] Phase 7.5 Sponsor Verification & Cross-Reference System.
+  - [x] `sponsors` table + `add_sponsor_to_case` SECURITY DEFINER RPC.
+  - [x] `owner_type`, `sponsor_id` columns on `documents`.
+  - [x] `finding_scope` column on `findings`.
+  - [x] `BankStatementSchema` + `ProofOfBillingSchema` Zod schemas.
+  - [x] Gemini extraction prompts for sponsor documents.
+  - [x] Configurable deterministic Verification Rules Engine.
+  - [x] `AddSponsorModal` UI component.
+  - [x] Sponsor document types in DocumentUpload dropzone.
+  - [x] `FindingCard` with Sponsor/Cross-Entity badges + Warning severity.
+  - [x] Multi-Agent Orchestration Framework (`skills/`, `agents/`).
 
 ## Decision Log
 - **[2026-06-21]**: Decided to use Next.js App Router for better server-side performance.
@@ -30,3 +46,6 @@
 - **[2026-06-21]**: Created a strict Findings System to manage discrepancy lifecycles.
 - **[2026-06-21]**: Enforced mandatory component inventory and folder structure.
 - **[2026-06-21]**: Initialized Supabase SSR client foundation for Phase 2. Setup `clsx` and `tailwind-merge` for UI components.
+- **[2026-07-25]**: Completed Sponsor Verification & Cross-Reference System. Sponsors are strictly limited to 2 per case, enforced at the RPC level. All sponsor discrepancies are `Warning` severity — they never auto-fail a case.
+- **[2026-07-25]**: Introduced configurable deterministic Verification Rules Engine (`src/lib/comparison/engine.ts`) to replace hardcoded field comparisons. AI strictly confined to extraction only.
+- **[2026-07-25]**: Scaffolded Multi-Agent Orchestration Framework with Planner, Backend Executor (Claude), Frontend Executor (Gemini), QA, and Reviewer agents.
