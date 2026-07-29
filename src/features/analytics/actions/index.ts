@@ -9,12 +9,14 @@ export interface AnalyticsData {
   resolvedRate: number;
   avgResolutionTimeHours: number;
   categoryCounts: Record<string, number>;
+  scopeCounts: Record<string, number>;
+  statusCounts: Record<string, number>;
   conflictingSources: Array<{ pair: string; count: number }>;
 }
 
-export async function getAnalyticsData(): Promise<AnalyticsData> {
+export async function getAnalyticsData(startDate?: string, endDate?: string): Promise<AnalyticsData> {
   const supabase = await createClient()
-  const dashboardStats = await getDashboardAnalytics();
+  const dashboardStats = await getDashboardAnalytics(startDate, endDate);
 
   const totalFindings = Object.values(dashboardStats.findings_by_category).reduce((a, b) => a + b, 0);
   const criticalDiscrepancies = dashboardStats.findings_by_severity['High'] || 0;
@@ -75,6 +77,8 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     resolvedRate,
     avgResolutionTimeHours,
     categoryCounts: dashboardStats.findings_by_category,
+    scopeCounts: dashboardStats.findings_by_scope || {},
+    statusCounts: dashboardStats.cases_by_status || {},
     conflictingSources
   };
 }

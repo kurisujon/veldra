@@ -12,6 +12,7 @@ const DashboardAnalyticsSchema = z.object({
   cases_by_status: z.record(z.string(), z.number()),
   findings_by_severity: z.record(z.string(), z.number()),
   findings_by_category: z.record(z.string(), z.number()),
+  findings_by_scope: z.record(z.string(), z.number()),
   recent_activity: z.array(z.object({
     id: z.string().uuid(),
     case_id: z.string().uuid().nullable(),
@@ -31,10 +32,14 @@ const DashboardAnalyticsSchema = z.object({
 
 export type DashboardAnalytics = z.infer<typeof DashboardAnalyticsSchema>;
 
-export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
+export async function getDashboardAnalytics(startDate?: string, endDate?: string): Promise<DashboardAnalytics> {
   const supabase = await createClient()
   
-  const { data, error } = await supabase.rpc('get_dashboard_analytics')
+  const args: any = {}
+  if (startDate) args.p_start_date = startDate
+  if (endDate) args.p_end_date = endDate
+
+  const { data, error } = await supabase.rpc('get_dashboard_analytics', Object.keys(args).length > 0 ? args : undefined)
   
   if (error) {
     console.error('Failed to fetch dashboard analytics:', error)

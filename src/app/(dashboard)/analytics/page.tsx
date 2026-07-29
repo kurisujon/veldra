@@ -1,6 +1,7 @@
 import { PageContainer } from "@/components/layouts/PageContainer";
 import { AnalyticsSummary } from "@/features/analytics/components/AnalyticsSummary";
 import { DiscrepancyBreakdown } from "@/features/analytics/components/DiscrepancyBreakdown";
+import { CaseAnalyticsBreakdown } from "@/features/analytics/components/CaseAnalyticsBreakdown";
 import { getAnalyticsData } from "@/features/analytics/actions";
 
 export default async function AnalyticsPage() {
@@ -24,6 +25,10 @@ export default async function AnalyticsPage() {
           criticalDiscrepancies={data.criticalDiscrepancies}
           resolvedRate={data.resolvedRate}
           avgResolutionTimeHours={data.avgResolutionTimeHours}
+        />
+        <CaseAnalyticsBreakdown
+          statusCounts={data.statusCounts}
+          scopeCounts={data.scopeCounts}
         />
         <DiscrepancyBreakdown 
           categoryCounts={data.categoryCounts}

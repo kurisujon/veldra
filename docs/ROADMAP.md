@@ -43,11 +43,18 @@
 - `FindingCard` updated with Sponsor / Cross-Entity visual badges.
 - `Warning` severity and `Identity` category added to DB enums.
 - Multi-Agent Orchestration Framework scaffolded (`skills/`, `agents/`).
+- `SponsorList` component integrated into Case Dashboard page.
+- `runVerificationEngine` wired into `analyzeDocuments` findings action.
+- `finding_scope` auto-calculated and persisted on analysis.
+- Graceful fallback for `getSponsorsByCase` if migration not yet applied.
 
-## Phase 8: Dashboard & Analytics 🔄 (Current)
-- Overview analytics for Case processing times, resolution rates.
-- Advanced administrative dashboards.
-- Sponsor-aware metrics (Applicant vs Sponsor findings breakdown).
+## Phase 8: Dashboard & Analytics ✅
+- `get_dashboard_analytics` RPC with optional date filtering (`p_start_date`, `p_end_date`).
+- `findings_by_scope` added to analytics response (applicant_only / sponsor_only / applicant_and_sponsor).
+- `AnalyticsSummary` metric cards (Total Findings, Critical, Resolved Rate, Avg Time).
+- `DiscrepancyBreakdown` (by category + top conflicting source pairs).
+- `CaseAnalyticsBreakdown` (case status distribution + findings by origin scope).
+- Sponsor-aware metrics fully integrated.
 
 ## Phase 9: Polish & QA
 - Performance audits, end-to-end testing, and final refinement.

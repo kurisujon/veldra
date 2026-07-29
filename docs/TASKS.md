@@ -1,16 +1,10 @@
 # Tasks Tracker
 
 ## Backlog
-- [ ] Implement advanced analytics for case processing (Phase 8).
-- [ ] Build supervisor and admin dashboards (Phase 8).
+- [ ] Phase 9: Polish & QA (performance audits, E2E testing, refinement).
 
 ## In Progress
-- [ ] Phase 8: Dashboard & Analytics.
-  - [ ] Wire up existing `get_dashboard_analytics` RPC.
-  - [ ] Build metric cards (Total Cases, Open Findings, Avg. Resolution Time).
-  - [ ] Build charts: Case status distribution, Findings by severity/category.
-  - [ ] Sponsor-aware finding breakdowns.
-  - [ ] Date range filtering.
+- (None — awaiting next directive)
 
 ## Completed
 - [x] Phase 1 Documentation Foundation.
@@ -36,6 +30,15 @@
   - [x] Sponsor document types in DocumentUpload dropzone.
   - [x] `FindingCard` with Sponsor/Cross-Entity badges + Warning severity.
   - [x] Multi-Agent Orchestration Framework (`skills/`, `agents/`).
+  - [x] `SponsorList` integrated into Case Dashboard.
+  - [x] `runVerificationEngine` wired into `analyzeDocuments`.
+  - [x] Graceful fallback for `getSponsorsByCase` if migration pending.
+- [x] Phase 8: Dashboard & Analytics.
+  - [x] `get_dashboard_analytics` RPC upgraded with date filtering + `findings_by_scope`.
+  - [x] `AnalyticsSummary` metric cards.
+  - [x] `DiscrepancyBreakdown` (by category + top conflicting source pairs).
+  - [x] `CaseAnalyticsBreakdown` (case status distribution + findings by scope).
+  - [x] Sponsor-aware metrics fully integrated.
 
 ## Decision Log
 - **[2026-06-21]**: Decided to use Next.js App Router for better server-side performance.

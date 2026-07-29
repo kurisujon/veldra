@@ -4,20 +4,13 @@
 Veldra is a Smart Document Verification Platform tailored for checking student visa application documents. It automates the extraction and cross-referencing of critical data across documents like PSA Birth Certificates, Transcripts, and Diplomas, flagging inconsistencies and generating necessary legal drafts. The product is a review workspace for document verification staff, strictly a tool, NOT a chatbot.
 
 ## Current Phase
-**Sponsor Verification & Cross-Reference System (Phase 7.5 Completed)**
-- `sponsors` table implemented with max-2-per-case enforcement via `add_sponsor_to_case` SECURITY DEFINER RPC.
-- `documents.owner_type` and `documents.sponsor_id` columns added — documents can now belong to Applicant or a Sponsor.
-- `findings.finding_scope` column added — findings are categorized as `applicant_only`, `sponsor_only`, or `applicant_and_sponsor`.
-- New Zod schemas: `BankStatementSchema`, `ProofOfBillingSchema` (in `src/lib/ai/schemas.ts`).
-- New Gemini extraction prompts for Bank Statements and Proof of Billing (in `src/lib/ai/prompts.ts`).
-- Configurable deterministic Verification Rules Engine created (`src/lib/comparison/engine.ts`).
-- `AddSponsorModal` UI component built (`src/features/sponsors/components/`).
-- `FindingCard` updated with `Sponsor` / `Cross-Entity` visual badges.
-- `Warning` severity and `Identity` finding category added to DB enums.
-- Multi-Agent Orchestration Framework scaffolded (`skills/`, `agents/`, `docs/MULTI_AGENT_ORCHESTRATION.md`).
-- Gemini 2.5 Flash document extraction remains fully operational with structured output validation and multi-key rotation fallback.
+**Dashboard & Analytics (Phase 8 Completed)**
+- `get_dashboard_analytics` RPC upgraded with optional date filtering and `findings_by_scope`.
+- `AnalyticsSummary`, `DiscrepancyBreakdown`, and `CaseAnalyticsBreakdown` components built.
+- Sponsor-aware metrics (applicant_only / sponsor_only / applicant_and_sponsor) fully integrated.
+- Phase 7.5 wiring completed: `SponsorList` on Case Dashboard, `runVerificationEngine` in `analyzeDocuments`, graceful fallback for missing `sponsors` table.
 
-**Current Phase:** Phase 8 - Dashboard & Analytics
+**Current Phase:** Phase 9 - Polish & QA
 
 ## Architecture Constraints
 - Veldra uses a strict Case-Centric Architecture.

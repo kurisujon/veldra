@@ -695,7 +695,13 @@ export type Database = {
           username: string
         }[]
       }
-      get_dashboard_analytics: { Args: Record<PropertyKey, never>; Returns: Json }
+      get_dashboard_analytics: {
+        Args: {
+          p_start_date?: string | null
+          p_end_date?: string | null
+        }
+        Returns: Json
+      }
       get_email_by_username: { Args: { p_username: string }; Returns: string }
       get_user_role: { Args: never; Returns: string }
       upload_document_record: {

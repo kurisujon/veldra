@@ -34,7 +34,7 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
   try {
     caseData = await getCaseById(id);
     documents = await getDocumentsByCase(id);
-    sponsors = await getSponsorsByCase(id);
+    sponsors = await getSponsorsByCase(id).catch(() => []);
     userRole = await getCurrentUserRole();
     extractions = await getExtractionsByCaseId(id);
 
