@@ -40,8 +40,8 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       if (!findingMap[fd.finding_id]) {
         findingMap[fd.finding_id] = [];
       }
-      // @ts-ignore - Supabase type for joined tables sometimes needs coercing
-      const docType = fd.documents?.type;
+      const doc = fd.documents as { type: string } | null;
+      const docType = doc?.type;
       if (docType) {
         findingMap[fd.finding_id].push(docType);
       }

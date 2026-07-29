@@ -35,7 +35,7 @@ export type DashboardAnalytics = z.infer<typeof DashboardAnalyticsSchema>;
 export async function getDashboardAnalytics(startDate?: string, endDate?: string): Promise<DashboardAnalytics> {
   const supabase = await createClient()
   
-  const args: any = {}
+  const args: { p_start_date?: string; p_end_date?: string } = {}
   if (startDate) args.p_start_date = startDate
   if (endDate) args.p_end_date = endDate
 

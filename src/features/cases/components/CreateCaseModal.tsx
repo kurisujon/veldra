@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Loader2 } from 'lucide-react';
 import { createCase } from '../actions';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 export function CreateCaseModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const router = useRouter();
@@ -19,11 +20,14 @@ export function CreateCaseModal({ isOpen, onClose }: { isOpen: boolean, onClose:
     const formData = new FormData(e.currentTarget);
     try {
       const newCase = await createCase(formData);
+      toast.success('Case created successfully');
       router.push(`/cases/${newCase.id}`);
       onClose();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Failed to create case');
+      const msg = err.message || 'Failed to create case';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

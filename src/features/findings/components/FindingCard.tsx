@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { updateFindingStatus } from '../actions'
 import type { Database } from '@/types/database'
+import { toast } from 'react-hot-toast'
 
 type Finding = Database['public']['Tables']['findings']['Row'] & { finding_scope?: string }
 
@@ -39,11 +40,13 @@ export function FindingCard({
     startTransition(async () => {
       try {
         const result = await updateFindingStatus(finding.id, finding.case_id, newStatus)
-        if (result.success && onStatusChange) {
-          onStatusChange(newStatus)
+        if (result.success) {
+          if (onStatusChange) onStatusChange(newStatus)
+          toast.success(`Finding marked as ${newStatus}`)
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to update status:', err)
+        toast.error('Failed to update status')
       }
     })
   }

@@ -193,8 +193,16 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
       </div>
 
       {filteredCases.length === 0 ? (
-        <Card className="p-md sm:p-xl text-center text-text-secondary">
-          No cases found matching your criteria.
+        <Card className="p-2xl text-center flex flex-col items-center gap-md">
+          <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center text-accent mb-xs">
+            <Search size={24} />
+          </div>
+          <h3 className="text-heading font-semibold text-text-primary">No cases found</h3>
+          <p className="text-body text-text-secondary max-w-sm">
+            {initialCases.length === 0
+              ? 'Get started by creating your first case using the button above.'
+              : 'No cases match your current filters. Try adjusting your search or status filter.'}
+          </p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-md sm:gap-lg overflow-x-hidden">

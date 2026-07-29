@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Upload, CheckCircle, Loader2, File as FileIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
+import { toast } from 'react-hot-toast'
 
 const DOCUMENT_TYPES = [
   { value: 'PSABirth', label: 'PSA Birth Certificate' },
@@ -17,7 +18,11 @@ const DOCUMENT_TYPES = [
   { value: 'Diploma', label: 'Diploma' },
   { value: 'ValidID', label: 'Valid ID' },
   { value: 'BankStatement', label: 'Bank Statement (Sponsor)' },
-  { value: 'ProofOfBilling', label: 'Proof of Billing (Sponsor)' }
+  { value: 'ProofOfBilling', label: 'Proof of Billing (Sponsor)' },
+  { value: 'SponsorValidID', label: 'Valid ID / Passport (Sponsor)' },
+  { value: 'SponsorCOE', label: 'Cert. of Employment (Sponsor)' },
+  { value: 'SponsorITR', label: 'Income Tax Return (Sponsor)' },
+  { value: 'AffidavitOfSupport', label: 'Affidavit of Support' }
 ] as const
 
 type DocumentType = typeof DOCUMENT_TYPES[number]['value']
@@ -73,6 +78,7 @@ export function DocumentUpload({
         })
         
         setError(null)
+        toast.success(`${type} uploaded successfully`)
         // Note: Do not clear uploadingType on success. Let useTransition keep it loading until revalidation finishes.
         if (fileInputRefs.current[type]) {
           fileInputRefs.current[type]!.value = ''
@@ -80,6 +86,7 @@ export function DocumentUpload({
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : `Failed to upload ${type}`
         setError(msg)
+        toast.error(msg)
         setUploadingType(null)
         if (fileInputRefs.current[type]) {
           fileInputRefs.current[type]!.value = ''

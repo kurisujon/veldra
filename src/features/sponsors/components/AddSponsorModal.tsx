@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { addSponsor } from '../actions'
+import { toast } from 'react-hot-toast'
 
 interface AddSponsorModalProps {
   caseId: string
@@ -36,7 +37,9 @@ export function AddSponsorModal({ caseId, isOpen, onClose, onSuccess }: AddSpons
 
     if (result.error) {
       setError(result.error)
+      toast.error(result.error)
     } else {
+      toast.success('Sponsor added successfully')
       setFirstName('')
       setLastName('')
       setRelationship('')

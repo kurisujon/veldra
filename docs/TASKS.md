@@ -1,10 +1,16 @@
 # Tasks Tracker
 
 ## Backlog
-- [ ] Phase 9: Polish & QA (performance audits, E2E testing, refinement).
+- (None)
 
 ## In Progress
-- (None — awaiting next directive)
+- [ ] Phase 9: Polish & QA.
+  - [x] Implement `loading.tsx` Suspense boundaries and Skeleton components for dashboards.
+  - [x] Implement `error.tsx` boundaries for graceful failures.
+  - [x] Polish empty states for cases, findings, and sponsors.
+  - [x] Toast notifications for async server actions (success/error).
+  - [ ] E2E Golden Path Verification (Case Creation -> Export).
+  - [x] Clean up codebase (remove console logs, fix unused imports, verify build).
 
 ## Completed
 - [x] Phase 1 Documentation Foundation.
