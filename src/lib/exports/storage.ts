@@ -17,7 +17,7 @@ export class StorageService {
       });
       
     if (error) {
-      throw new Error(`Storage upload error: ${error.message}`);
+      throw new Error(`Storage upload error: ${(error instanceof Error ? error.message : String(error))}`);
     }
     
     // We return the relative path within the 'exports' bucket

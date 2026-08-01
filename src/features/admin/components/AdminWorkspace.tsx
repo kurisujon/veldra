@@ -42,8 +42,8 @@ export function AdminWorkspace({ users }: { users: any[] }) {
         setIsCreating(false)
         ;(e.target as HTMLFormElement).reset()
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred')
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'An error occurred')
     }
     setLoading(false)
   }
@@ -63,8 +63,8 @@ export function AdminWorkspace({ users }: { users: any[] }) {
         setMessage('User deleted successfully.')
         setUserToDelete(null)
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred')
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'An error occurred')
     }
     setDeletingId(null)
   }

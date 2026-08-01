@@ -23,9 +23,9 @@ export function CreateCaseModal({ isOpen, onClose }: { isOpen: boolean, onClose:
       toast.success('Case created successfully');
       router.push(`/cases/${newCase.id}`);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      const msg = err.message || 'Failed to create case';
+      const msg = (err instanceof Error ? err.message : String(err)) || 'Failed to create case';
       setError(msg);
       toast.error(msg);
     } finally {

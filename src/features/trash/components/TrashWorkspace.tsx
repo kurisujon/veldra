@@ -42,9 +42,9 @@ export function TrashWorkspace({ deletedCases, deletedDrafts, deletedExports }: 
         await actionFn(id)
       }
       setMessage('Item restored successfully.')
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e)
-      setError(e.message || "Failed to restore item.")
+      setError((e instanceof Error ? e.message : String(e)) || "Failed to restore item.")
     }
     setLoading(null)
   }
@@ -64,9 +64,9 @@ export function TrashWorkspace({ deletedCases, deletedDrafts, deletedExports }: 
         await permanentlyDeleteExport(id, caseId!)
       }
       setMessage('Item permanently deleted.')
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e)
-      setError(e.message || "Failed to delete item permanently.")
+      setError((e instanceof Error ? e.message : String(e)) || "Failed to delete item permanently.")
     }
     setLoading(null)
     setTargetToDelete(null)

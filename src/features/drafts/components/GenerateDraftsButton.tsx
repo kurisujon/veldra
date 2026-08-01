@@ -18,7 +18,7 @@ export function GenerateDraftsButton({ caseId }: GenerateDraftsButtonProps) {
         const result = await generateDrafts(caseId)
         if (!result.success) throw new Error('Generation failed')
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to generate drafts')
+        setError(err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Failed to generate drafts')
       }
     })
   }

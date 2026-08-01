@@ -8,7 +8,7 @@ export async function getDocumentDownloadUrl(filePath: string) {
     .createSignedUrl(filePath, 3600); // 1 hour
 
   if (error) {
-    throw new Error(`Failed to generate download URL: ${error.message}`);
+    throw new Error(`Failed to generate download URL: ${(error instanceof Error ? error.message : String(error))}`);
   }
 
   return data.signedUrl;

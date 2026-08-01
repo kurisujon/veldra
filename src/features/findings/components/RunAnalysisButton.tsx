@@ -21,9 +21,9 @@ export function RunAnalysisButton({ caseId }: RunAnalysisButtonProps) {
         } else {
           toast.success('Analysis completed successfully')
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to run analysis:', err)
-        toast.error(err.message || 'An error occurred while running the analysis.')
+        toast.error((err instanceof Error ? err.message : String(err)) || 'An error occurred while running the analysis.')
       }
     })
   }

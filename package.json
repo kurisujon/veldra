@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "ESLINT_USE_FLAT_CONFIG=true eslint src",
     "restore-db": "git restore src/types/database.ts",
-    "gen-types": "npx supabase gen types typescript --linked > src/types/database.ts"
+    "gen-types": "npx supabase gen types typescript --linked > src/types/database.ts",
+    "test:e2e": "dotenv -e .env.e2e.local -- playwright test",
+    "test:e2e:desktop": "dotenv -e .env.e2e.local -- playwright test --project=chromium-desktop",
+    "test:e2e:headed": "dotenv -e .env.e2e.local -- playwright test --headed",
+    "test:e2e:ui": "dotenv -e .env.e2e.local -- playwright test --ui",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",

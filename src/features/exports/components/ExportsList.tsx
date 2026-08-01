@@ -42,8 +42,8 @@ export function ExportsList({ exports }: { exports: any[] }) {
         setMessage('Export moved to trash successfully.')
         setExportToDelete(null)
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while deleting.')
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'An error occurred while deleting.')
     }
     setDeletingId(null)
   }

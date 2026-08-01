@@ -55,8 +55,8 @@ export async function extractFieldsWithAI(text: string, documentType: string, at
         raw_value: String(f.raw_value)
       }));
     }
-  } catch (error: any) {
-    console.error(`Gemini Extraction Error on key ${keyIndex + 1}/${apiKeys.length}:`, error.message);
+  } catch (error: unknown) {
+    console.error(`Gemini Extraction Error on key ${keyIndex + 1}/${apiKeys.length}:`, (error instanceof Error ? error.message : String(error)));
     
     // If it's a quota limit (429) or internal error, and we haven't exhausted our keys
     if (attempt < apiKeys.length - 1) {

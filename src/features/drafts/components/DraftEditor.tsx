@@ -60,7 +60,7 @@ export function DraftEditor({ draft, findingCount = 0 }: DraftEditorProps) {
         setIsSaved(true)
         setSaveError(null)
       } catch (err) {
-        setSaveError(err instanceof Error ? err.message : 'Failed to save draft')
+        setSaveError(err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Failed to save draft')
       }
     })
   }
@@ -77,7 +77,7 @@ export function DraftEditor({ draft, findingCount = 0 }: DraftEditorProps) {
         setStatus('Finalized')
         setSaveError(null)
       } catch (err) {
-        setSaveError(err instanceof Error ? err.message : 'Failed to finalize draft')
+        setSaveError(err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Failed to finalize draft')
       }
     })
   }
@@ -187,8 +187,8 @@ export function DraftEditor({ draft, findingCount = 0 }: DraftEditorProps) {
                   if (res && 'error' in res) {
                     setSaveError(res.error as string)
                   }
-                } catch (e: any) {
-                  setSaveError(e.message || 'Failed to generate export')
+                } catch (e: unknown) {
+                  setSaveError((e instanceof Error ? e.message : String(e)) || 'Failed to generate export')
                 }
               })
             }}
@@ -220,7 +220,7 @@ export function DraftEditor({ draft, findingCount = 0 }: DraftEditorProps) {
           console.error(err);
           setIsDeletingDraft(false);
           setIsAnimatingOut(false);
-          setSaveError(err instanceof Error ? err.message : 'Failed to delete draft. You might not have permission.');
+          setSaveError(err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Failed to delete draft. You might not have permission.');
           setShowDeleteModal(false);
         }
       }}

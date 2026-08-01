@@ -11,8 +11,8 @@ export default async function Cases() {
   
   try {
     cases = await getCases();
-  } catch (e: any) {
-    error = e.message;
+  } catch (e: unknown) {
+    error = (e instanceof Error ? e.message : String(e));
   }
 
   return (

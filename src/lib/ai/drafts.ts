@@ -39,8 +39,8 @@ Based on the draft type, write the document from the perspective of the applican
       }
 
       return response.text;
-    } catch (error: any) {
-      console.warn(`Draft generation failed on attempt ${attempt + 1}: ${error.message}`);
+    } catch (error: unknown) {
+      console.warn(`Draft generation failed on attempt ${attempt + 1}: ${(error instanceof Error ? error.message : String(error))}`);
       lastError = error;
     }
   }

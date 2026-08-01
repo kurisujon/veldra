@@ -42,9 +42,9 @@ export function ExportWorkspace({ caseId, exports }: ExportWorkspaceProps) {
         setTimeout(() => setToastMessage(null), 5000)
         return
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      setToastMessage(err.message || 'Failed to generate export package.')
+      setToastMessage((err instanceof Error ? err.message : String(err)) || 'Failed to generate export package.')
       setTimeout(() => setToastMessage(null), 5000)
     } finally {
       setIsGenerating(false)

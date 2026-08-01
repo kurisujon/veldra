@@ -92,7 +92,7 @@ export async function updateDocumentField(params: z.infer<typeof UpdateFieldSche
     })
     .eq('id', fieldId)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
 
   revalidatePath(path)
   return { success: true }
@@ -171,7 +171,7 @@ export async function runExtraction(documentId: string, caseId: string, document
     rawResponse = result.rawResponse
     modelUsed = result.modelUsed
     normalizedJson = result.normalizedJson as Record<string, unknown>
-  } catch (extractionError: any) {
+  } catch (extractionError: unknown) {
     console.error(`Gemini Document Extraction Failed:`, extractionError)
 
     // Create or update extraction record with status: Failed
@@ -188,7 +188,7 @@ export async function runExtraction(documentId: string, caseId: string, document
         .from('document_extractions')
         .update({
           status: 'Failed',
-          error_message: extractionError.message,
+          error_message: (extractionError instanceof Error ? extractionError.message : String(extractionError)),
           updated_at: new Date().toISOString(),
         })
         .eq('id', existingExt.id)
@@ -198,12 +198,12 @@ export async function runExtraction(documentId: string, caseId: string, document
         document_id: documentId,
         document_type: documentType,
         status: 'Failed',
-        error_message: extractionError.message,
+        error_message: (extractionError instanceof Error ? extractionError.message : String(extractionError)),
       })
     }
 
     revalidatePath(`/cases/${caseId}/documents/${documentId}`)
-    throw new Error(`Extraction Failed: ${extractionError.message}`)
+    throw new Error(`Extraction Failed: ${(extractionError instanceof Error ? extractionError.message : String(extractionError))}`)
   }
 
   // 5. Flatten validated JSON into document fields

@@ -304,9 +304,9 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
             await moveToTrashCase(caseToDelete);
             setMessage('Case moved to trash successfully.');
             setCaseToDelete(null);
-          } catch (err: any) {
+          } catch (err: unknown) {
             console.error(err);
-            setError(err.message || 'Failed to move case to trash.');
+            setError((err instanceof Error ? err.message : String(err)) || 'Failed to move case to trash.');
           } finally {
             setIsDeleting(false);
           }
@@ -329,9 +329,9 @@ export function CaseList({ initialCases }: { initialCases: any[] }) {
             setMessage(`${selectedCases.size} cases moved to trash successfully.`);
             setSelectedCases(new Set());
             setShowBulkDeleteModal(false);
-          } catch (err: any) {
+          } catch (err: unknown) {
             console.error(err);
-            setError(err.message || 'Failed to move cases to trash.');
+            setError((err instanceof Error ? err.message : String(err)) || 'Failed to move cases to trash.');
           } finally {
             setIsBulkDeleting(false);
           }

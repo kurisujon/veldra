@@ -84,7 +84,7 @@ export function DocumentUpload({
           fileInputRefs.current[type]!.value = ''
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : `Failed to upload ${type}`
+        const msg = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : `Failed to upload ${type}`
         setError(msg)
         toast.error(msg)
         setUploadingType(null)

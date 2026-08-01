@@ -34,8 +34,8 @@ export function ExtractionWorkspace({
     startTransition(async () => {
       try {
         await runExtraction(document.id, document.case_id, document.type)
-      } catch (err: any) {
-        alert(err.message)
+      } catch (err: unknown) {
+        alert((err instanceof Error ? err.message : String(err)))
       }
     })
   }

@@ -82,7 +82,7 @@ export async function deleteValidId(caseId: string, filePath: string) {
   const { error } = await supabase.storage.from('documents').remove([parsed.data.filePath])
 
   if (error) {
-    throw new Error(`Delete failed: ${error.message}`)
+    throw new Error(`Delete failed: ${(error instanceof Error ? error.message : String(error))}`)
   }
 
   revalidatePath(`/cases/${caseId}`)

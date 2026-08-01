@@ -39,11 +39,11 @@ export class ExportService {
         .select()
         .single();
         
-      if (error) throw new Error(`Failed to insert export package: ${error.message}`);
+      if (error) throw new Error(`Failed to insert export package: ${(error instanceof Error ? error.message : String(error))}`);
       
       return { success: true, data: record };
-    } catch (error: any) {
-      return { error: error.message || 'Unknown error occurred during export generation' };
+    } catch (error: unknown) {
+      return { error: (error instanceof Error ? error.message : String(error)) || 'Unknown error occurred during export generation' };
     }
   }
 
@@ -101,11 +101,11 @@ export class ExportService {
         .select()
         .single();
 
-      if (error) throw new Error(`Failed to insert draft export package: ${error.message}`);
+      if (error) throw new Error(`Failed to insert draft export package: ${(error instanceof Error ? error.message : String(error))}`);
       
       return { success: true, data: record };
-    } catch (error: any) {
-      return { error: error.message || 'Unknown error occurred during draft export generation' };
+    } catch (error: unknown) {
+      return { error: (error instanceof Error ? error.message : String(error)) || 'Unknown error occurred during draft export generation' };
     }
   }
 }

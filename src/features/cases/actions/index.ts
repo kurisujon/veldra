@@ -77,7 +77,7 @@ export async function getCases(): Promise<CaseWithApplicants[]> {
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   return data || []
 }
 
@@ -92,7 +92,7 @@ export async function getDeletedCases(): Promise<CaseWithApplicants[]> {
     .not('deleted_at', 'is', null)
     .order('deleted_at', { ascending: false })
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   return data || []
 }
 
@@ -108,7 +108,7 @@ export async function getCaseById(id: string): Promise<CaseWithApplicants> {
     .is('deleted_at', null)
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   if (!data) throw new Error('Not found')
   return data
 }
@@ -120,7 +120,7 @@ export async function moveToTrashCase(id: string) {
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   revalidatePath('/cases')
   return { success: true }
 }
@@ -132,7 +132,7 @@ export async function restoreCase(id: string) {
     .update({ deleted_at: null })
     .eq('id', id)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   revalidatePath('/cases')
   return { success: true }
 }
@@ -144,7 +144,7 @@ export async function permanentlyDeleteCase(id: string) {
     .delete()
     .eq('id', id)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   revalidatePath('/cases')
   return { success: true }
 }
@@ -166,7 +166,7 @@ export async function updateCaseStatus(id: string, status: CaseRow['status']) {
     .update({ status: parsed.data.status, updated_at: new Date().toISOString() })
     .eq('id', parsed.data.id)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
@@ -194,7 +194,7 @@ export async function updateCaseStatus(id: string, status: CaseRow['status']) {
 export async function deleteCase(id: string) {
   const supabase = await createClient()
   const { error } = await supabase.from('cases').delete().eq('id', id)
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   revalidatePath('/cases')
   return { success: true }
 }
@@ -205,7 +205,7 @@ export async function bulkMoveToTrashCases(ids: string[]) {
     .from('cases')
     .update({ deleted_at: new Date().toISOString() })
     .in('id', ids)
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   revalidatePath('/cases')
   revalidatePath('/trash')
 }

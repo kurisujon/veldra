@@ -133,7 +133,7 @@ export async function deleteDocument(documentId: string, caseId: string) {
     .eq('id', parsed.data.documentId)
 
   if (error) {
-    throw new Error(`Delete failed: ${error.message}`)
+    throw new Error(`Delete failed: ${(error instanceof Error ? error.message : String(error))}`)
   }
 
   revalidatePath(`/cases/${parsed.data.caseId}`)
@@ -150,7 +150,7 @@ export async function getDocumentsByCase(caseId: string) {
     .order('created_at', { ascending: false })
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error((error instanceof Error ? error.message : String(error)))
   }
 
   return data
@@ -176,7 +176,7 @@ export async function getSignedUrlsForDocuments(filePaths: string[]) {
     .createSignedUrls(paths, 3600)
 
   if (error) {
-    throw new Error(`Failed to generate signed URLs: ${error.message}`)
+    throw new Error(`Failed to generate signed URLs: ${(error instanceof Error ? error.message : String(error))}`)
   }
 
   const urlMap: Record<string, string> = {}
@@ -200,7 +200,7 @@ export async function getDocumentById(documentId: string) {
     .single()
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error((error instanceof Error ? error.message : String(error)))
   }
 
   return data

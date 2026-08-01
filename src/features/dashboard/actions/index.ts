@@ -43,7 +43,7 @@ export async function getDashboardAnalytics(startDate?: string, endDate?: string
   
   if (error) {
     console.error('Failed to fetch dashboard analytics:', error)
-    throw new Error(`Analytics fetch failed: ${error.message}`)
+    throw new Error(`Analytics fetch failed: ${(error instanceof Error ? error.message : String(error))}`)
   }
   
   const parsed = DashboardAnalyticsSchema.safeParse(data);

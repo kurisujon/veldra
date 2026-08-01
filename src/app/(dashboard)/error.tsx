@@ -35,7 +35,7 @@ export default function DashboardError({
 
           <div className="bg-background rounded-md p-md w-full border border-text-secondary/10 overflow-hidden text-left">
             <p className="text-small font-mono text-text-secondary truncate">
-              {error.message || 'Unknown error'}
+              {(error instanceof Error ? error.message : String(error)) || 'Unknown error'}
             </p>
           </div>
 

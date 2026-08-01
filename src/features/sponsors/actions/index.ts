@@ -26,7 +26,7 @@ export async function addSponsor(input: z.infer<typeof AddSponsorSchema>) {
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: (error instanceof Error ? error.message : String(error)) }
   }
 
   revalidatePath(`/cases/${result.data.case_id}`)
@@ -44,6 +44,6 @@ export async function getSponsorsByCase(caseId: string) {
     .eq('case_id', parsed.data)
     .order('created_at', { ascending: true })
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   return data ?? []
 }

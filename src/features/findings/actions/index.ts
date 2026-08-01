@@ -252,7 +252,7 @@ export async function updateFindingStatus(findingId: string, caseId: string, sta
     .update({ status: parsed.data.status })
     .eq('id', parsed.data.findingId)
 
-  if (error) throw new Error(`Failed to update finding: ${error.message}`)
+  if (error) throw new Error(`Failed to update finding: ${(error instanceof Error ? error.message : String(error))}`)
 
   // Log activity
   await supabase.from('activity_logs').insert({

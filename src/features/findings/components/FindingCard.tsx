@@ -44,7 +44,7 @@ export function FindingCard({
           if (onStatusChange) onStatusChange(newStatus)
           toast.success(`Finding marked as ${newStatus}`)
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to update status:', err)
         toast.error('Failed to update status')
       }

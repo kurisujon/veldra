@@ -216,7 +216,7 @@ export function ValidIdUpload({ caseId, existingIds = [] }: ValidIdUploadProps) 
       try {
         await uploadValidId(formData)
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : `Failed to upload ${type}`
+        const msg = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : `Failed to upload ${type}`
         setError(msg)
       } finally {
         setUploadingType(null)

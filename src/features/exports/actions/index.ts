@@ -86,7 +86,7 @@ export async function getExportsByCase(caseId: string) {
     .order('created_at', { ascending: false })
 
   if (error) {
-    return { error: error.message }
+    return { error: (error instanceof Error ? error.message : String(error)) }
   }
 
   if (!data) return []
@@ -121,7 +121,7 @@ export async function getAllExports() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    return { error: error.message }
+    return { error: (error instanceof Error ? error.message : String(error)) }
   }
 
   if (!data) return []
@@ -156,7 +156,7 @@ export async function getDeletedExports() {
     .order('deleted_at', { ascending: false })
 
   if (error) {
-    return { error: error.message }
+    return { error: (error instanceof Error ? error.message : String(error)) }
   }
 
   if (!data) return []
@@ -189,7 +189,7 @@ export async function moveToTrashExport(exportId: string, caseId: string) {
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', exportId)
 
-  if (error) return { error: error.message }
+  if (error) return { error: (error instanceof Error ? error.message : String(error)) }
 
   revalidatePath(`/cases/${caseId}`)
   revalidatePath('/exports')
@@ -204,7 +204,7 @@ export async function restoreExport(exportId: string, caseId: string) {
     .update({ deleted_at: null })
     .eq('id', exportId)
 
-  if (error) return { error: error.message }
+  if (error) return { error: (error instanceof Error ? error.message : String(error)) }
 
   revalidatePath(`/cases/${caseId}`)
   revalidatePath('/exports')
@@ -219,7 +219,7 @@ export async function deleteExport(exportId: string, caseId: string) {
     .delete()
     .eq('id', exportId)
 
-  if (error) return { error: error.message }
+  if (error) return { error: (error instanceof Error ? error.message : String(error)) }
 
   revalidatePath(`/cases/${caseId}`)
   revalidatePath('/exports')

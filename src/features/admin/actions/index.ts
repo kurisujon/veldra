@@ -31,7 +31,7 @@ export async function createEmployeeAccount(formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: (error instanceof Error ? error.message : String(error)) }
   }
 
   const result = data as { success?: boolean; error?: string; user_id?: string }
@@ -52,7 +52,7 @@ export async function getAllUsers() {
   const { data, error } = await supabase.rpc('get_all_employees')
 
   if (error) {
-    console.error('getAllUsers error:', error.message)
+    console.error('getAllUsers error:', (error instanceof Error ? error.message : String(error)))
     return []
   }
 
@@ -70,7 +70,7 @@ export async function deleteEmployeeAccount(userId: string) {
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: (error instanceof Error ? error.message : String(error)) }
   }
 
   revalidatePath('/admin')

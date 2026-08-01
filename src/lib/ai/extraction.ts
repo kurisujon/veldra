@@ -108,7 +108,7 @@ export async function extractDocumentWithAI(
     if (attempt < apiKeysCount - 1) {
       console.warn(
         `Gemini extraction attempt ${attempt + 1} failed: ${
-          error instanceof Error ? error.message : String(error)
+          error instanceof Error ? (error instanceof Error ? error.message : String(error)) : String(error)
         }. Rotating API key...`
       );
       return extractDocumentWithAI(input, attempt + 1);
@@ -117,7 +117,7 @@ export async function extractDocumentWithAI(
     // Exhausted all key rotation attempts, throw the final error
     throw new Error(
       `Gemini extraction failed after ${apiKeysCount} attempt(s): ${
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error instanceof Error ? error.message : String(error)) : String(error)
       }`
     );
   }

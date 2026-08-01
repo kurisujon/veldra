@@ -221,7 +221,7 @@ export async function updateDraftContent(draftId: string, content: string) {
     .select('case_id')
     .single()
 
-  if (error) throw new Error(`Failed to update draft: ${error.message}`)
+  if (error) throw new Error(`Failed to update draft: ${(error instanceof Error ? error.message : String(error))}`)
 
   revalidatePath(`/cases/${draft.case_id}`)
   return { success: true }
@@ -248,7 +248,7 @@ export async function finalizeDraft(draftId: string, caseId: string) {
     .update({ status: 'Finalized', updated_at: new Date().toISOString() })
     .eq('id', parsed.data.draftId)
 
-  if (error) throw new Error(`Failed to finalize draft: ${error.message}`)
+  if (error) throw new Error(`Failed to finalize draft: ${(error instanceof Error ? error.message : String(error))}`)
 
   await supabase.from('activity_logs').insert({
     case_id: parsed.data.caseId,
@@ -333,7 +333,7 @@ export async function moveToTrashDraft(id: string, caseId: string) {
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   revalidatePath(`/cases/${caseId}`)
   revalidatePath('/drafts')
   return { success: true }
@@ -346,7 +346,7 @@ export async function restoreDraft(id: string, caseId: string) {
     .update({ deleted_at: null })
     .eq('id', id)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   revalidatePath(`/cases/${caseId}`)
   revalidatePath('/drafts')
   return { success: true }
@@ -359,7 +359,7 @@ export async function permanentlyDeleteDraft(id: string, caseId: string) {
     .delete()
     .eq('id', id)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   revalidatePath(`/cases/${caseId}`)
   revalidatePath('/drafts')
   return { success: true }
@@ -372,7 +372,7 @@ export async function deleteDraft(draftId: string, caseId: string) {
   if (!user) throw new Error('Unauthorized')
 
   const { error } = await supabase.from('generated_drafts').delete().eq('id', draftId)
-  if (error) throw new Error(error.message)
+  if (error) throw new Error((error instanceof Error ? error.message : String(error)))
   
   revalidatePath(`/cases/${caseId}`)
   return { success: true }

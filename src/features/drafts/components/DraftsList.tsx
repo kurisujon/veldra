@@ -51,8 +51,8 @@ export function DraftsList({ drafts }: { drafts: any[] }) {
       await moveToTrashDraft(draftToDelete.id, draftToDelete.caseId)
       setMessage('Draft moved to trash successfully.')
       setDraftToDelete(null)
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while deleting.')
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'An error occurred while deleting.')
     }
     setDeletingId(null)
   }

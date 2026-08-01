@@ -20,13 +20,13 @@ export async function ocrWithPaddle(buffer: Buffer, mimeType: string, fileName: 
 
     const result = await response.json();
     return result as OCRResult;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PaddleOCR Error:', error);
     return {
       success: false,
       engine: 'paddleocr',
       text: '',
-      error: error.message
+      error: (error instanceof Error ? error.message : String(error))
     };
   }
 }

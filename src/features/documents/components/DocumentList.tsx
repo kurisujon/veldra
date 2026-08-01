@@ -24,8 +24,8 @@ export function DocumentList({ documents, extractions = [], caseId }: { document
       try {
         await deleteDocument(docToDelete, caseId)
         setDeletedDocIds(prev => new Set(prev).add(docToDelete))
-      } catch (err: any) {
-        alert(err.message || 'Failed to delete document')
+      } catch (err: unknown) {
+        alert((err instanceof Error ? err.message : String(err)) || 'Failed to delete document')
       } finally {
         setDocToDelete(null)
       }
