@@ -183,4 +183,96 @@ export type ExtractedDocumentData =
   | Sf10Data
   | DiplomaData
   | BankStatementData
-  | ProofOfBillingData;
+  | ProofOfBillingData
+  | SponsorValidIDData
+  | SponsorCOEData
+  | SponsorITRData
+  | AffidavitOfSupportData;
+
+// ---------------------------------------------------------------------------
+// Phase 10: Sponsor Document Schemas
+// ---------------------------------------------------------------------------
+
+/**
+ * Sponsor Valid ID / Passport
+ */
+export const SponsorValidIDSchema = z.object({
+  documentType: z.string().nullish().catch(null).default(null),
+  idType: z.string().nullish().catch(null).default(null),
+  idNumber: z.string().nullish().catch(null).default(null),
+  firstName: z.string().nullish().catch(null).default(null),
+  middleName: z.string().nullish().catch(null).default(null),
+  lastName: z.string().nullish().catch(null).default(null),
+  suffix: z.string().nullish().catch(null).default(null),
+  fullName: z.string().nullish().catch(null).default(null),
+  dateOfBirth: z.string().nullish().catch(null).default(null),
+  sex: z.string().nullish().catch(null).default(null),
+  address: z.string().nullish().catch(null).default(null),
+  issueDate: z.string().nullish().catch(null).default(null),
+  expiryDate: z.string().nullish().catch(null).default(null),
+  issuingAuthority: z.string().nullish().catch(null).default(null),
+  remarks: z.string().nullish().catch(null).default(null),
+});
+export type SponsorValidIDData = z.infer<typeof SponsorValidIDSchema>;
+
+/**
+ * Certificate of Employment (COE)
+ */
+export const SponsorCOESchema = z.object({
+  documentType: z.string().nullish().catch(null).default(null),
+  sponsorFullName: z.string().nullish().catch(null).default(null),
+  sponsorFirstName: z.string().nullish().catch(null).default(null),
+  sponsorLastName: z.string().nullish().catch(null).default(null),
+  employerName: z.string().nullish().catch(null).default(null),
+  employerAddress: z.string().nullish().catch(null).default(null),
+  position: z.string().nullish().catch(null).default(null),
+  employmentStatus: z.string().nullish().catch(null).default(null),
+  employmentStartDate: z.string().nullish().catch(null).default(null),
+  monthlySalary: z.string().nullish().catch(null).default(null),
+  annualSalary: z.string().nullish().catch(null).default(null),
+  issueDate: z.string().nullish().catch(null).default(null),
+  signatoryName: z.string().nullish().catch(null).default(null),
+  signatoryPosition: z.string().nullish().catch(null).default(null),
+  remarks: z.string().nullish().catch(null).default(null),
+});
+export type SponsorCOEData = z.infer<typeof SponsorCOESchema>;
+
+/**
+ * Income Tax Return (ITR)
+ */
+export const SponsorITRSchema = z.object({
+  documentType: z.string().nullish().catch(null).default(null),
+  taxpayerFullName: z.string().nullish().catch(null).default(null),
+  taxpayerFirstName: z.string().nullish().catch(null).default(null),
+  taxpayerLastName: z.string().nullish().catch(null).default(null),
+  tin: z.string().nullish().catch(null).default(null),
+  taxYear: z.string().nullish().catch(null).default(null),
+  employerName: z.string().nullish().catch(null).default(null),
+  grossCompensationIncome: z.string().nullish().catch(null).default(null),
+  taxableIncome: z.string().nullish().catch(null).default(null),
+  address: z.string().nullish().catch(null).default(null),
+  remarks: z.string().nullish().catch(null).default(null),
+});
+export type SponsorITRData = z.infer<typeof SponsorITRSchema>;
+
+/**
+ * Affidavit of Support
+ */
+export const AffidavitOfSupportSchema = z.object({
+  documentType: z.string().nullish().catch(null).default(null),
+  sponsorFullName: z.string().nullish().catch(null).default(null),
+  sponsorFirstName: z.string().nullish().catch(null).default(null),
+  sponsorLastName: z.string().nullish().catch(null).default(null),
+  sponsorAddress: z.string().nullish().catch(null).default(null),
+  applicantFullName: z.string().nullish().catch(null).default(null),
+  applicantFirstName: z.string().nullish().catch(null).default(null),
+  applicantLastName: z.string().nullish().catch(null).default(null),
+  declaredRelationship: z.string().nullish().catch(null).default(null),
+  supportDeclaration: z.string().nullish().catch(null).default(null),
+  executionDate: z.string().nullish().catch(null).default(null),
+  notaryName: z.string().nullish().catch(null).default(null),
+  notaryRollNumber: z.string().nullish().catch(null).default(null),
+  remarks: z.string().nullish().catch(null).default(null),
+});
+export type AffidavitOfSupportData = z.infer<typeof AffidavitOfSupportSchema>;
+

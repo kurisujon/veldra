@@ -30,6 +30,8 @@ export function compareDates(fields: DocumentField[]): Discrepancy[] {
         if (firstVal.trim() !== otherVal.trim()) {
           discrepancies.push({
             title: `${fieldName} Mismatch`,
+            scope: 'applicant_only',
+            method: 'normalized',
             description: generateFindingDescription(fieldName, firstVal, otherVal, 'Date Mismatch'),
             category: 'Date Mismatch',
             severity: 'High',

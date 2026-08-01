@@ -8,7 +8,7 @@ import { DocumentList } from "@/features/documents/components/DocumentList";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getFindingsByCase, getCurrentUserRole } from "@/features/findings/actions";
+import { getFindingsByCase, getCurrentUserRole, getComparisonResultsByCase, getSponsorRelationshipsByCase } from "@/features/findings/actions";
 import { getDraftsByCase } from "@/features/drafts/actions";
 import { CaseFindingsWorkspace } from "@/features/findings/components/CaseFindingsWorkspace";
 import { RunAnalysisButton } from "@/features/findings/components/RunAnalysisButton";
@@ -27,6 +27,8 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
   let sponsors: Awaited<ReturnType<typeof getSponsorsByCase>> = [];
   let extractions: any[] = [];
   let findings: Awaited<ReturnType<typeof getFindingsByCase>> = [];
+  let comparisonResults: Awaited<ReturnType<typeof getComparisonResultsByCase>> = [];
+  let sponsorRelationships: Awaited<ReturnType<typeof getSponsorRelationshipsByCase>> = [];
   let drafts: Awaited<ReturnType<typeof getDraftsByCase>> = [];
   let exports: any[] = [];
   let userRole = 'Reviewer';
@@ -40,6 +42,8 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
 
     if (caseData && caseData.status === 'NeedsReview') {
       findings = await getFindingsByCase(id);
+      comparisonResults = await getComparisonResultsByCase(id);
+      sponsorRelationships = await getSponsorRelationshipsByCase(id);
     }
     if (caseData && (caseData.status === 'DraftGenerated' || caseData.status === 'Reviewed' || caseData.status === 'ReadyForExport' || caseData.status === 'Exported')) {
       drafts = await getDraftsByCase(id);
@@ -149,6 +153,8 @@ export default async function CaseDetailsPage({ params }: { params: Promise<{ id
         <CaseFindingsWorkspace
           caseId={caseData.id}
           findings={findings}
+          comparisonResults={comparisonResults}
+          sponsorRelationships={sponsorRelationships}
           documents={documents}
           userRole={userRole}
         />

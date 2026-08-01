@@ -30,6 +30,8 @@ export function compareTimeline(fields: DocumentField[]): Discrepancy[] {
         if (firstVal.trim() !== otherVal.trim()) {
           discrepancies.push({
             title: `${fieldName} Mismatch`,
+            scope: 'applicant_only',
+            method: 'calculated',
             description: generateFindingDescription(fieldName, firstVal, otherVal, 'School Gap'),
             category: 'School Gap',
             severity: 'Medium',

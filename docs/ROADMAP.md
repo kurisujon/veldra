@@ -56,5 +56,11 @@
 - `CaseAnalyticsBreakdown` (case status distribution + findings by origin scope).
 - Sponsor-aware metrics fully integrated.
 
-## Phase 9: Polish & QA
+## Phase 10: Advanced Three-Stage Verification Engine ✅
+- Segregation of rules into Applicant, Sponsor, and Relationship stages.
+- New database tables: `comparison_results`, `sponsor_relationships`, `relationship_evidence`.
+- Added strict verification of relationship claims via parent/grandparent linkage.
+- `CaseFindingsWorkspace` UI overhaul with 3-tab layout and exact rule verification persistence.
+
+## Phase 11: Polish & QA
 - Performance audits, end-to-end testing, and final refinement.

@@ -32,6 +32,8 @@ export function compareAddresses(fields: DocumentField[]): Discrepancy[] {
         if (normalize(firstVal) !== normalize(otherVal)) {
           discrepancies.push({
             title: `${fieldName} Mismatch`,
+            scope: 'applicant_only',
+            method: 'normalized',
             description: generateFindingDescription(fieldName, firstVal, otherVal, 'Address Mismatch'),
             category: 'Address Mismatch',
             severity: 'Medium',

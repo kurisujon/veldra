@@ -29,6 +29,8 @@ export function compareNames(fields: DocumentField[]): Discrepancy[] {
         if (normalize(firstVal) !== normalize(otherVal)) {
           discrepancies.push({
             title: `${fieldName} Mismatch`,
+            scope: 'applicant_only',
+            method: 'normalized',
             description: generateFindingDescription(fieldName, firstVal, otherVal, 'Name Mismatch'),
             category: 'Name Mismatch',
             severity: 'High',

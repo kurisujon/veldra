@@ -8,7 +8,7 @@ import { compareNames } from '@/lib/comparison/compareNames'
 import { compareDates } from '@/lib/comparison/compareDates'
 import { compareAddresses } from '@/lib/comparison/compareAddresses'
 import { compareTimeline } from '@/lib/comparison/compareTimeline'
-import { runVerificationEngine } from '@/lib/comparison/engine'
+import { runCaseVerification } from '@/lib/comparison/engine'
 import type { DocumentMetadata, Sponsor } from '@/lib/comparison/types'
 
 const AnalyzeDocumentsSchema = z.object({
@@ -69,6 +69,8 @@ export async function analyzeDocuments(caseId: string) {
 
   const sponsors: Sponsor[] = (sponsorsRaw ?? []).map((s) => ({
     id: s.id,
+    first_name: s.first_name,
+    last_name: s.last_name,
     relationship: s.relationship
   }))
 
@@ -87,6 +89,7 @@ export async function analyzeDocuments(caseId: string) {
   // Build document metadata map for owner_type and sponsor_id lookup
   const documentMetadata: DocumentMetadata[] = (documents ?? []).map((d) => ({
     id: d.id,
+    type: d.type || 'unknown',
     owner_type: (d.owner_type as 'applicant' | 'sponsor') ?? 'applicant',
     sponsor_id: d.sponsor_id ?? null
   }))
@@ -110,25 +113,30 @@ export async function analyzeDocuments(caseId: string) {
       ...compareTimeline(applicantFields as any)
     ]
 
-    // Sponsor cross-reference engine discrepancies
-    const engineDiscrepancies = sponsors.length > 0
-      ? runVerificationEngine(fields as any, documentMetadata, sponsors)
-      : []
+    // Phase 10: Three-Stage Verification Engine
+    const engineResult = await runCaseVerification(caseId, fields as any, documentMetadata, sponsors)
 
-    const discrepancies = [...legacyDiscrepancies, ...engineDiscrepancies]
+    const discrepancies = [
+      ...legacyDiscrepancies,
+      ...engineResult.applicant.discrepancies,
+      ...engineResult.sponsor.discrepancies
+    ]
 
     for (const disc of discrepancies) {
       discrepancyFound = true
 
-      // Determine finding_scope from the owner_type of the two fields
-      const metaA = documentMetadata.find((d) => d.id === disc.fieldA.document_id)
-      const metaB = documentMetadata.find((d) => d.id === disc.fieldB.document_id)
-      const ownerA = metaA?.owner_type ?? 'applicant'
-      const ownerB = metaB?.owner_type ?? 'applicant'
+      // Determine finding_scope based on scope if available, else derive it
+      let finding_scope = disc.scope || 'applicant_only'
+      
+      if (!disc.scope) {
+        const metaA = documentMetadata.find((d) => d.id === disc.fieldA?.document_id)
+        const metaB = documentMetadata.find((d) => d.id === disc.fieldB?.document_id)
+        const ownerA = metaA?.owner_type ?? 'applicant'
+        const ownerB = metaB?.owner_type ?? 'applicant'
 
-      let finding_scope = 'applicant_only'
-      if (ownerA === 'sponsor' && ownerB === 'sponsor') finding_scope = 'sponsor_only'
-      else if (ownerA !== ownerB) finding_scope = 'applicant_and_sponsor'
+        if (ownerA === 'sponsor' && ownerB === 'sponsor') finding_scope = 'sponsor_only'
+        else if (ownerA !== ownerB) finding_scope = 'applicant_and_sponsor'
+      }
 
       const { data: finding, error: insertError } = await supabase
         .from('findings')
@@ -147,18 +155,61 @@ export async function analyzeDocuments(caseId: string) {
       if (insertError) throw new Error(`Failed to insert finding: ${insertError.message}`)
 
       // Link documents to finding
-      const findingDocs = [
-        { finding_id: finding.id, document_id: disc.fieldA.document_id },
-        { finding_id: finding.id, document_id: disc.fieldB.document_id }
-      ]
-      await supabase.from('finding_documents').insert(findingDocs)
+      const findingDocs = []
+      if (disc.fieldA?.document_id) {
+        findingDocs.push({ finding_id: finding.id, document_id: disc.fieldA.document_id })
+      }
+      if (disc.fieldB?.document_id && disc.fieldB.document_id !== disc.fieldA?.document_id) {
+        findingDocs.push({ finding_id: finding.id, document_id: disc.fieldB.document_id })
+      }
+      
+      if (findingDocs.length > 0) {
+        await supabase.from('finding_documents').insert(findingDocs)
+      }
 
       // Link document fields to finding
-      const findingFieldRefs = [
-        { finding_id: finding.id, document_field_id: disc.fieldA.id, document_id: disc.fieldA.document_id, role: 'source_a' },
-        { finding_id: finding.id, document_field_id: disc.fieldB.id, document_id: disc.fieldB.document_id, role: 'source_b' }
-      ]
-      await supabase.from('finding_field_references').insert(findingFieldRefs as any)
+      const findingFieldRefs = []
+      if (disc.fieldA) {
+        findingFieldRefs.push({ finding_id: finding.id, document_field_id: disc.fieldA.id, document_id: disc.fieldA.document_id, role: 'source_a' })
+      }
+      if (disc.fieldB) {
+        findingFieldRefs.push({ finding_id: finding.id, document_field_id: disc.fieldB.id, document_id: disc.fieldB.document_id, role: 'source_b' })
+      }
+      
+      if (findingFieldRefs.length > 0) {
+        await supabase.from('finding_field_references').insert(findingFieldRefs as any)
+      }
+    }
+
+    // Persist comparison_results from the Phase 10 engine
+    const comparisonResults = [
+      ...engineResult.applicant.results,
+      ...engineResult.sponsor.results
+    ]
+
+    if (comparisonResults.length > 0) {
+      const { error: insertError } = await supabase
+        .from('comparison_results')
+        .insert(comparisonResults.map(cr => ({
+          case_id: cr.case_id,
+          comparison_scope: cr.comparison_scope,
+          rule_code: cr.rule_code,
+          left_document_id: cr.left_document_id,
+          right_document_id: cr.right_document_id,
+          field_name: cr.field_name,
+          left_value: cr.left_value,
+          right_value: cr.right_value,
+          left_normalized: cr.left_normalized,
+          right_normalized: cr.right_normalized,
+          status: cr.status,
+          severity: cr.severity,
+          explanation: cr.explanation,
+          method: cr.method
+        })))
+        
+      if (insertError) {
+        console.error('Failed to insert comparison results:', insertError)
+      }
     }
   }
 
@@ -289,4 +340,34 @@ export async function getCurrentUserRole(): Promise<string> {
   return userRoleData?.role || 'Guest'
 }
 
+export async function getComparisonResultsByCase(caseId: string) {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('comparison_results')
+    .select('*')
+    .eq('case_id', caseId)
+    .order('created_at', { ascending: false })
 
+  if (error) {
+    console.error('Error fetching comparison results:', error)
+    return []
+  }
+
+  return data
+}
+
+export async function getSponsorRelationshipsByCase(caseId: string) {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('sponsor_relationships')
+    .select('*, relationship_evidence(*)')
+    .eq('case_id', caseId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching sponsor relationships:', error)
+    return []
+  }
+
+  return data
+}

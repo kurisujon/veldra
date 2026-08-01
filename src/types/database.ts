@@ -127,6 +127,140 @@ export type Database = {
         }
         Relationships: []
       }
+      comparison_results: {
+        Row: {
+          id: string
+          case_id: string
+          comparison_scope: string
+          rule_code: string
+          left_document_id: string | null
+          right_document_id: string | null
+          field_name: string
+          left_value: string | null
+          right_value: string | null
+          left_normalized: string | null
+          right_normalized: string | null
+          status: string
+          severity: string
+          explanation: string | null
+          method: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          case_id: string
+          comparison_scope: string
+          rule_code: string
+          left_document_id?: string | null
+          right_document_id?: string | null
+          field_name: string
+          left_value?: string | null
+          right_value?: string | null
+          left_normalized?: string | null
+          right_normalized?: string | null
+          status?: string
+          severity?: string
+          explanation?: string | null
+          method?: string
+          created_at?: string
+        }
+        Update: {
+          case_id?: string
+          comparison_scope?: string
+          rule_code?: string
+          left_document_id?: string | null
+          right_document_id?: string | null
+          field_name?: string
+          left_value?: string | null
+          right_value?: string | null
+          left_normalized?: string | null
+          right_normalized?: string | null
+          status?: string
+          severity?: string
+          explanation?: string | null
+          method?: string
+        }
+        Relationships: []
+      }
+      sponsor_relationships: {
+        Row: {
+          id: string
+          case_id: string
+          sponsor_id: string
+          declared_relationship: string
+          verified_relationship: string | null
+          verification_status: string
+          confidence: number
+          review_notes: string | null
+          missing_evidence: any
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          case_id: string
+          sponsor_id: string
+          declared_relationship: string
+          verified_relationship?: string | null
+          verification_status?: string
+          confidence?: number
+          review_notes?: string | null
+          missing_evidence?: any
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string
+          sponsor_id?: string
+          declared_relationship?: string
+          verified_relationship?: string | null
+          verification_status?: string
+          confidence?: number
+          review_notes?: string | null
+          missing_evidence?: any
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      relationship_evidence: {
+        Row: {
+          id: string
+          sponsor_relationship_id: string
+          document_id: string | null
+          field_name: string
+          extracted_value: string | null
+          normalized_value: string | null
+          evidence_role: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sponsor_relationship_id: string
+          document_id?: string | null
+          field_name: string
+          extracted_value?: string | null
+          normalized_value?: string | null
+          evidence_role?: string
+          created_at?: string
+        }
+        Update: {
+          sponsor_relationship_id?: string
+          document_id?: string | null
+          field_name?: string
+          extracted_value?: string | null
+          normalized_value?: string | null
+          evidence_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_evidence_sponsor_relationship_id_fkey"
+            columns: ["sponsor_relationship_id"]
+            isOneToOne: false
+            referencedRelation: "sponsor_relationships"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       document_extractions: {
         Row: {
           case_id: string
@@ -755,6 +889,10 @@ export type Database = {
         | "School Gap"
         | "Missing Information"
         | "Identity"
+        | "Employment Mismatch"
+        | "Income Discrepancy"
+        | "Document Validity"
+        | "Relationship Evidence"
       finding_field_role: "source_a" | "source_b" | "supporting"
       finding_severity: "High" | "Medium" | "Low" | "Warning"
       finding_status: "Open" | "Accepted" | "Resolved" | "Ignored"
@@ -926,6 +1064,11 @@ export const Constants = {
         "Age Calculation Issue",
         "School Gap",
         "Missing Information",
+        "Identity",
+        "Employment Mismatch",
+        "Income Discrepancy",
+        "Document Validity",
+        "Relationship Evidence"
       ],
       finding_field_role: ["source_a", "source_b", "supporting"],
       finding_severity: ["High", "Medium", "Low"],

@@ -45,6 +45,13 @@
   - [x] `DiscrepancyBreakdown` (by category + top conflicting source pairs).
   - [x] `CaseAnalyticsBreakdown` (case status distribution + findings by scope).
   - [x] Sponsor-aware metrics fully integrated.
+- [x] Phase 10: Advanced Three-Stage Verification Engine & UI.
+  - [x] Schema migration for `comparison_results`, `sponsor_relationships`, `relationship_evidence`.
+  - [x] AI extraction schemas for `SponsorValidID`, `SponsorCOE`, `SponsorITR`, `AffidavitOfSupport`.
+  - [x] Normalization utilities (Names, Dates, Addresses, Institutions).
+  - [x] Three-Stage Orchestrator (Applicant, Sponsor, Relationship chains).
+  - [x] UI Redesign of `CaseFindingsWorkspace` to 3-tab layout (Applicant, Sponsor, Relationship).
+  - [x] Display of Verified Matches alongside Discrepancies.
 
 ## Decision Log
 - **[2026-06-21]**: Decided to use Next.js App Router for better server-side performance.
@@ -58,3 +65,4 @@
 - **[2026-07-25]**: Completed Sponsor Verification & Cross-Reference System. Sponsors are strictly limited to 2 per case, enforced at the RPC level. All sponsor discrepancies are `Warning` severity — they never auto-fail a case.
 - **[2026-07-25]**: Introduced configurable deterministic Verification Rules Engine (`src/lib/comparison/engine.ts`) to replace hardcoded field comparisons. AI strictly confined to extraction only.
 - **[2026-07-25]**: Scaffolded Multi-Agent Orchestration Framework with Planner, Backend Executor (Claude), Frontend Executor (Gemini), QA, and Reviewer agents.
+- **[2026-08-01]**: Overhauled engine to Phase 10 Three-Stage Verification. Enforced strict graph-based evidence chains for relationships (e.g., PSA -> Parent PSA -> Sponsor ID) instead of loose surname matching, saving granular passes and fails into `comparison_results` for a comprehensive audit trail.
