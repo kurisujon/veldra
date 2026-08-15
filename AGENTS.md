@@ -27,8 +27,17 @@ When operating within the Veldra project, the division of labor is strictly defi
 
 ## 3. Current System State
 
-*   **Phase 7 (Export & Reporting) is Complete.** The `export_packages` schema, Zod-validated server actions (`generateExport`, `getExportsByCase`), and the `ExportWorkspace` UI component are fully implemented and integrated.
-*   **Gemini 2.5 Flash Document Extraction Integration is Complete.** Structured AI document extraction (covering PSA Birth Certificates, PSA Marriage Certificates, TOR, SF10, Diplomas) is fully operational with automatic API key rotation on failover. The split-screen `ExtractionWorkspace` responsive UI has been updated to support custom status badge variants, robust failure and error reporting, and on-demand "Re-run Extraction" options.
-*   **Next Phase:** Phase 8 - Dashboard & Analytics.
-*   **Build Status:** Clean. Both `next build` and `next lint` pass with zero warnings. Keep it this way.
+*   **Phase 11 (Polish & QA) is Complete.** Codebase cleaned of type bypasses, Playwright E2E test suite generated (`e2e/`), loading/error boundaries and toast notifications verified.
+*   **Phase 10 (Advanced Three-Stage Verification Engine) is Complete.** Applicant, Sponsor, and Relationship verification logic implemented with 3-tab `CaseFindingsWorkspace` UI and graph evidence chain tracking.
+*   **Phase 8 (Dashboard & Analytics) is Complete.** `get_dashboard_analytics` RPC with scope filtering, sponsor-aware metrics, and analytics visual breakdown components.
+*   **Gemini 2.5 Flash Document Extraction Integration is Complete.** Structured AI document extraction (covering PSA Birth Certificates, PSA Marriage Certificates, TOR, SF10, Diplomas, Sponsor ID/COE/ITR/Affidavit) is fully operational with automatic API key rotation on failover.
+## 4. Workspace Skills & Commands
+
+The following specialized skills are installed and available for this workspace:
+
+*   **`demo-video-recorder`** (`/demo-video-recorder`): Generates a captioned demo video of a single Veldra UI flow using Playwright.
+    *   *Trigger phrases*: `/demo-video-recorder`, `"record a demo for <flow>"`, `"make a walkthrough video of <flow>"`, `"generate a demo video for <flow>"`, or `Use the demo-video-recorder skill for <flow>`.
+*   **`project-progress-docs`** (`/project-progress-docs`): Enforces progress reporting, zero-tolerance checks, and updates documentation set (`AGENTS.md`, `GEMINI.md`, `docs/`).
+    *   *Trigger phrases*: `/project-progress-docs`, `"update project status"`, `"check repo state"`, or `Use the project-progress-docs skill`.
+
 

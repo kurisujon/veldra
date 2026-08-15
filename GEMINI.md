@@ -4,13 +4,17 @@
 Veldra is a Smart Document Verification Platform tailored for checking student visa application documents. It automates the extraction and cross-referencing of critical data across documents like PSA Birth Certificates, Transcripts, and Diplomas, flagging inconsistencies and generating necessary legal drafts. The product is a review workspace for document verification staff, strictly a tool, NOT a chatbot.
 
 ## Current Phase
-**Dashboard & Analytics (Phase 8 Completed)**
-- `get_dashboard_analytics` RPC upgraded with optional date filtering and `findings_by_scope`.
-- `AnalyticsSummary`, `DiscrepancyBreakdown`, and `CaseAnalyticsBreakdown` components built.
-- Sponsor-aware metrics (applicant_only / sponsor_only / applicant_and_sponsor) fully integrated.
-- Phase 7.5 wiring completed: `SponsorList` on Case Dashboard, `runVerificationEngine` in `analyzeDocuments`, graceful fallback for missing `sponsors` table.
+**Polish & QA (Phase 11 Completed)**
+- Performance & code review complete; removed type bypasses across codebase.
+- Playwright E2E suite generated (`e2e/` specs for auth, smoke, cases, docs, analysis, authorization, visual audit).
+- Phase 10 Three-Stage Verification Engine fully operational with 3-tab `CaseFindingsWorkspace`.
+- Phase 8 Analytics & Phase 7.5 Sponsor verification systems integrated.
 
-**Current Phase:** Phase 9 - Polish & QA
+**Current Phase:** Production Maintenance & Operational Readiness
+
+## Workspace Skills & Commands
+- **`demo-video-recorder`** (`/demo-video-recorder`): Generates a captioned Playwright demo video of one UI flow at a time. Call using `/demo-video-recorder`, `"record a demo for <flow>"`, `"make a walkthrough video"`, or `Use the demo-video-recorder skill`.
+- **`project-progress-docs`** (`/project-progress-docs`): Reports progress and synchronizes project docs. Call using `/project-progress-docs`, `"update project status"`, or `Use the project-progress-docs skill`.
 
 ## Architecture Constraints
 - Veldra uses a strict Case-Centric Architecture.

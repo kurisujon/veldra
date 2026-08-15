@@ -85,23 +85,41 @@ export function Hero() {
               <div className="w-3 h-3 rounded-full bg-text-secondary/20"></div>
               <div className="w-3 h-3 rounded-full bg-text-secondary/20"></div>
             </div>
-            {/* Mock App UI */}
-            <div className="flex h-[400px] md:h-[550px] bg-background">
-              <div className="hidden md:flex w-[200px] border-r border-text-secondary/10 bg-surface flex-col p-md gap-md">
-                <div className="h-6 w-24 bg-text-secondary/10 rounded-full mb-md"></div>
-                {[1,2,3,4,5].map(i => <div key={i} className={`h-8 w-full rounded-button ${i===2 ? 'bg-background' : 'bg-transparent'}`}></div>)}
-              </div>
-              <div className="flex-1 p-xl flex flex-col gap-lg overflow-hidden">
-                <div className="flex justify-between items-center">
-                  <div className="h-8 w-48 bg-text-secondary/10 rounded-full"></div>
-                  <div className="h-8 w-32 bg-accent/10 rounded-full"></div>
+            {/* Product Demo Video */}
+            <div className="flex h-[400px] md:h-[550px] bg-background relative overflow-hidden items-center justify-center">
+              <video 
+                src="/demos/landing-demo.mp4"
+                poster="/public/globe.svg"
+                controls
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback if video file is not yet rendered on static host
+                  (e.target as HTMLElement).style.display = 'none';
+                  const fallback = document.getElementById('demo-fallback-ui');
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+              <div id="demo-fallback-ui" className="hidden w-full h-full flex-row">
+                <div className="hidden md:flex w-[200px] border-r border-text-secondary/10 bg-surface flex-col p-md gap-md">
+                  <div className="h-6 w-24 bg-text-secondary/10 rounded-full mb-md"></div>
+                  {[1,2,3,4,5].map(i => <div key={i} className={`h-8 w-full rounded-button ${i===2 ? 'bg-background' : 'bg-transparent'}`}></div>)}
                 </div>
-                <div className="grid grid-cols-3 gap-md">
-                  {[1,2,3].map(i => <div key={i} className="h-24 bg-surface border border-text-secondary/10 rounded-card p-md shadow-sm"></div>)}
-                </div>
-                <div className="flex-1 bg-surface border border-text-secondary/10 rounded-card p-md shadow-sm flex flex-col gap-md">
-                  <div className="h-6 w-32 bg-text-secondary/10 rounded-full"></div>
-                  {[1,2,3,4].map(i => <div key={i} className="h-12 w-full bg-background rounded-button"></div>)}
+                <div className="flex-1 p-xl flex flex-col gap-lg overflow-hidden">
+                  <div className="flex justify-between items-center">
+                    <div className="h-8 w-48 bg-text-secondary/10 rounded-full"></div>
+                    <div className="h-8 w-32 bg-accent/10 rounded-full"></div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-md">
+                    {[1,2,3].map(i => <div key={i} className="h-24 bg-surface border border-text-secondary/10 rounded-card p-md shadow-sm"></div>)}
+                  </div>
+                  <div className="flex-1 bg-surface border border-text-secondary/10 rounded-card p-md shadow-sm flex flex-col gap-md">
+                    <div className="h-6 w-32 bg-text-secondary/10 rounded-full"></div>
+                    {[1,2,3,4].map(i => <div key={i} className="h-12 w-full bg-background rounded-button font-medium text-small text-text-secondary flex items-center px-md">Case Review Flow Verified</div>)}
+                  </div>
                 </div>
               </div>
             </div>
