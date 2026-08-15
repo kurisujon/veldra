@@ -85,40 +85,81 @@ export function Hero() {
               <div className="w-3 h-3 rounded-full bg-text-secondary/20"></div>
               <div className="w-3 h-3 rounded-full bg-text-secondary/20"></div>
             </div>
-            {/* Product Demo Video */}
+            {/* Product Demo Video / Interactive Preview */}
             <div className="flex h-[400px] md:h-[550px] bg-background relative overflow-hidden items-center justify-center">
               <video 
                 src="/demos/landing-demo.mp4"
-                poster="/public/globe.svg"
                 controls
                 autoPlay
                 muted
                 loop
                 playsInline
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover relative z-10"
                 onError={(e) => {
-                  // Fallback if video file is not yet rendered on static host
+                  // If media file isn't uploaded yet, hide video tag and show rich UI preview
                   (e.target as HTMLElement).style.display = 'none';
                   const fallback = document.getElementById('demo-fallback-ui');
                   if (fallback) fallback.style.display = 'flex';
                 }}
               />
-              <div id="demo-fallback-ui" className="hidden w-full h-full flex-row">
-                <div className="hidden md:flex w-[200px] border-r border-text-secondary/10 bg-surface flex-col p-md gap-md">
-                  <div className="h-6 w-24 bg-text-secondary/10 rounded-full mb-md"></div>
-                  {[1,2,3,4,5].map(i => <div key={i} className={`h-8 w-full rounded-button ${i===2 ? 'bg-background' : 'bg-transparent'}`}></div>)}
+              <div id="demo-fallback-ui" className="w-full h-full flex flex-row bg-background">
+                <div className="hidden md:flex w-[220px] border-r border-text-secondary/10 bg-surface flex-col p-md gap-sm">
+                  <div className="flex items-center gap-xs mb-md px-xs">
+                    <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center text-white font-bold text-xs">V</div>
+                    <span className="font-semibold text-text-primary text-small">Veldra Workspace</span>
+                  </div>
+                  <div className="px-sm py-xs rounded-button bg-background text-text-primary text-small font-medium flex items-center justify-between shadow-xs">
+                    <span>Cases</span>
+                    <span className="text-[11px] bg-accent/10 text-accent font-semibold px-xs py-0.5 rounded-full">12 Active</span>
+                  </div>
+                  <div className="px-sm py-xs rounded-button text-text-secondary text-small font-medium hover:bg-background/50">Drafts</div>
+                  <div className="px-sm py-xs rounded-button text-text-secondary text-small font-medium hover:bg-background/50">Exports</div>
+                  <div className="px-sm py-xs rounded-button text-text-secondary text-small font-medium hover:bg-background/50">Analytics</div>
                 </div>
-                <div className="flex-1 p-xl flex flex-col gap-lg overflow-hidden">
-                  <div className="flex justify-between items-center">
-                    <div className="h-8 w-48 bg-text-secondary/10 rounded-full"></div>
-                    <div className="h-8 w-32 bg-accent/10 rounded-full"></div>
+
+                <div className="flex-1 p-lg md:p-xl flex flex-col gap-md overflow-hidden bg-background">
+                  <div className="flex justify-between items-center border-b border-text-secondary/10 pb-md">
+                    <div>
+                      <div className="text-small font-semibold text-text-primary">Juan Dela Cruz — Case #2026-0815</div>
+                      <div className="text-[12px] text-text-secondary">Student Visa Application • Primary Applicant</div>
+                    </div>
+                    <span className="text-[12px] font-medium text-accent bg-accent/10 border border-accent/20 px-sm py-xs rounded-full">
+                      Stage 3 Verified
+                    </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-md">
-                    {[1,2,3].map(i => <div key={i} className="h-24 bg-surface border border-text-secondary/10 rounded-card p-md shadow-sm"></div>)}
+
+                  <div className="grid grid-cols-3 gap-sm md:gap-md">
+                    <div className="bg-surface border border-text-secondary/10 rounded-card p-sm md:p-md shadow-xs">
+                      <div className="text-[11px] text-text-secondary">Applicant Docs</div>
+                      <div className="text-body font-semibold text-text-primary mt-xs">PSA, TOR, SF10</div>
+                    </div>
+                    <div className="bg-surface border border-text-secondary/10 rounded-card p-sm md:p-md shadow-xs">
+                      <div className="text-[11px] text-text-secondary">Sponsor Docs</div>
+                      <div className="text-body font-semibold text-text-primary mt-xs">ID, COE, ITR</div>
+                    </div>
+                    <div className="bg-surface border border-text-secondary/10 rounded-card p-sm md:p-md shadow-xs">
+                      <div className="text-[11px] text-text-secondary">Evidence Chain</div>
+                      <div className="text-body font-semibold text-success mt-xs">Parent Link Confirmed</div>
+                    </div>
                   </div>
-                  <div className="flex-1 bg-surface border border-text-secondary/10 rounded-card p-md shadow-sm flex flex-col gap-md">
-                    <div className="h-6 w-32 bg-text-secondary/10 rounded-full"></div>
-                    {[1,2,3,4].map(i => <div key={i} className="h-12 w-full bg-background rounded-button font-medium text-small text-text-secondary flex items-center px-md">Case Review Flow Verified</div>)}
+
+                  <div className="flex-1 bg-surface border border-text-secondary/10 rounded-card p-md shadow-xs flex flex-col gap-sm">
+                    <div className="flex items-center justify-between pb-xs border-b border-text-secondary/10">
+                      <span className="text-small font-semibold text-text-primary">Verification Findings</span>
+                      <span className="text-[11px] text-text-secondary">3 Stage Engine Audit</span>
+                    </div>
+                    <div className="p-sm bg-background border border-text-secondary/10 rounded-button flex items-center justify-between text-small">
+                      <span className="font-medium text-text-primary">Applicant Name Match</span>
+                      <span className="text-[11px] bg-success/10 text-success font-semibold px-xs py-0.5 rounded">Exact Match</span>
+                    </div>
+                    <div className="p-sm bg-background border border-text-secondary/10 rounded-button flex items-center justify-between text-small">
+                      <span className="font-medium text-text-primary">Mother&apos;s Name Cross-Reference</span>
+                      <span className="text-[11px] bg-warning/10 text-warning font-semibold px-xs py-0.5 rounded">Fuzzy Match (Affidavit)</span>
+                    </div>
+                    <div className="p-sm bg-background border border-text-secondary/10 rounded-button flex items-center justify-between text-small">
+                      <span className="font-medium text-text-primary">Sponsor Income Verification</span>
+                      <span className="text-[11px] bg-accent/10 text-accent font-semibold px-xs py-0.5 rounded">Verified (ITR & COE)</span>
+                    </div>
                   </div>
                 </div>
               </div>
