@@ -85,99 +85,116 @@ export function Hero() {
               <div className="w-3 h-3 rounded-full bg-text-secondary/20"></div>
               <div className="w-3 h-3 rounded-full bg-text-secondary/20"></div>
             </div>
-            {/* Animated Workspace Preview */}
-            <div className="flex h-[400px] md:h-[550px] bg-background relative overflow-hidden">
-              {/* Sidebar */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 1.0 }}
-                className="hidden md:flex w-[220px] border-r border-text-secondary/10 bg-surface flex-col p-md gap-sm"
-              >
-                <div className="flex items-center gap-xs mb-md px-xs">
-                  <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center text-white font-bold text-xs">V</div>
-                  <span className="font-semibold text-text-primary text-small">Veldra Workspace</span>
-                </div>
-                <div className="px-sm py-xs rounded-button bg-background text-text-primary text-small font-medium flex items-center justify-between shadow-xs">
-                  <span>Cases</span>
-                  <span className="text-[11px] bg-accent/10 text-accent font-semibold px-xs py-0.5 rounded-full">12</span>
-                </div>
-                <div className="px-sm py-xs rounded-button text-text-secondary text-small font-medium">Documents</div>
-                <div className="px-sm py-xs rounded-button text-text-secondary text-small font-medium">Findings</div>
-                <div className="px-sm py-xs rounded-button text-text-secondary text-small font-medium">Analytics</div>
-              </motion.div>
-
-              {/* Main Content */}
-              <div className="flex-1 p-lg md:p-xl flex flex-col gap-md overflow-hidden bg-background">
-                {/* Case Header */}
+            {/* Product Demo Video / Interactive Preview */}
+            <div className="flex h-[400px] md:h-[550px] bg-background relative overflow-hidden items-center justify-center">
+              <video 
+                src="/demos/landing-demo.mp4"
+                controls
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover relative z-10"
+                onError={(e) => {
+                  // If media file isn't uploaded yet, hide video tag and show rich UI preview
+                  (e.target as HTMLElement).style.display = 'none';
+                  const fallback = document.getElementById('demo-fallback-ui');
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+              <div id="demo-fallback-ui" className="w-full h-full flex flex-row bg-background" style={{ display: 'none' }}>
+                {/* Sidebar */}
                 <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 1.2 }}
-                  className="flex justify-between items-center border-b border-text-secondary/10 pb-md"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 1.0 }}
+                  className="hidden md:flex w-[220px] border-r border-text-secondary/10 bg-surface flex-col p-md gap-sm"
                 >
-                  <div>
-                    <div className="text-small font-semibold text-text-primary">Juan Dela Cruz — Case #2026-0815</div>
-                    <div className="text-[12px] text-text-secondary mt-0.5">Student Visa Application • Primary Applicant</div>
+                  <div className="flex items-center gap-xs mb-md px-xs">
+                    <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center text-white font-bold text-xs">V</div>
+                    <span className="font-semibold text-text-primary text-small">Veldra Workspace</span>
                   </div>
-                  <span className="text-[12px] font-medium text-accent bg-accent/10 border border-accent/20 px-sm py-xs rounded-full">
-                    Stage 3 Verified
-                  </span>
+                  <div className="px-sm py-xs rounded-button bg-background text-text-primary text-small font-medium flex items-center justify-between shadow-xs">
+                    <span>Cases</span>
+                    <span className="text-[11px] bg-accent/10 text-accent font-semibold px-xs py-0.5 rounded-full">12</span>
+                  </div>
+                  <div className="px-sm py-xs rounded-button text-text-secondary text-small font-medium">Documents</div>
+                  <div className="px-sm py-xs rounded-button text-text-secondary text-small font-medium">Findings</div>
+                  <div className="px-sm py-xs rounded-button text-text-secondary text-small font-medium">Analytics</div>
                 </motion.div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-3 gap-sm md:gap-md">
-                  {[
-                    { label: 'Applicant Docs', value: 'PSA, TOR, SF10', delay: 1.4 },
-                    { label: 'Sponsor Docs', value: 'ID, COE, ITR', delay: 1.5 },
-                    { label: 'Evidence Chain', value: 'Parent Link ✓', delay: 1.6, isSuccess: true },
-                  ].map((card) => (
-                    <motion.div
-                      key={card.label}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: card.delay }}
-                      className="bg-surface border border-text-secondary/10 rounded-card p-sm md:p-md shadow-xs"
-                    >
-                      <div className="text-[11px] text-text-secondary">{card.label}</div>
-                      <div className={`text-body font-semibold mt-xs ${card.isSuccess ? 'text-success' : 'text-text-primary'}`}>
-                        {card.value}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                {/* Main Content */}
+                <div className="flex-1 p-lg md:p-xl flex flex-col gap-md overflow-hidden bg-background">
+                  {/* Case Header */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 1.2 }}
+                    className="flex justify-between items-center border-b border-text-secondary/10 pb-md"
+                  >
+                    <div>
+                      <div className="text-small font-semibold text-text-primary">Juan Dela Cruz — Case #2026-0815</div>
+                      <div className="text-[12px] text-text-secondary mt-0.5">Student Visa Application • Primary Applicant</div>
+                    </div>
+                    <span className="text-[12px] font-medium text-accent bg-accent/10 border border-accent/20 px-sm py-xs rounded-full">
+                      Stage 3 Verified
+                    </span>
+                  </motion.div>
 
-                {/* Findings Table */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 1.7 }}
-                  className="flex-1 bg-surface border border-text-secondary/10 rounded-card p-md shadow-xs flex flex-col gap-sm"
-                >
-                  <div className="flex items-center justify-between pb-xs border-b border-text-secondary/10">
-                    <span className="text-small font-semibold text-text-primary">Verification Findings</span>
-                    <span className="text-[11px] text-text-secondary">3-Stage Engine</span>
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-3 gap-sm md:gap-md">
+                    {[
+                      { label: 'Applicant Docs', value: 'PSA, TOR, SF10', delay: 1.4 },
+                      { label: 'Sponsor Docs', value: 'ID, COE, ITR', delay: 1.5 },
+                      { label: 'Evidence Chain', value: 'Parent Link ✓', delay: 1.6, isSuccess: true },
+                    ].map((card) => (
+                      <motion.div
+                        key={card.label}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: card.delay }}
+                        className="bg-surface border border-text-secondary/10 rounded-card p-sm md:p-md shadow-xs"
+                      >
+                        <div className="text-[11px] text-text-secondary">{card.label}</div>
+                        <div className={`text-body font-semibold mt-xs ${card.isSuccess ? 'text-success' : 'text-text-primary'}`}>
+                          {card.value}
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
-                  {[
-                    { name: 'Full Name Consistency', badge: 'Exact Match', badgeClass: 'bg-success/10 text-success', delay: 1.9 },
-                    { name: 'Date of Birth Cross-Reference', badge: 'Exact Match', badgeClass: 'bg-success/10 text-success', delay: 2.1 },
-                    { name: 'Mother\u2019s Name (Affidavit)', badge: 'Fuzzy Match', badgeClass: 'bg-warning/10 text-warning', delay: 2.3 },
-                    { name: 'Sponsor Income (ITR vs COE)', badge: 'Verified', badgeClass: 'bg-accent/10 text-accent', delay: 2.5 },
-                  ].map((finding) => (
-                    <motion.div
-                      key={finding.name}
-                      initial={{ opacity: 0, x: 8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: finding.delay }}
-                      className="p-sm bg-background border border-text-secondary/10 rounded-button flex items-center justify-between text-small"
-                    >
-                      <span className="font-medium text-text-primary">{finding.name}</span>
-                      <span className={`text-[11px] ${finding.badgeClass} font-semibold px-xs py-0.5 rounded`}>
-                        {finding.badge}
-                      </span>
-                    </motion.div>
-                  ))}
-                </motion.div>
+
+                  {/* Findings Table */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 1.7 }}
+                    className="flex-1 bg-surface border border-text-secondary/10 rounded-card p-md shadow-xs flex flex-col gap-sm"
+                  >
+                    <div className="flex items-center justify-between pb-xs border-b border-text-secondary/10">
+                      <span className="text-small font-semibold text-text-primary">Verification Findings</span>
+                      <span className="text-[11px] text-text-secondary">3-Stage Engine</span>
+                    </div>
+                    {[
+                      { name: 'Full Name Consistency', badge: 'Exact Match', badgeClass: 'bg-success/10 text-success', delay: 1.9 },
+                      { name: 'Date of Birth Cross-Reference', badge: 'Exact Match', badgeClass: 'bg-success/10 text-success', delay: 2.1 },
+                      { name: 'Mother\u2019s Name (Affidavit)', badge: 'Fuzzy Match', badgeClass: 'bg-warning/10 text-warning', delay: 2.3 },
+                      { name: 'Sponsor Income (ITR vs COE)', badge: 'Verified', badgeClass: 'bg-accent/10 text-accent', delay: 2.5 },
+                    ].map((finding) => (
+                      <motion.div
+                        key={finding.name}
+                        initial={{ opacity: 0, x: 8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: finding.delay }}
+                        className="p-sm bg-background border border-text-secondary/10 rounded-button flex items-center justify-between text-small"
+                      >
+                        <span className="font-medium text-text-primary">{finding.name}</span>
+                        <span className={`text-[11px] ${finding.badgeClass} font-semibold px-xs py-0.5 rounded`}>
+                          {finding.badge}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
               </div>
             </div>
           </div>
