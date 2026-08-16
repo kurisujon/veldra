@@ -88,7 +88,7 @@ export function Hero() {
             {/* Product Demo Video / Interactive Preview */}
             <div className="flex h-[400px] md:h-[550px] bg-background relative overflow-hidden items-center justify-center">
               <video 
-                src="/demos/landing-demo.mp4"
+                src="/demos/landing-demo.webm"
                 controls
                 autoPlay
                 muted

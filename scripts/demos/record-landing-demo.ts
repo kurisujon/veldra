@@ -50,8 +50,8 @@ async function recordLandingDemo() {
 
   const baseURL = process.env.DEMO_BASE_URL || 'http://localhost:3000';
 
-  console.log(`Navigating to ${baseURL}...`);
-  await page.goto(baseURL);
+  console.log(`Navigating to ${baseURL}... (Waiting up to 120s for initial compile)`);
+  await page.goto(baseURL, { timeout: 120000 });
   await showCaption('Veldra — Smart Document Verification Platform', 3500);
 
   // Step 1: Scroll to See It In Action interactive demo section
