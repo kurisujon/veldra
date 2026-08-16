@@ -38,16 +38,16 @@ export function CreateCaseModal({ isOpen, onClose }: { isOpen: boolean, onClose:
       <form onSubmit={handleSubmit} className="flex flex-col gap-md">
         {error && <div className="text-small text-error bg-error/10 p-sm rounded-input">{error}</div>}
         <div>
-          <label className="mb-xs block text-small font-medium text-text-secondary">First Name</label>
-          <Input name="firstName" required placeholder="Juan" />
+          <label htmlFor="firstName" className="mb-xs block text-small font-medium text-text-secondary">First Name</label>
+          <Input id="firstName" name="firstName" required placeholder="Juan" />
         </div>
         <div>
-          <label className="mb-xs block text-small font-medium text-text-secondary">Middle Name / Initial (Optional)</label>
-          <Input name="middleName" placeholder="T." />
+          <label htmlFor="middleName" className="mb-xs block text-small font-medium text-text-secondary">Middle Name / Initial (Optional)</label>
+          <Input id="middleName" name="middleName" placeholder="T." />
         </div>
         <div>
-          <label className="mb-xs block text-small font-medium text-text-secondary">Last Name</label>
-          <Input name="lastName" required placeholder="Dela Cruz" />
+          <label htmlFor="lastName" className="mb-xs block text-small font-medium text-text-secondary">Last Name</label>
+          <Input id="lastName" name="lastName" required placeholder="Dela Cruz" />
         </div>
 
         <div className="mt-md flex justify-end gap-sm">
