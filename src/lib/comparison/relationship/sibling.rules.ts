@@ -73,10 +73,9 @@ export function verifySiblingRelationship(
       if (isFatherMissing) {
         status = 'insufficient_evidence';
         confidence = 10;
-        missing.push({
-          description: 'Joint Affidavit of Two Disinterested Persons (required because the father field is missing on the PSA Birth Certificate, preventing paternal link verification)',
-          found: false
-        });
+        missing.push(
+          'Joint Affidavit of Two Disinterested Persons (required because the father field is missing on the PSA Birth Certificate, preventing paternal link verification)'
+        );
       } else {
         // Both fathers are present and both mothers are present, but NEITHER match.
         status = 'conflicting_evidence';
