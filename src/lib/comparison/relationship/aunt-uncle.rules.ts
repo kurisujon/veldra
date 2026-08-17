@@ -98,8 +98,21 @@ export function verifyAuntUncleRelationship(
       status = 'partially_supported';
       confidence = 80;
     } else {
-      status = 'needs_manual_review';
-      confidence = 30;
+      // Neither grandparent matches.
+      // If grandfather is completely missing on either document, it could be a paternal half-sibling without AUSF.
+      const isFatherMissing = !parentPsaFather?.raw_value || !sponPsaFather?.raw_value;
+      if (isFatherMissing) {
+        status = 'insufficient_evidence';
+        confidence = 10;
+        missing.push({
+          description: 'Joint Affidavit of Two Disinterested Persons (required because the grandfather field is missing on the PSA Birth Certificate, preventing paternal link verification)',
+          found: false
+        });
+      } else {
+        // Both grandfathers are present and both grandmothers are present, but NEITHER match.
+        status = 'conflicting_evidence';
+        confidence = 0;
+      }
     }
   }
 

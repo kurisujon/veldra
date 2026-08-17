@@ -67,8 +67,21 @@ export function verifySiblingRelationship(
       status = 'partially_supported'; // Half-siblings are generally accepted but might need review
       confidence = 80;
     } else {
-      status = 'needs_manual_review';
-      confidence = 30;
+      // Neither parent matches. 
+      // If father is completely missing on either document, it could be a paternal half-sibling without AUSF.
+      const isFatherMissing = !appFather?.raw_value || !sponFather?.raw_value;
+      if (isFatherMissing) {
+        status = 'insufficient_evidence';
+        confidence = 10;
+        missing.push({
+          description: 'Joint Affidavit of Two Disinterested Persons (required because the father field is missing on the PSA Birth Certificate, preventing paternal link verification)',
+          found: false
+        });
+      } else {
+        // Both fathers are present and both mothers are present, but NEITHER match.
+        status = 'conflicting_evidence';
+        confidence = 0;
+      }
     }
   }
 
