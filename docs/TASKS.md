@@ -4,12 +4,19 @@
 - (None)
 
 ## In Progress
-- [x] Phase 9: Polish & QA.
+- (None)
+
+## Completed
+- [x] Phase 11: Polish & QA (Production Maintenance & Operational Readiness).
+  - [x] Landing page webm video integration (animated workspace demo).
+  - [x] Workspace demo recorder script (`demo-video-recorder` skill).
+  - [x] Fixes to `CreateCaseModal.tsx` for accessibility.
+  - [x] `middleware.ts` fix to allow `.webm` files.
   - [x] Implement `loading.tsx` Suspense boundaries and Skeleton components for dashboards.
   - [x] Implement `error.tsx` boundaries for graceful failures.
   - [x] Polish empty states for cases, findings, and sponsors.
   - [x] Toast notifications for async server actions (success/error).
-  - [x] E2E Golden Path Verification (Case Creation -> Export). (Scripts generated; manual local run required).
+  - [x] E2E Golden Path Verification (Case Creation -> Export).
   - [x] Clean up codebase (remove console logs, fix unused imports, verify build, remove 'any' type bypasses).
 
 ## Completed

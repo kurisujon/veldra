@@ -1,5 +1,303 @@
 import { z } from 'zod';
 
+// ---------------------------------------------------------------------------
+// Evidence Field Schema (new: grounded extraction)
+// ---------------------------------------------------------------------------
+
+/**
+ * Zod schema for an evidence-grounded extracted field.
+ * Every field extracted by the upgraded pipeline includes source evidence.
+ */
+export const EvidenceFieldSchema = z.object({
+  value: z.union([z.string(), z.null()]).catch(null).default(null),
+  sourceText: z.union([z.string(), z.null()]).catch(null).default(null),
+  page: z.union([z.number(), z.null()]).catch(null).default(null),
+  confidence: z.union([z.number(), z.null()]).catch(null).default(null),
+  status: z.enum(['verified', 'uncertain', 'missing', 'unreadable']).catch('uncertain').default('uncertain'),
+});
+
+export type EvidenceField = z.infer<typeof EvidenceFieldSchema>;
+
+/**
+ * Helper to create a nullable evidence field with graceful degradation.
+ */
+function evidenceField() {
+  return EvidenceFieldSchema.catch({
+    value: null,
+    sourceText: null,
+    page: null,
+    confidence: null,
+    status: 'uncertain' as const,
+  }).default({
+    value: null,
+    sourceText: null,
+    page: null,
+    confidence: null,
+    status: 'uncertain' as const,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Grounded Extraction Schemas (new pipeline)
+// ---------------------------------------------------------------------------
+
+/**
+ * Grounded PSA Birth Certificate schema — each field carries evidence.
+ */
+export const GroundedBirthCertificateSchema = z.object({
+  documentType: evidenceField(),
+  certificateNumber: evidenceField(),
+  registryNumber: evidenceField(),
+  firstName: evidenceField(),
+  middleName: evidenceField(),
+  lastName: evidenceField(),
+  suffix: evidenceField(),
+  sex: evidenceField(),
+  dateOfBirth: evidenceField(),
+  placeOfBirth: evidenceField(),
+  fatherFirstName: evidenceField(),
+  fatherMiddleName: evidenceField(),
+  fatherLastName: evidenceField(),
+  motherMaidenFirstName: evidenceField(),
+  motherMaidenMiddleName: evidenceField(),
+  motherMaidenLastName: evidenceField(),
+  dateOfRegistration: evidenceField(),
+  issuingOffice: evidenceField(),
+  remarks: evidenceField(),
+});
+
+export type GroundedBirthCertificateData = z.infer<typeof GroundedBirthCertificateSchema>;
+
+export const GroundedMarriageCertificateSchema = z.object({
+  documentType: evidenceField(),
+  certificateNumber: evidenceField(),
+  husbandFirstName: evidenceField(),
+  husbandMiddleName: evidenceField(),
+  husbandLastName: evidenceField(),
+  wifeFirstName: evidenceField(),
+  wifeMiddleName: evidenceField(),
+  wifeLastName: evidenceField(),
+  dateOfMarriage: evidenceField(),
+  placeOfMarriage: evidenceField(),
+  husbandCitizenship: evidenceField(),
+  wifeCitizenship: evidenceField(),
+  issuingOffice: evidenceField(),
+  remarks: evidenceField(),
+});
+
+export type GroundedMarriageCertificateData = z.infer<typeof GroundedMarriageCertificateSchema>;
+
+const GroundedAcademicEntrySchema = z.object({
+  schoolYear: z.string().nullish().catch(null).default(null),
+  term: z.string().nullish().catch(null).default(null),
+  subjectCode: z.string().nullish().catch(null).default(null),
+  subjectTitle: z.string().nullish().catch(null).default(null),
+  grade: z.string().nullish().catch(null).default(null),
+  units: z.string().nullish().catch(null).default(null),
+});
+
+export const GroundedTorSchema = z.object({
+  documentType: evidenceField(),
+  studentFirstName: evidenceField(),
+  studentMiddleName: evidenceField(),
+  studentLastName: evidenceField(),
+  studentSuffix: evidenceField(),
+  institutionName: evidenceField(),
+  institutionAddress: evidenceField(),
+  program: evidenceField(),
+  degree: evidenceField(),
+  studentNumber: evidenceField(),
+  dateOfGraduation: evidenceField(),
+  honors: evidenceField(),
+  academicEntries: evidenceField(),
+});
+
+export type GroundedTorData = z.infer<typeof GroundedTorSchema>;
+
+const GroundedGradeLevelEntrySchema = z.object({
+  gradeLevel: z.string().nullish().catch(null).default(null),
+  schoolYear: z.string().nullish().catch(null).default(null),
+  schoolName: z.string().nullish().catch(null).default(null),
+  generalAverage: z.string().nullish().catch(null).default(null),
+});
+
+export const GroundedSf10Schema = z.object({
+  documentType: evidenceField(),
+  studentFirstName: evidenceField(),
+  studentMiddleName: evidenceField(),
+  studentLastName: evidenceField(),
+  dateOfBirth: evidenceField(),
+  schoolName: evidenceField(),
+  schoolAddress: evidenceField(),
+  lrn: evidenceField(),
+  gradeLevelEntries: evidenceField(),
+  remarks: evidenceField(),
+});
+
+export type GroundedSf10Data = z.infer<typeof GroundedSf10Schema>;
+
+export const GroundedDiplomaSchema = z.object({
+  documentType: evidenceField(),
+  studentFirstName: evidenceField(),
+  studentMiddleName: evidenceField(),
+  studentLastName: evidenceField(),
+  studentSuffix: evidenceField(),
+  institutionName: evidenceField(),
+  degree: evidenceField(),
+  program: evidenceField(),
+  dateAwarded: evidenceField(),
+  honors: evidenceField(),
+  remarks: evidenceField(),
+});
+
+export type GroundedDiplomaData = z.infer<typeof GroundedDiplomaSchema>;
+
+export const GroundedBankStatementSchema = z.object({
+  documentType: evidenceField(),
+  accountHolderName: evidenceField(),
+  accountNumber: evidenceField(),
+  bankName: evidenceField(),
+  bankAddress: evidenceField(),
+  statementDate: evidenceField(),
+  currency: evidenceField(),
+  closingBalance: evidenceField(),
+  remarks: evidenceField(),
+});
+
+export type GroundedBankStatementData = z.infer<typeof GroundedBankStatementSchema>;
+
+export const GroundedProofOfBillingSchema = z.object({
+  documentType: evidenceField(),
+  billerName: evidenceField(),
+  customerName: evidenceField(),
+  billingAddress: evidenceField(),
+  accountNumber: evidenceField(),
+  statementDate: evidenceField(),
+  dueDate: evidenceField(),
+  amountDue: evidenceField(),
+  remarks: evidenceField(),
+});
+
+export type GroundedProofOfBillingData = z.infer<typeof GroundedProofOfBillingSchema>;
+
+export const GroundedSponsorValidIDSchema = z.object({
+  documentType: evidenceField(),
+  idType: evidenceField(),
+  idNumber: evidenceField(),
+  firstName: evidenceField(),
+  middleName: evidenceField(),
+  lastName: evidenceField(),
+  suffix: evidenceField(),
+  fullName: evidenceField(),
+  dateOfBirth: evidenceField(),
+  sex: evidenceField(),
+  address: evidenceField(),
+  issueDate: evidenceField(),
+  expiryDate: evidenceField(),
+  issuingAuthority: evidenceField(),
+  remarks: evidenceField(),
+});
+
+export type GroundedSponsorValidIDData = z.infer<typeof GroundedSponsorValidIDSchema>;
+
+export const GroundedSponsorCOESchema = z.object({
+  documentType: evidenceField(),
+  sponsorFullName: evidenceField(),
+  sponsorFirstName: evidenceField(),
+  sponsorLastName: evidenceField(),
+  employerName: evidenceField(),
+  employerAddress: evidenceField(),
+  position: evidenceField(),
+  employmentStatus: evidenceField(),
+  employmentStartDate: evidenceField(),
+  monthlySalary: evidenceField(),
+  annualSalary: evidenceField(),
+  issueDate: evidenceField(),
+  signatoryName: evidenceField(),
+  signatoryPosition: evidenceField(),
+  remarks: evidenceField(),
+});
+
+export type GroundedSponsorCOEData = z.infer<typeof GroundedSponsorCOESchema>;
+
+export const GroundedSponsorITRSchema = z.object({
+  documentType: evidenceField(),
+  taxpayerFullName: evidenceField(),
+  taxpayerFirstName: evidenceField(),
+  taxpayerLastName: evidenceField(),
+  tin: evidenceField(),
+  taxYear: evidenceField(),
+  employerName: evidenceField(),
+  grossCompensationIncome: evidenceField(),
+  taxableIncome: evidenceField(),
+  address: evidenceField(),
+  remarks: evidenceField(),
+});
+
+export type GroundedSponsorITRData = z.infer<typeof GroundedSponsorITRSchema>;
+
+export const GroundedAffidavitOfSupportSchema = z.object({
+  documentType: evidenceField(),
+  sponsorFullName: evidenceField(),
+  sponsorFirstName: evidenceField(),
+  sponsorLastName: evidenceField(),
+  sponsorAddress: evidenceField(),
+  applicantFullName: evidenceField(),
+  applicantFirstName: evidenceField(),
+  applicantLastName: evidenceField(),
+  declaredRelationship: evidenceField(),
+  supportDeclaration: evidenceField(),
+  executionDate: evidenceField(),
+  notaryName: evidenceField(),
+  notaryRollNumber: evidenceField(),
+  remarks: evidenceField(),
+});
+
+export type GroundedAffidavitOfSupportData = z.infer<typeof GroundedAffidavitOfSupportSchema>;
+
+/**
+ * Union type for all grounded extraction data.
+ */
+export type GroundedExtractionData =
+  | GroundedBirthCertificateData
+  | GroundedMarriageCertificateData
+  | GroundedTorData
+  | GroundedSf10Data
+  | GroundedDiplomaData
+  | GroundedBankStatementData
+  | GroundedProofOfBillingData
+  | GroundedSponsorValidIDData
+  | GroundedSponsorCOEData
+  | GroundedSponsorITRData
+  | GroundedAffidavitOfSupportData;
+
+// ---------------------------------------------------------------------------
+// Grounded Schema Registry
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the grounded Zod schema for a given document type.
+ */
+export function getGroundedSchemaForType(documentType: string): z.ZodObject<z.ZodRawShape> {
+  const type = documentType.toLowerCase();
+  if (type.includes('birth') || type === 'psabirth') return GroundedBirthCertificateSchema;
+  if (type.includes('marriage') || type === 'psamarriage') return GroundedMarriageCertificateSchema;
+  if (type.includes('tor') || type.includes('transcript') || type === 'tor') return GroundedTorSchema;
+  if (type === 'sf10' || type.includes('sf10')) return GroundedSf10Schema;
+  if (type.includes('diploma') || type === 'diploma') return GroundedDiplomaSchema;
+  if (type.includes('bank') || type === 'bankstatement') return GroundedBankStatementSchema;
+  if (type.includes('billing') || type === 'proofofbilling') return GroundedProofOfBillingSchema;
+  if (type.includes('sponsorvalidid') || type === 'validid') return GroundedSponsorValidIDSchema;
+  if (type.includes('sponsorcoe') || type === 'coe') return GroundedSponsorCOESchema;
+  if (type.includes('sponsoritr') || type === 'itr') return GroundedSponsorITRSchema;
+  if (type.includes('affidavit') || type === 'affidavitofsupport') return GroundedAffidavitOfSupportSchema;
+  throw new Error(`No grounded schema defined for document type: ${documentType}`);
+}
+
+// ===========================================================================
+// Legacy Flat Schemas (preserved for backward compatibility)
+// ===========================================================================
+
 /**
  * Zod schema for a structured PSA Birth Certificate extraction object.
  * All fields are nullable to handle missing or unreadable values.
@@ -275,4 +573,3 @@ export const AffidavitOfSupportSchema = z.object({
   remarks: z.string().nullish().catch(null).default(null),
 });
 export type AffidavitOfSupportData = z.infer<typeof AffidavitOfSupportSchema>;
-

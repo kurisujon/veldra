@@ -9,6 +9,7 @@ Veldra is a Smart Document Verification Platform tailored for checking student v
 - Playwright E2E suite generated (`e2e/` specs for auth, smoke, cases, docs, analysis, authorization, visual audit).
 - Phase 10 Three-Stage Verification Engine fully operational with 3-tab `CaseFindingsWorkspace`.
 - Phase 8 Analytics & Phase 7.5 Sponsor verification systems integrated.
+- Phase 11.5 Evidence-Grounded AI Extraction Upgrade completed. Pipeline rebuilt with decoupled OCR, Zod-grounded extraction, cross-reference validation, fallback API key rotation, multi-signal confidence scoring, and model escalation. `ExtractionWorkspace` now strictly surfaces OCR source evidence.
 
 **Current Phase:** Production Maintenance & Operational Readiness
 

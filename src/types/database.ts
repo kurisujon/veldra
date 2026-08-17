@@ -278,6 +278,14 @@ export type Database = {
           reviewed_by: string | null
           status: Database["public"]["Enums"]["extraction_status"]
           updated_at: string
+          ocr_text: string | null
+          page_count: number | null
+          document_quality: string | null
+          model_used: string | null
+          processing_duration_ms: number | null
+          ocr_engine: string | null
+          retry_count: number | null
+          uncertain_field_count: number | null
         }
         Insert: {
           case_id: string
@@ -295,6 +303,14 @@ export type Database = {
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["extraction_status"]
           updated_at?: string
+          ocr_text?: string | null
+          page_count?: number | null
+          document_quality?: string | null
+          model_used?: string | null
+          processing_duration_ms?: number | null
+          ocr_engine?: string | null
+          retry_count?: number | null
+          uncertain_field_count?: number | null
         }
         Update: {
           case_id?: string
@@ -312,6 +328,14 @@ export type Database = {
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["extraction_status"]
           updated_at?: string
+          ocr_text?: string | null
+          page_count?: number | null
+          document_quality?: string | null
+          model_used?: string | null
+          processing_duration_ms?: number | null
+          ocr_engine?: string | null
+          retry_count?: number | null
+          uncertain_field_count?: number | null
         }
         Relationships: [
           {
@@ -348,6 +372,11 @@ export type Database = {
           reviewed_value: string | null
           status: Database["public"]["Enums"]["field_status"]
           updated_at: string
+          source_text: string | null
+          page_number: number | null
+          bounding_box: Json | null
+          ocr_confidence: number | null
+          evidence_status: string | null
         }
         Insert: {
           case_id: string
@@ -366,6 +395,11 @@ export type Database = {
           reviewed_value?: string | null
           status?: Database["public"]["Enums"]["field_status"]
           updated_at?: string
+          source_text?: string | null
+          page_number?: number | null
+          bounding_box?: Json | null
+          ocr_confidence?: number | null
+          evidence_status?: string | null
         }
         Update: {
           case_id?: string
@@ -384,6 +418,11 @@ export type Database = {
           reviewed_value?: string | null
           status?: Database["public"]["Enums"]["field_status"]
           updated_at?: string
+          source_text?: string | null
+          page_number?: number | null
+          bounding_box?: Json | null
+          ocr_confidence?: number | null
+          evidence_status?: string | null
         }
         Relationships: [
           {

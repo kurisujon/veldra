@@ -27,10 +27,11 @@ When operating within the Veldra project, the division of labor is strictly defi
 
 ## 3. Current System State
 
+*   **Operational Readiness is Active.** Integrated landing page animated workspace demo (webm), created `demo-video-recorder` skill, fixed `CreateCaseModal.tsx` accessibility, and updated middleware for `.webm` support.
 *   **Phase 11 (Polish & QA) is Complete.** Codebase cleaned of type bypasses, Playwright E2E test suite generated (`e2e/`), loading/error boundaries and toast notifications verified.
 *   **Phase 10 (Advanced Three-Stage Verification Engine) is Complete.** Applicant, Sponsor, and Relationship verification logic implemented with 3-tab `CaseFindingsWorkspace` UI and graph evidence chain tracking.
 *   **Phase 8 (Dashboard & Analytics) is Complete.** `get_dashboard_analytics` RPC with scope filtering, sponsor-aware metrics, and analytics visual breakdown components.
-*   **Gemini 2.5 Flash Document Extraction Integration is Complete.** Structured AI document extraction (covering PSA Birth Certificates, PSA Marriage Certificates, TOR, SF10, Diplomas, Sponsor ID/COE/ITR/Affidavit) is fully operational with automatic API key rotation on failover.
+*   **Phase 11.5 (Evidence-Grounded AI Extraction Upgrade) is Complete.** AI document extraction pipeline rebuilt with two-stage OCR decoupling, Zod-grounded structured extraction with evidence tracking, cross-reference validation, fallback API key rotation, multi-signal confidence scoring, and model escalation (Flash to Pro). `DocumentField` and `ExtractionWorkspace` now strictly track and surface OCR source evidence to human reviewers.
 ## 4. Workspace Skills & Commands
 
 The following specialized skills are installed and available for this workspace:

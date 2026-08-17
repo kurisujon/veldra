@@ -78,6 +78,14 @@ A `Document` may have one active extraction record, or multiple historical extra
 - `reviewedBy`
 - `notes`
 - `errorMessage`
+- `ocrText` (Raw OCR text separated from JSON)
+- `pageCount`
+- `documentQuality` ('clear', 'degraded', 'poor')
+- `modelUsed` (e.g. gemini-2.5-pro)
+- `processingDurationMs`
+- `ocrEngine` ('pdf-parse' | 'gemini-ocr')
+- `retryCount`
+- `uncertainFieldCount`
 
 ## Relationships
 - Belongs To: `Case`
@@ -131,6 +139,11 @@ Each field stores:
 - `reviewNotes`
 - `reviewedAt`
 - `reviewedBy`
+- `sourceText` (OCR source text)
+- `pageNumber` (1-indexed page location)
+- `boundingBox` ({x, y, width, height})
+- `ocrConfidence` (OCR-level confidence)
+- `evidenceStatus` ('verified', 'uncertain', 'missing', 'unreadable')
 
 ## Relationships
 - Belongs To: `Case`

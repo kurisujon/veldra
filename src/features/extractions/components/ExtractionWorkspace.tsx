@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { runExtraction, updateDocumentField } from '../actions'
-import { Check, X, Loader2, Edit2 } from 'lucide-react'
+import { Check, X, Loader2, Edit2, AlertTriangle, Eye, FileText, ChevronDown, ChevronUp } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 const EXTRACTION_STATUS_VARIANTS: Record<string, 'neutral' | 'primary' | 'success' | 'warning' | 'error'> = {
@@ -194,6 +194,12 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
   const [isPending, startTransition] = useTransition()
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(field.reviewed_value || field.normalized_value || field.raw_value)
+  const [isSourceExpanded, setIsSourceExpanded] = useState(false)
+
+  const evidenceStatus = field.evidence_status || field?.metadata?.evidence_status
+  const confidence = field.confidence_score ?? field?.metadata?.confidence_score
+  const pageNumber = field.page_number ?? field?.metadata?.page_number
+  const sourceText = field.source_text ?? field?.metadata?.source_text
 
   const handleAccept = () => {
     startTransition(async () => {
@@ -253,6 +259,41 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
           {field.field_name.replace(/([a-z])([A-Z])/g, '$1 $2')}
         </span>
         
+        {(evidenceStatus || confidence !== undefined || pageNumber !== undefined) && (
+          <div className="flex flex-wrap items-center gap-sm text-xs text-text-secondary mb-xs">
+            {evidenceStatus && (
+              <div 
+                className={`flex items-center gap-xs ${
+                  evidenceStatus.toLowerCase() === 'verified' ? 'text-green-600' : 
+                  evidenceStatus.toLowerCase() === 'uncertain' ? 'text-amber-500' : 
+                  evidenceStatus.toLowerCase() === 'unreadable' ? 'text-red-500' : 'text-text-secondary'
+                }`}
+                title={
+                  evidenceStatus.toLowerCase() === 'verified' ? 'Evidence verified' :
+                  evidenceStatus.toLowerCase() === 'uncertain' ? 'Needs review — evidence uncertain' :
+                  evidenceStatus.toLowerCase() === 'missing' ? 'Field not found in document' :
+                  evidenceStatus.toLowerCase() === 'unreadable' ? 'Field unreadable' : ''
+                }
+              >
+                {evidenceStatus.toLowerCase() === 'verified' ? <Check size={12} /> :
+                 evidenceStatus.toLowerCase() === 'uncertain' ? <AlertTriangle size={12} /> :
+                 <span className="w-2 h-2 rounded-full bg-current inline-block" />}
+                <span className="font-medium capitalize">{evidenceStatus}</span>
+              </div>
+            )}
+            {confidence !== undefined && (
+              <div className={`flex items-center gap-xs ${evidenceStatus ? 'border-l border-default pl-sm' : ''}`}>
+                <span>{typeof confidence === 'number' && confidence <= 1 ? `${Math.round(confidence * 100)}%` : `${confidence}%`}</span>
+              </div>
+            )}
+            {pageNumber !== undefined && (
+              <div className={`flex items-center gap-xs ${(evidenceStatus || confidence !== undefined) ? 'border-l border-default pl-sm' : ''}`}>
+                <FileText size={12} /> <span>Page {pageNumber}</span>
+              </div>
+            )}
+          </div>
+        )}
+        
         {isEditing ? (
           <textarea 
             className="w-full bg-background border border-accent-muted rounded-md p-sm text-body text-text-primary outline-none min-h-[100px] resize-y font-mono text-sm"
@@ -286,6 +327,24 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
           <span className={`text-body ${isRejected ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
             {displayValue || ''}
           </span>
+        )}
+
+        {/* Source Text Section */}
+        {sourceText && sourceText !== displayValue && !isEditing && (
+          <div className="mt-xs">
+            <button 
+              onClick={() => setIsSourceExpanded(!isSourceExpanded)}
+              className="flex items-center gap-xs text-xs text-text-secondary hover:text-text-primary transition-colors"
+            >
+              {isSourceExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              Source text
+            </button>
+            {isSourceExpanded && (
+              <div className="mt-xs p-sm bg-background border border-default rounded-md text-xs font-mono text-text-secondary break-words">
+                {sourceText}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

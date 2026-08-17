@@ -3,7 +3,7 @@
  * Tests that case data is not accessible to unauthenticated users or
  * other users via direct URL access.
  */
-import { test, expect, browser } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { createTestCase, timestamp } from "./helpers";
 
 test.describe("Authorization & RLS", () => {
