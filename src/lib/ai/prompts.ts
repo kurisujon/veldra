@@ -18,6 +18,11 @@ IMPORTANT FIELD LOCATION GUIDE for Philippine PSA Birth Certificates:
 - "fatherFirstName", "fatherMiddleName", "fatherLastName" refer ONLY to the FATHER's name.
 - These three sets of names (child, mother, father) are ALWAYS different people. They must NEVER have the same values unless the document genuinely shows identical names.
 
+CRITICAL RULE FOR BLANK FATHER SECTIONS:
+- In the Philippines, children born out of wedlock (illegitimate) often have Sections 13-17 (Father's Name) left COMPLETELY BLANK, with dashes (---), "N/A", or empty fields.
+- If the father section on the document is blank, empty, contains only dashes, lines, or "N/A", you MUST return null for ALL father fields (fatherFirstName, fatherMiddleName, fatherLastName). Do NOT guess, infer, or copy any name from other sections into the father fields.
+- Do NOT use the mother's last name, the child's last name, or any other name as a substitute for a missing father name.
+
 Schema:
 {
   "documentType": "PSABirth",
