@@ -7,7 +7,7 @@ import type { Database } from '@/types/database'
 
 const UploadDocumentSchema = z.object({
   caseId: z.string().uuid(),
-  type: z.enum(['PSABirth', 'PSAMarriage', 'TOR', 'SF10', 'Diploma', 'ValidID', 'BankStatement', 'ProofOfBilling', 'SponsorValidID', 'SponsorCOE', 'SponsorITR', 'AffidavitOfSupport']),
+  type: z.enum(['PSABirth', 'PSAMarriage', 'TOR', 'SF10', 'Diploma', 'ValidID', 'BankStatement', 'ProofOfBilling', 'SponsorValidID', 'SponsorCOE', 'SponsorITR', 'AffidavitOfSupport', 'SponsorPSABirth']),
   file: z.instanceof(File, { message: 'Valid file is required' })
     .refine((file) => file.size <= 50 * 1024 * 1024, 'File size must be less than 50MB')
     .refine(
@@ -18,7 +18,7 @@ const UploadDocumentSchema = z.object({
 
 const SaveDocumentRecordSchema = z.object({
   caseId: z.string().uuid(),
-  type: z.enum(['PSABirth', 'PSAMarriage', 'TOR', 'SF10', 'Diploma', 'ValidID', 'BankStatement', 'ProofOfBilling', 'SponsorValidID', 'SponsorCOE', 'SponsorITR', 'AffidavitOfSupport']),
+  type: z.enum(['PSABirth', 'PSAMarriage', 'TOR', 'SF10', 'Diploma', 'ValidID', 'BankStatement', 'ProofOfBilling', 'SponsorValidID', 'SponsorCOE', 'SponsorITR', 'AffidavitOfSupport', 'SponsorPSABirth']),
   filePath: z.string(),
   fileName: z.string(),
   fileSize: z.number(),
