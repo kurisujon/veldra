@@ -23,6 +23,12 @@ CRITICAL RULE FOR BLANK FATHER SECTIONS:
 - If the father section on the document is blank, empty, contains only dashes, lines, or "N/A", you MUST return null for ALL father fields (fatherFirstName, fatherMiddleName, fatherLastName). Do NOT guess, infer, or copy any name from other sections into the father fields.
 - Do NOT use the mother's last name, the child's last name, or any other name as a substitute for a missing father name.
 
+HEURISTIC FOR OBSCURED LABELS:
+- If the document is an old or poor-quality scan where the "Mother" and "Father" labels are unreadable, look at the names themselves to distinguish them.
+- Traditionally female names (e.g., Rosario, Maria, Elena) belong to the MOTHER.
+- Traditionally male names (e.g., Juan, Jose, Pedro) belong to the FATHER.
+- Use this gender-based heuristic only if you cannot clearly read the section labels (Section 6 for Mother, Section 13 for Father).
+
 Schema:
 {
   "documentType": "PSABirth",
