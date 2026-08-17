@@ -6,27 +6,36 @@ export function getExtractionPrompt(documentType: string): string {
   const type = documentType.toLowerCase();
 
   if (type.includes('birth') || type === 'psabirth') {
-    return `You are a high-precision document extraction agent. Extract structured information from the provided Birth Certificate.
+    return `You are a high-precision document extraction agent. Extract structured information from the provided Philippine PSA Birth Certificate (Certificate of Live Birth).
 Return a single JSON object matching this schema exactly. Use null for missing, unreadable, or not present values. Do not invent any data. Do not include markdown formatting or backticks (e.g., do NOT wrap the response in \`\`\`json ... \`\`\`).
+
+IMPORTANT FIELD LOCATION GUIDE for Philippine PSA Birth Certificates:
+- The CHILD's name (the person whose birth is registered) is at the TOP of the form (Sections 1-3: First Name, Middle Name, Last Name).
+- The MOTHER's maiden name is in the MIDDLE section of the form (Sections 6-9). The mother's maiden name is the name she had BEFORE marriage. This is a DIFFERENT person from the child.
+- The FATHER's name is in the LOWER section of the form (Sections 13-17). This is also a DIFFERENT person from the child.
+- "firstName", "middleName", and "lastName" below refer ONLY to the CHILD (the subject of the birth certificate), NOT the mother or father.
+- "motherMaidenFirstName", "motherMaidenMiddleName", "motherMaidenLastName" refer ONLY to the MOTHER's maiden name.
+- "fatherFirstName", "fatherMiddleName", "fatherLastName" refer ONLY to the FATHER's name.
+- These three sets of names (child, mother, father) are ALWAYS different people. They must NEVER have the same values unless the document genuinely shows identical names.
 
 Schema:
 {
   "documentType": "PSABirth",
   "certificateNumber": string or null,
   "registryNumber": string or null,
-  "firstName": string or null,
-  "middleName": string or null,
-  "lastName": string or null,
+  "firstName": string or null (CHILD's first name - Section 1),
+  "middleName": string or null (CHILD's middle name - Section 2),
+  "lastName": string or null (CHILD's last name - Section 3),
   "suffix": string or null,
   "sex": string or null,
   "dateOfBirth": string or null (preferably formatted as YYYY-MM-DD if clear, otherwise verbatim),
   "placeOfBirth": string or null,
-  "fatherFirstName": string or null,
-  "fatherMiddleName": string or null,
-  "fatherLastName": string or null,
-  "motherMaidenFirstName": string or null,
-  "motherMaidenMiddleName": string or null,
-  "motherMaidenLastName": string or null,
+  "fatherFirstName": string or null (FATHER's first name - Section 13),
+  "fatherMiddleName": string or null (FATHER's middle name - Section 14),
+  "fatherLastName": string or null (FATHER's last name - Section 15),
+  "motherMaidenFirstName": string or null (MOTHER's maiden first name - Section 6),
+  "motherMaidenMiddleName": string or null (MOTHER's maiden middle name - Section 7),
+  "motherMaidenLastName": string or null (MOTHER's maiden last name - Section 8),
   "dateOfRegistration": string or null,
   "issuingOffice": string or null,
   "remarks": string or null
