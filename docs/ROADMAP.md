@@ -64,3 +64,13 @@
 
 ## Phase 11: Polish & QA ✅
 - Performance audits, end-to-end testing, and final refinement.
+
+## Phase 11.6: Philippine Document Extraction Architecture
+- Phase 11.6-A: OCR Provider Abstraction ✅
+- Phase 11.6-B: Zero-Trust Database Migration ✅
+- Phase 11.6-C: Canonical Evidence Map ✅
+- Phase 11.6-D: Candidate Extraction ✅
+- Phase 11.6-E: Deterministic Evidence Validator ✅
+- Phase 11.6-F: Document Profile Registry ✅
+- Phase 11.6-G: Reliability & Dual Extraction ✅
+- Phase 11.6-H: Human Verification Workspace & RPC Security ✅

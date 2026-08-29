@@ -16,6 +16,7 @@ import {
   FindingScope
 } from './types'
 
+import { getVerifiedFields } from './trust-boundary'
 import { applicantNameRules } from './applicant/applicant-name.rules'
 import { applicantBirthRules } from './applicant/applicant-birth.rules'
 import { applicantEducationRules } from './applicant/applicant-education.rules'
@@ -69,16 +70,22 @@ const RELATIONSHIP_MODULES: Record<string, Function> = {
 
 export async function runCaseVerification(
   caseId: string,
-  fields: DocumentField[],
+  allFields: DocumentField[],
   documents: DocumentMetadata[],
   sponsors: Sponsor[]
 ): Promise<CaseVerificationResult> {
-  const applicantResult = await verifyApplicantDocuments(caseId, fields, documents)
-  const sponsorResult = await verifySponsorDocuments(caseId, fields, documents, sponsors)
+  // LAYER 3 ZERO-TRUST BOUNDARY
+  // Only explicitly verified fields are allowed to participate in findings comparison.
+  // Legacy fields without a state, or fields in candidate/unreadable/ambiguous state,
+  // are strictly ignored.
+  const verifiedFields = getVerifiedFields(allFields)
+
+  const applicantResult = await verifyApplicantDocuments(caseId, verifiedFields, documents)
+  const sponsorResult = await verifySponsorDocuments(caseId, verifiedFields, documents, sponsors)
   
   let relationshipResult: RelationshipResult | null = null
   if (applicantResult.canContinue && sponsorResult.canContinue && sponsors.length > 0) {
-    relationshipResult = await verifyApplicantSponsorRelationship(caseId, fields, documents, sponsors)
+    relationshipResult = await verifyApplicantSponsorRelationship(caseId, verifiedFields, documents, sponsors)
   }
 
   return {

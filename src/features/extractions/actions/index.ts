@@ -70,8 +70,8 @@ export async function getExtractionByDocumentId(documentId: string) {
 
 const UpdateFieldSchema = z.object({
   fieldId: z.string().uuid(),
-  reviewedValue: z.string().nullable(),
-  status: z.enum(['NeedsReview', 'Accepted', 'Corrected', 'Rejected']),
+  action: z.enum(['accept', 'reject', 'correct']),
+  correctedValue: z.string().nullable().optional(),
   path: z.string()
 })
 
@@ -79,20 +79,15 @@ export async function updateDocumentField(params: z.infer<typeof UpdateFieldSche
   const parsed = UpdateFieldSchema.safeParse(params)
   if (!parsed.success) throw new Error('Invalid field update payload')
 
-  const { fieldId, reviewedValue, status, path } = parsed.data
+  const { fieldId, action, correctedValue, path } = parsed.data
   const supabase = await createClient()
 
-  const { data: auth } = await supabase.auth.getUser()
-
-  const { error } = await supabase
-    .from('document_fields')
-    .update({
-      reviewed_value: reviewedValue,
-      status: status,
-      reviewed_by: auth.user?.id,
-      reviewed_at: new Date().toISOString()
-    })
-    .eq('id', fieldId)
+  // The RPC will enforce authentication and authorization securely.
+  const { error } = await supabase.rpc('verify_document_field', {
+    p_field_id: fieldId,
+    p_action: action,
+    p_corrected_value: correctedValue || null
+  })
 
   if (error) throw new Error((error instanceof Error ? error.message : String(error)))
 
@@ -383,7 +378,17 @@ export async function runExtraction(documentId: string, caseId: string, document
     extractionId = newExt.id
   }
 
-  // 7. Insert the extracted fields with evidence metadata
+  // 7. Persist Canonical Evidence Map
+  if (groundedResult.canonicalMap) {
+    const { persistCanonicalEvidence } = await import('@/lib/extraction/evidence/persistence');
+    try {
+      await persistCanonicalEvidence(supabase as any, extractionId, groundedResult.canonicalMap);
+    } catch (err) {
+      console.warn('Failed to persist canonical evidence, continuing without it:', err);
+    }
+  }
+
+  // 8. Insert the extracted fields with evidence metadata
   const fieldsToInsert = flattenedFields.map((f) => ({
     case_id: caseId,
     document_id: documentId,
@@ -397,16 +402,45 @@ export async function runExtraction(documentId: string, caseId: string, document
     confidence_score: f.confidence_score,
     ocr_confidence: f.ocr_confidence,
     evidence_status: f.evidence_status,
+    state: f.state || 'candidate',
     status: f.evidence_status === 'verified' && f.confidence_score !== null && f.confidence_score >= 0.85
       ? 'NeedsReview' as const   // Even verified fields need human review
       : 'NeedsReview' as const,  // All fields start as NeedsReview
   }))
 
-  const { error: fieldError } = await supabase
+  const { data: insertedFields, error: fieldError } = await supabase
     .from('document_fields')
-    .insert(fieldsToInsert)
+    .insert(fieldsToInsert as any)
+    .select('id, field_name')
 
   if (fieldError) throw new Error(fieldError.message)
+
+  // 9. Insert field_evidence tracking
+  if (insertedFields) {
+    const fieldEvidenceToInsert: any[] = [];
+    for (const insertedField of insertedFields) {
+       const flatField = flattenedFields.find(ff => ff.field_name === insertedField.field_name);
+       if (flatField && flatField.evidenceSpanIds && flatField.state === 'candidate') {
+         for (const spanId of flatField.evidenceSpanIds) {
+           fieldEvidenceToInsert.push({
+             document_field_id: insertedField.id,
+             ocr_span_id: spanId,
+             evidence_role: 'value'
+           });
+         }
+       }
+    }
+    
+    if (fieldEvidenceToInsert.length > 0) {
+      const { error: evidenceError } = await (supabase as any)
+        .from('field_evidence')
+        .insert(fieldEvidenceToInsert);
+        
+      if (evidenceError) {
+        console.warn('Failed to insert field_evidence:', evidenceError);
+      }
+    }
+  }
 
   revalidatePath(`/cases/${caseId}/documents/${documentId}`)
   return { success: true }

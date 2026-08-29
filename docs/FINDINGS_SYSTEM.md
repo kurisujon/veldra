@@ -51,3 +51,7 @@ With Phase 10, the engine now logs **every** rule evaluation (both passed and fa
 - **Verified Matches** (from `comparison_results`) are shown alongside discrepancies, allowing reviewers to see exactly what passed.
 - Selecting a discrepancy automatically opens the relevant `sourceDocuments` in the `DocumentComparisonPanel` side-by-side, highlighting the exact fields in question.
 - Reviewers must explicitly set the status of every "Open" finding before the case can proceed to "Reviewed".
+
+## Layer 3 Zero-Trust Boundary
+
+Phase 11.6 introduced a strict trust boundary between document extraction and the comparison engine. The comparison engine is fundamentally restricted from processing any 'candidate', 'unreadable', 'ambiguous', or legacy 'null' state fields. All comparison modules automatically filter incoming DocumentField objects via the `getVerifiedFields` helper, ensuring only strictly human-verified ('state === verified') fields can generate findings.

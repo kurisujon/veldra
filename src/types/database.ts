@@ -812,6 +812,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      verify_document_field: {
+        Args: {
+          p_field_id: string
+          p_action: string
+          p_corrected_value: string | null
+        }
+        Returns: void
+      }
       add_sponsor_to_case: {
         Args: {
           p_case_id: string

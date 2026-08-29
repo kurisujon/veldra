@@ -15,7 +15,14 @@
  * - Document quality (clear vs degraded vs poor)
  */
 
-import type { ExtractedField, DocumentQuality, EvidenceStatus } from './types';
+import type { 
+  ExtractedField, 
+  DocumentQuality, 
+  EvidenceStatus,
+  FieldReliability,
+  ReliabilityDecision
+} from './types';
+import type { RiskLevel } from '../extraction/profiles/types';
 
 // ---------------------------------------------------------------------------
 // Confidence Thresholds
@@ -224,4 +231,78 @@ function isPlausibleIdentifier(value: string): boolean {
   // Identifiers should contain alphanumeric characters
   const cleaned = value.replace(/[^a-zA-Z0-9\-]/g, '');
   return cleaned.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Field Reliability Evaluation (Phase 11.6-G)
+// ---------------------------------------------------------------------------
+
+export interface ReliabilityEvaluationParams {
+  ocrConfidence: number | null;
+  evidenceStatus: EvidenceStatus;
+  profileRisk: RiskLevel;
+  structurallyValid: boolean;
+  state?: string;
+  hasSpanIds: boolean;
+  requiredField: boolean;
+}
+
+/**
+ * Deterministically evaluates the reliability of an extracted field without fuzzy LLM math.
+ * Note: 'ACCEPT' here means Layer 2 Candidate Acceptance, NOT Layer 3 'verified' state.
+ */
+export function evaluateFieldReliability(params: ReliabilityEvaluationParams): FieldReliability {
+  // Determine evidence coverage
+  let evidenceCoverage: 'complete' | 'partial' | 'missing' = 'missing';
+  if (params.state === 'candidate') {
+    evidenceCoverage = params.evidenceStatus === 'verified' ? 'complete' : 
+                       (params.evidenceStatus === 'uncertain' ? 'partial' : 'missing');
+  } else if (params.state === 'not_present' || params.state === 'unreadable' || params.state === 'ambiguous') {
+    evidenceCoverage = params.hasSpanIds ? 'partial' : 'missing';
+  }
+
+  const deterministicValidation = params.structurallyValid ? 'pass' : 'fail';
+
+  // Base state is single_model until dual extraction merges results
+  const extractionConsistency = 'single_model';
+  const escalationStatus = 'none';
+
+  let finalState: ReliabilityDecision = 'ACCEPT';
+
+  // Deterministic Escalation Rules (11.6-G)
+  
+  // 1. Invalid structural normalization/validation
+  if (deterministicValidation === 'fail') {
+    finalState = 'ESCALATE_TO_PRO';
+  }
+  
+  // 2. High risk field requires cross-check (if candidate)
+  if (params.profileRisk === 'high' && params.state === 'candidate') {
+    finalState = 'ESCALATE_TO_PRO';
+  }
+  
+  // 3. Low OCR confidence (< 0.6)
+  if (params.ocrConfidence !== null && params.ocrConfidence < 0.6 && params.state === 'candidate') {
+    finalState = 'ESCALATE_TO_PRO';
+  }
+
+  // 4. Required field reported as not_present
+  if (params.requiredField && params.state === 'not_present') {
+    finalState = 'ESCALATE_TO_PRO';
+  }
+
+  // 5. Evidence quality issues (e.g. fabricated or uncertain spans for candidate)
+  if (params.state === 'candidate' && evidenceCoverage !== 'complete') {
+    finalState = 'ESCALATE_TO_PRO';
+  }
+
+  return {
+    ocrConfidence: params.ocrConfidence,
+    evidenceCoverage,
+    profileRisk: params.profileRisk,
+    deterministicValidation,
+    extractionConsistency,
+    escalationStatus,
+    finalState,
+  };
 }

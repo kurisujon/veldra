@@ -18,7 +18,7 @@ import { getExtractionProfile } from './profiles';
 // Anti-Hallucination System Instructions
 // ---------------------------------------------------------------------------
 
-const ANTI_HALLUCINATION_RULES = `
+export const ANTI_HALLUCINATION_RULES = `
 STRICT EXTRACTION RULES — YOU MUST FOLLOW ALL OF THESE:
 
 1. Extract ONLY information explicitly visible in the document. Do NOT invent, infer, or assume any values.
@@ -45,21 +45,22 @@ IMPORTANT: It is ALWAYS better to return null with status "missing" than to gues
 // Evidence Schema Template
 // ---------------------------------------------------------------------------
 
-const EVIDENCE_FIELD_SCHEMA = `
+export const EVIDENCE_FIELD_SCHEMA = `
 For EVERY field, return an object with:
 {
   "value": <extracted value as string, or null if not found>,
-  "sourceText": <the exact text you read from the document for this field, or null>,
-  "page": <page number where found (1-indexed), or null>,
-  "confidence": <your confidence 0.0-1.0 in the extraction accuracy>,
-  "status": <one of: "verified", "uncertain", "missing", "unreadable">
+  "state": <one of: "candidate", "not_present", "unreadable", "ambiguous">,
+  "evidenceSpanIds": [<array of exact string IDs of the spans containing this value>]
 }
 
 Status meanings:
-- "verified": You can clearly read the field and are confident in the extraction.
-- "uncertain": The field exists but is ambiguous, partially illegible, or you are not fully confident.
-- "missing": The field does not appear on the document or is intentionally left blank.
+- "candidate": You found the value and have linked the exact evidence spans.
+- "not_present": The field does not appear on the document or is intentionally left blank.
 - "unreadable": The field location is identified but the text cannot be read at all.
+- "ambiguous": The field exists but is ambiguous or partially illegible.
+
+CRITICAL ZERO-TRUST RULE:
+You MUST NOT invent, fabricate, or guess "evidenceSpanIds". You may ONLY use the exact span IDs provided in the Canonical Evidence Context below. If you cannot find a matching span ID for the text you are extracting, you must either omit the ID or mark the state as ambiguous.
 `.trim();
 
 // ---------------------------------------------------------------------------
@@ -107,18 +108,17 @@ export function getExtractionPrompt(documentType: string, ocrText?: string): str
 // OCR Context Section
 // ---------------------------------------------------------------------------
 
-function buildOCRContext(ocrText?: string): string {
-  if (!ocrText || ocrText.trim().length === 0) return '';
+export function buildCanonicalEvidenceContext(evidenceContext?: string): string {
+  if (!evidenceContext || evidenceContext.trim().length === 0) return '';
 
   return `
-OCR REFERENCE TEXT:
-The following text was separately extracted from this document via OCR.
-Use it as a cross-reference to verify your readings. If your visual reading
-differs from the OCR text, note the discrepancy with "uncertain" status.
+CANONICAL EVIDENCE CONTEXT:
+The following is a list of exact evidence spans deterministically extracted from the document.
+You MUST use these exact span_ids in your "evidenceSpanIds" array for any field you extract.
 
----BEGIN OCR TEXT---
-${ocrText.substring(0, 8000)}
----END OCR TEXT---
+---BEGIN EVIDENCE SPANS---
+${evidenceContext.substring(0, 32000)}
+---END EVIDENCE SPANS---
 `;
 }
 
@@ -169,7 +169,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "remarks": {evidence object}
 }
 ${examplesSection}
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -200,7 +200,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "issuingOffice": {evidence object},
   "remarks": {evidence object}
 }
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -233,7 +233,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "honors": {evidence object},
   "academicEntries": {evidence object where value is JSON array string or null}
 }
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -260,7 +260,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "gradeLevelEntries": {evidence object where value is JSON array string or null},
   "remarks": {evidence object}
 }
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -288,7 +288,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "honors": {evidence object},
   "remarks": {evidence object}
 }
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -314,7 +314,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "closingBalance": {evidence object},
   "remarks": {evidence object}
 }
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -340,7 +340,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "amountDue": {evidence object},
   "remarks": {evidence object}
 }
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -372,7 +372,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "issuingAuthority": {evidence object},
   "remarks": {evidence object}
 }
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -404,7 +404,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "signatoryPosition": {evidence object},
   "remarks": {evidence object}
 }
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -432,7 +432,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "address": {evidence object},
   "remarks": {evidence object}
 }
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -463,7 +463,7 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "notaryRollNumber": {evidence object},
   "remarks": {evidence object}
 }
-${buildOCRContext(ocrText)}`;
+${buildCanonicalEvidenceContext(ocrText)}`;
 }
 
 // ---------------------------------------------------------------------------

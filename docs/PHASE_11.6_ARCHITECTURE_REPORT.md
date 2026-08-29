@@ -81,3 +81,23 @@ Move away from basic unit tests and implement a rigorous benchmark suite:
 - **OCR Provider Selection**: Google Document AI is highly capable but requires cloud infrastructure setup. A decision must be made on the initial production provider.
 - **Legacy Migrations**: Existing `document_fields` in the DB that use the old `source_text` format will lack `field_evidence` spans. A strategy for backfilling or archiving legacy extractions is required.
 - **Performance Overhead**: Dual-extraction on high-risk fields and large `ocr_spans` inserts will increase database load and processing duration per document.
+
+## Phase 11.6 Zero-Trust Canonical Evidence
+
+11.6-C establishes: Observed Evidence -> Canonical Evidence Map -> future Candidate Extraction. The AI has NO authority over the observed evidence layer.
+
+## Phase 11.6-F: Document Profile Registry
+
+Implemented strongly-typed Profile Registry replacing generic validation. 
+- Profiles (PSA Birth Certificate, Sponsor Valid ID, Affidavit of Support) define exact field metadata.
+- Zod validation and normalization boundaries strictly separate document semantics from evidence validation.
+- AI is dynamically prompted based on the profile, enforcing candidate states and zero-trust limits.
+- **Phase 11.6-G Complete:** Field Reliability & Dual Extraction implemented. Evaluates deterministic FieldReliability on a per-field basis (escalating high-risk or low-confidence to Gemini 2.5 Pro). Pro extraction strictly inherits EvidenceMap authority and conflicts are handled deterministically.
+
+## Phase 11.6-H: Human Verification Workspace & RPC Security
+
+Implemented strict RPC boundary for human verification, resolving a deadlock where the generic Server Action could not mutate the verified state required by the Comparison Engine.
+
+- **RPC Implementation**: Created `verify_document_field` PL/pgSQL function to execute transitions (candidate -> verified, correct -> verified) using `SECURITY DEFINER` privileges.
+- **RLS Lockdown**: Revoked generic `UPDATE` privileges on `document_fields` for standard reviewers, forcing state mutations to happen exclusively through the audited RPC.
+- **UI Integration**: Refactored `ExtractionWorkspace.tsx` to visualize the new canonical `field.state` and strictly present the multi-dimensional `FieldReliability` matrix (OCR Confidence, Profile Risk, Evidence Coverage) instead of legacy `evidence_status`.

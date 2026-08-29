@@ -341,3 +341,17 @@ This is the canonical data flow for document verification and draft generation.
 
 The Comparison Engine must consume reviewed field-level data, not raw files.  
 The Draft Generation system must consume accepted Findings and final approved field values, not transient extraction output.
+
+## Phase 11.6 Zero-Trust Canonical Evidence
+
+In Phase 11.6, Veldra transitioned to a Zero-Trust architecture. The extraction flow is strictly defined as:
+**Observed Evidence → Canonical Evidence Map → future Candidate Extraction**
+
+The AI has **NO authority** over the observed evidence layer. 
+- The OCR Provider creates `ocr_pages` and `ocr_spans`.
+- The `EvidenceMap` indexes these spans deterministically.
+- AI candidate generation must return valid `evidenceSpanIds` matching the canonical `EvidenceMap`. It cannot invent source text, page numbers, or bounding boxes.
+
+## Phase 11.6-F: Document Profile Registry
+
+The Document Profile Registry formally types document structures, providing schema validation, field states, risk levels, and deterministic normalization strategies (e.g., PERSON_NAME, DATE) while keeping zero-trust boundary intact. The registry statically maps 'documentType' to a 'DocumentProfile'.

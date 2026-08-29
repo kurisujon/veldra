@@ -20,7 +20,10 @@ import {
   isTransientError,
 } from './gemini';
 import { getExtractionPrompt } from './prompts';
+import { Registry, buildProfilePrompt } from '../extraction/profiles';
 import { getGroundedSchemaForType, type EvidenceField } from './schemas';
+import { EvidenceMap } from "../extraction/evidence/EvidenceMap";
+import { CanonicalEvidenceMap } from "../extraction/ocr/types";
 import { inspectDocument } from './document-inspector';
 import { readDocumentText } from './ocr-reader';
 import { validateEvidence } from './evidence-validator';
@@ -29,7 +32,9 @@ import {
   computeFieldConfidence,
   computeDocumentConfidence,
   isStructurallyValid,
+  evaluateFieldReliability
 } from './confidence';
+import { resolveConflict } from './dual-extraction';
 import {
   ExtractionError,
   DEFAULT_PIPELINE_CONFIG,
@@ -138,6 +143,34 @@ export async function extractDocumentGrounded(
   }
   const ocrDurationMs = Date.now() - ocrStart;
 
+  // ── 11.6-D Bridging: Convert legacy OCR to CanonicalEvidenceMap ────────
+  // This satisfies the new Zero-Trust architecture while preserving legacy OCR.
+
+  const canonicalMap: CanonicalEvidenceMap = {
+    fullText: ocrResult.fullText,
+    pages: [{
+      pageNumber: 1,
+      width: 1000,
+      height: 1000,
+      blocks: ocrResult.fullText.split('\n').filter(l => l.trim()).map((line, i) => ({
+        id: `span_${i}`,
+        text: line,
+        normalizedText: line.trim().toLowerCase(),
+        boundingBox: { x: 0, y: 0, width: 0, height: 0 },
+        confidence: ocrResult.averageConfidence ?? 0.9,
+        type: 'line'
+      }))
+    }],
+    averageConfidence: ocrResult.averageConfidence ?? 0.9,
+    provider: ocrResult.engine,
+    processingDurationMs: ocrResult.processingDurationMs ?? 0
+  };
+
+  const evidenceMap = EvidenceMap.fromCanonicalProviderMap(input.documentId, canonicalMap, [input.documentId]);
+  const evidenceContext = evidenceMap.getAllSpans().map(s => 
+    `SPAN_ID: ${s.id}\nPAGE: ${s.pageId}\nTYPE: ${s.blockType}\nTEXT: ${s.text}\nOCR_CONFIDENCE: ${(s.ocrConfidence ?? 0.9).toFixed(2)}\n`
+  ).join('\n');
+
   // ── Step 3: Gemini Structured Extraction with Evidence ───────────────────
   let rawResponse = '';
   let modelUsed = pipelineConfig.primaryModel;
@@ -150,7 +183,12 @@ export async function extractDocumentGrounded(
   ): Promise<void> => {
     const extractionStart = Date.now();
     const client = getGeminiClient(attempt);
-    const prompt = getExtractionPrompt(input.documentType, ocrResult.fullText);
+    // 11.6-F: Use Document Profile Registry to build the prompt
+    const profile = Registry.getProfile(input.documentType);
+    if (!profile) {
+      throw new Error(`Unknown document type: ${input.documentType}`);
+    }
+    const prompt = buildProfilePrompt(profile, evidenceContext);
     const base64Data = input.fileBuffer.toString('base64');
 
     try {
@@ -193,8 +231,10 @@ export async function extractDocumentGrounded(
         );
       }
 
-      // Validate with grounded Zod schema
-      const groundedSchema = getGroundedSchemaForType(input.documentType);
+      // Validate with zero-trust grounded Zod schema (now returning CandidateField)
+      const profileSchema = Registry.getProfile(input.documentType)?.schema;
+      if (!profileSchema) throw new Error(`Unknown document type: ${input.documentType}`);
+      const groundedSchema = profileSchema;
       try {
         parsedJson = groundedSchema.parse(parsed) as Record<string, EvidenceField>;
       } catch (zodError) {
@@ -261,72 +301,209 @@ export async function extractDocumentGrounded(
     throw lastError;
   }
 
-  // ── Step 4: Convert to ExtractedField Records ────────────────────────────
+    // ── Step 4: Convert CandidateField to Legacy ExtractedField ────────────
+  // This maps the 11.6-D zero-trust state back to the legacy state machine
+  // so `validateEvidence` and downstream systems continue working.
   let fields: Record<string, ExtractedField> = {};
   for (const [fieldName, evidence] of Object.entries(parsedJson)) {
     if (fieldName === 'documentType') continue;
 
+    // 11.6-D Step 7: Candidate Validation
+    const spanIds = evidence.evidenceSpanIds || [];
+    
+    // Validate that every returned span actually exists in the canonical map
+    for (const spanId of spanIds) {
+      if (!evidenceMap.hasSpan(spanId)) {
+        throw new ExtractionError(
+          'GEMINI_FABRICATED_EVIDENCE',
+          `AI returned fabricated span ID: ${spanId}. This violates Zero-Trust constraints.`,
+          { retryable: true }
+        );
+      }
+    }
+
+    // Enforce state logic correctly
+    if (evidence.state === 'not_present' && spanIds.length > 0) {
+      throw new ExtractionError(
+        'GEMINI_INVALID_RESPONSE',
+        `AI returned state 'not_present' but supplied evidence spans.`,
+        { retryable: true }
+      );
+    }
+    
+    if (evidence.state === 'candidate' && spanIds.length === 0) {
+      throw new ExtractionError(
+        'GEMINI_INVALID_RESPONSE',
+        `AI returned state 'candidate' but supplied zero evidence spans.`,
+        { retryable: true }
+      );
+    }
+
+    // Resolve exactly the spans Gemini referenced
+    const resolvedText = evidenceMap.getTextForSpans(spanIds);
+
+    // Translate zero-trust 'state' to legacy 'status'
+    let legacyStatus: 'verified' | 'uncertain' | 'missing' | 'unreadable' = 'uncertain';
+    if (evidence.state === 'candidate') legacyStatus = 'verified'; // We assume verified until Validator catches it
+    else if (evidence.state === 'not_present') legacyStatus = 'missing';
+    else if (evidence.state === 'unreadable') legacyStatus = 'unreadable';
+    else legacyStatus = 'uncertain';
+
     fields[fieldName] = {
       value: evidence.value ?? null,
-      sourceText: evidence.sourceText ?? null,
-      page: evidence.page ?? null,
-      confidence: evidence.confidence ?? null,
-      status: evidence.status ?? 'uncertain',
+      sourceText: resolvedText.length > 0 ? resolvedText : null,
+      page: 1, // Currently mocked via our shim above
+      confidence: legacyStatus === 'verified' ? 0.95 : null,
+      status: legacyStatus,
       boundingBox: null,
+      state: evidence.state,
+      evidenceSpanIds: evidence.evidenceSpanIds || [],
     };
   }
 
-  // ── Step 5: Evidence Validation ──────────────────────────────────────────
-  const evidenceResult = validateEvidence(fields, ocrResult);
+  // ── Step 5: Deterministic Evidence Validation ────────────────────────────
+  // Pass the Canonical Evidence Map to the Phase 11.6-E Evidence Validator.
+  const evidenceResult = validateEvidence(fields, evidenceMap, input.documentId);
+  
+  // Apply deterministic validation results back to fields
   fields = evidenceResult.fields;
 
   // ── Step 6: Normalization ────────────────────────────────────────────────
   fields = normalizeFields(fields, input.documentType);
 
-  // ── Step 7: Confidence Scoring ───────────────────────────────────────────
-  for (const [fieldName, field] of Object.entries(fields)) {
-    if (field.value === null) continue;
+  // ── Step 7: Reliability Scoring (Phase 11.6-G) ──────────────────────────
+  
+  const escalatedFields: string[] = [];
+  const profile = Registry.getProfile(input.documentType);
 
-    const confidence = computeFieldConfidence({
+  for (const [fieldName, field] of Object.entries(fields)) {
+    // Keep legacy confidence for compatibility, but also evaluate reliability
+    const legacyConf = computeFieldConfidence({
       ocrConfidence: ocrResult.averageConfidence,
       extractionConfidence: field.confidence,
       evidenceStatus: field.status,
       documentQuality: inspection.quality,
       structurallyValid: isStructurallyValid(fieldName, String(field.value)),
     });
+    
+    let reliability = undefined;
+    if (profile) {
+      const fieldDef = profile.fields[fieldName];
+      if (fieldDef) {
+        reliability = evaluateFieldReliability({
+          ocrConfidence: ocrResult.averageConfidence, // Fallback to doc avg if span not available
+          evidenceStatus: field.status,
+          profileRisk: fieldDef.risk,
+          structurallyValid: isStructurallyValid(fieldName, String(field.value)),
+          state: field.state,
+          hasSpanIds: (field.evidenceSpanIds || []).length > 0,
+          requiredField: fieldDef.required
+        });
 
-    fields[fieldName] = { ...field, confidence };
+        if (reliability.finalState === 'ESCALATE_TO_PRO') {
+          escalatedFields.push(fieldName);
+        }
+      }
+    }
+
+    fields[fieldName] = { ...field, confidence: legacyConf, reliability };
   }
 
   const overallConfidence = computeDocumentConfidence(fields);
 
-  // ── Step 8: Model Escalation (if needed) ─────────────────────────────────
+  // ── Step 8: Targeted Dual Extraction (Phase 11.6-G) ─────────────────────
   if (
     pipelineConfig.enableModelEscalation &&
-    overallConfidence < pipelineConfig.escalationThreshold &&
+    escalatedFields.length > 0 &&
     modelUsed !== pipelineConfig.escalationModel
   ) {
-    // Log escalation decision (privacy-safe)
     console.info(
-      `[Extraction] Escalating from ${modelUsed} to ${pipelineConfig.escalationModel}` +
-        ` — confidence: ${overallConfidence.toFixed(2)}, threshold: ${pipelineConfig.escalationThreshold}`
+      `[Extraction] Escalating ${escalatedFields.length} fields to ${pipelineConfig.escalationModel}`
     );
 
-    // Re-run with the escalation model
-    try {
-      const escalatedResult = await extractDocumentGrounded(input, {
-        ...pipelineConfig,
-        enableModelEscalation: false, // Prevent recursive escalation
-        primaryModel: pipelineConfig.escalationModel,
-      });
-
-      // Use escalated result only if it's better
-      if (escalatedResult.overallConfidence > overallConfidence) {
-        return escalatedResult;
+    // Build a targeted subset schema for Pro
+    const escalatedSchemaObj: any = {};
+    if (profile) {
+      for (const field of escalatedFields) {
+        escalatedSchemaObj[field] = profile.schema.shape[field];
       }
-    } catch {
-      // If escalation fails, use the original result
-      console.warn(`[Extraction] Escalation failed, using original result`);
+    }
+    
+    if (Object.keys(escalatedSchemaObj).length > 0) {
+      // Create a temporary profile just for this escalation
+      const targetedProfile = {
+        ...profile!,
+        schema: (profile!.schema as any).pick(escalatedSchemaObj) // naive pick
+      };
+      
+      const proPrompt = buildProfilePrompt(targetedProfile as any, evidenceContext);
+      
+      try {
+        const client = getGeminiClient(0); // For now, attempt 0
+        const response = await client.models.generateContent({
+          model: pipelineConfig.escalationModel,
+          contents: [
+            { inlineData: { data: input.fileBuffer.toString('base64'), mimeType: input.mimeType } },
+            proPrompt,
+          ],
+          config: { temperature: 0.1, responseMimeType: 'application/json' },
+        });
+
+        const cleanJson = (response.text || '{}').replace(/^```json\s*/i, '').replace(/```$/, '').trim();
+        const proParsed = JSON.parse(cleanJson);
+        const proValidated = (targetedProfile.schema as any).parse(proParsed) as Record<string, EvidenceField>;
+
+        // Translate Pro outputs exactly like Flash
+        let proFields: Record<string, ExtractedField> = {};
+        for (const [fName, evidence] of Object.entries(proValidated)) {
+          if (fName === 'documentType') continue;
+          
+          const spanIds = evidence.evidenceSpanIds || [];
+          for (const spanId of spanIds) {
+            if (!evidenceMap.hasSpan(spanId)) {
+               throw new ExtractionError('GEMINI_FABRICATED_EVIDENCE', 'Pro fabricated evidence');
+            }
+          }
+          const resolvedText = evidenceMap.getTextForSpans(spanIds);
+          let legacyStatus: any = 'uncertain';
+          if (evidence.state === 'candidate') legacyStatus = 'verified';
+          else if (evidence.state === 'not_present') legacyStatus = 'missing';
+          else if (evidence.state === 'unreadable') legacyStatus = 'unreadable';
+
+          proFields[fName] = {
+            value: evidence.value ?? null,
+            sourceText: resolvedText.length > 0 ? resolvedText : null,
+            page: 1,
+            confidence: legacyStatus === 'verified' ? 0.95 : null,
+            status: legacyStatus,
+            boundingBox: null,
+            state: evidence.state,
+            evidenceSpanIds: spanIds,
+          };
+        }
+
+        // Validate Pro evidence
+        proFields = validateEvidence(proFields, evidenceMap, input.documentId).fields;
+        proFields = normalizeFields(proFields, input.documentType);
+
+        // Resolve conflicts
+        for (const fName of escalatedFields) {
+          if (proFields[fName]) {
+             const flashField = fields[fName];
+             const proField = proFields[fName];
+             const updatedField = resolveConflict(flashField, proField, flashField.reliability!);
+             fields[fName] = updatedField;
+          }
+        }
+      } catch (err) {
+        console.warn(`[Extraction] Pro escalation failed for fields:`, err);
+        // Fallback to flash by doing nothing, update reliability to failed
+        for (const fName of escalatedFields) {
+          if (fields[fName].reliability) {
+            fields[fName].reliability!.escalationStatus = 'escalation_failed';
+          }
+        }
+      }
     }
   }
 

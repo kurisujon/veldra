@@ -41,6 +41,12 @@ export interface ExtractedField<T = string | null> {
   status: EvidenceStatus;
   /** Optional bounding box of the source text on the page */
   boundingBox: BoundingBox | null;
+  /** 11.6-D Candidate State: candidate | not_present | unreadable | ambiguous */
+  state?: string;
+  /** 11.6-D Zero-Trust evidence span IDs */
+  evidenceSpanIds?: string[];
+  /** 11.6-G Field Reliability Metrics */
+  reliability?: FieldReliability;
 }
 
 export type EvidenceStatus =
@@ -48,6 +54,37 @@ export type EvidenceStatus =
   | 'uncertain'   // Value extracted but evidence is weak or ambiguous
   | 'missing'     // Field not present in document
   | 'unreadable'; // Field location identified but text is illegible
+
+// ---------------------------------------------------------------------------
+// Field Reliability & Dual Extraction (Phase 11.6-G)
+// ---------------------------------------------------------------------------
+
+export type ReliabilityDecision = 
+  | 'ACCEPT'
+  | 'ESCALATE_TO_PRO'
+  | 'NEEDS_HUMAN_REVIEW'
+  | 'REJECT';
+
+export type EscalationStatus = 
+  | 'none'
+  | 'escalated'
+  | 'escalation_failed';
+
+export type ExtractionConsistency = 
+  | 'single_model'
+  | 'flash_pro_match'
+  | 'flash_pro_conflict'
+  | 'evidence_disagreement';
+
+export interface FieldReliability {
+  ocrConfidence: number | null;
+  evidenceCoverage: 'complete' | 'partial' | 'missing';
+  profileRisk: 'high' | 'medium' | 'low';
+  deterministicValidation: 'pass' | 'fail';
+  extractionConsistency: ExtractionConsistency;
+  escalationStatus: EscalationStatus;
+  finalState: ReliabilityDecision;
+}
 
 // ---------------------------------------------------------------------------
 // Extraction Error Categories
@@ -60,9 +97,11 @@ export type ExtractionErrorCode =
   | 'UPLOAD_FAILED'
   | 'DOCUMENT_READ_FAILED'
   | 'OCR_FAILED'
+  | 'OCR_PROVIDER_NOT_CONFIGURED'
   | 'GEMINI_REQUEST_FAILED'
   | 'GEMINI_RATE_LIMITED'
   | 'GEMINI_INVALID_RESPONSE'
+  | 'GEMINI_FABRICATED_EVIDENCE'
   | 'SCHEMA_VALIDATION_FAILED'
   | 'EVIDENCE_VALIDATION_FAILED'
   | 'LOW_CONFIDENCE'
@@ -167,6 +206,8 @@ export interface GroundedExtractionResult {
   retryCount: number;
   /** The document quality assessment */
   quality: DocumentQuality;
+  /** 11.6-D Canonical Evidence Map */
+  canonicalMap?: any;
 }
 
 // ---------------------------------------------------------------------------
@@ -247,4 +288,6 @@ export interface FlattenedField {
   confidence_score: number | null;
   ocr_confidence: number | null;
   evidence_status: EvidenceStatus;
+  state?: string;
+  evidenceSpanIds?: string[];
 }

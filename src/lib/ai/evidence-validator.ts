@@ -1,217 +1,179 @@
 /**
- * Evidence Validator for the Veldra extraction pipeline.
+ * Deterministic Evidence Validator for Veldra Zero-Trust Architecture (Phase 11.6-E)
  *
- * After Gemini extracts structured fields and Zod validates the schema,
- * this module verifies that extracted values have genuine source evidence
- * in the OCR text. This catches hallucinated values that would otherwise
- * pass schema validation.
- *
- * Principle: DOCUMENT EVIDENCE > MODEL KNOWLEDGE > HEURISTICS
+ * This module enforces the absolute security boundary between AI extraction and system trust.
+ * It verifies that AI candidate values are strictly grounded in canonical OCR evidence.
  */
 
-import type { ExtractedField, EvidenceStatus, OCRResult } from './types';
+import type { ExtractedField, EvidenceStatus } from './types';
+import { EvidenceMap, EvidenceSpan } from '../extraction/evidence/EvidenceMap';
 
-// ---------------------------------------------------------------------------
-// Evidence Validation
-// ---------------------------------------------------------------------------
-
-interface EvidenceValidationResult {
-  /** Updated fields with evidence status set */
+export interface EvidenceValidationResult {
+  /** Updated fields with deterministic state/status applied */
   fields: Record<string, ExtractedField>;
-  /** Count of fields with verified evidence */
+  /** Count of fields successfully validated as supported candidates */
   verifiedCount: number;
-  /** Count of fields with uncertain evidence */
-  uncertainCount: number;
-  /** Count of fields that are missing */
+  /** Count of fields explicitly not present */
   missingCount: number;
-  /** Overall evidence score (0.0 - 1.0) */
-  evidenceScore: number;
+  /** Count of fields rejected due to fabricated evidence or mismatch */
+  rejectedCount: number;
 }
 
 /**
- * Validates extracted field values against OCR source text.
- *
- * For each field, checks whether the claimed sourceText actually appears
- * in the OCR output. If it doesn't, the field is marked 'uncertain'
- * rather than automatically rejected — a single uncertain field triggers
- * manual review rather than document rejection.
+ * Normalizes text deterministically to account for basic OCR variations,
+ * without allowing arbitrary fuzzy matching.
+ */
+export function normalizeForComparison(text: string): string {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/['']/g, "'") // Normalize quotes
+    .replace(/[""]/g, '"') // Normalize double quotes
+    .replace(/[\u00A0]/g, ' ') // Non-breaking space
+    .trim();
+}
+
+/**
+ * Validates AI candidates deterministically against the Canonical Evidence Map.
  */
 export function validateEvidence(
   fields: Record<string, ExtractedField>,
-  ocrResult: OCRResult
+  evidenceMap: EvidenceMap,
+  extractionId: string
 ): EvidenceValidationResult {
   const validatedFields: Record<string, ExtractedField> = {};
   let verifiedCount = 0;
-  let uncertainCount = 0;
   let missingCount = 0;
-  let totalScorable = 0;
-  let totalScore = 0;
-
-  const ocrText = ocrResult.fullText;
-  const normalizedOcrText = normalizeForComparison(ocrText);
+  let rejectedCount = 0;
 
   for (const [fieldName, field] of Object.entries(fields)) {
-    const validated = validateSingleField(field, ocrText, normalizedOcrText);
-    validatedFields[fieldName] = validated;
+    try {
+      const validatedField = validateSingleField(field, evidenceMap, extractionId);
+      validatedFields[fieldName] = validatedField;
 
-    if (validated.value !== null) {
-      totalScorable++;
-      switch (validated.status) {
-        case 'verified':
-          verifiedCount++;
-          totalScore += 1.0;
-          break;
-        case 'uncertain':
-          uncertainCount++;
-          totalScore += 0.3;
-          break;
-        case 'unreadable':
-          uncertainCount++;
-          totalScore += 0.1;
-          break;
-        case 'missing':
-          missingCount++;
-          break;
-      }
-    } else {
-      if (validated.status === 'missing') {
+      if (validatedField.state === 'not_present') {
         missingCount++;
+      } else if (validatedField.state === 'candidate') {
+        verifiedCount++;
+      } else if (validatedField.state === 'ambiguous' || validatedField.state === 'unreadable') {
+        // Track these as valid candidate states but not explicitly verified/missing
+      } else {
+        rejectedCount++;
       }
+    } catch (e) {
+      // Any error during validation means the field is rejected.
+      validatedFields[fieldName] = {
+        ...field,
+        state: 'rejected',
+        status: 'uncertain', // fallback for legacy compatibility
+        value: null,
+        evidenceSpanIds: [], // DO NOT persist invalid spans
+      };
+      rejectedCount++;
     }
   }
-
-  const evidenceScore = totalScorable > 0 ? totalScore / totalScorable : 0;
 
   return {
     fields: validatedFields,
     verifiedCount,
-    uncertainCount,
     missingCount,
-    evidenceScore,
+    rejectedCount,
   };
 }
-
-// ---------------------------------------------------------------------------
-// Single Field Validation
-// ---------------------------------------------------------------------------
 
 function validateSingleField(
   field: ExtractedField,
-  ocrText: string,
-  normalizedOcrText: string
+  evidenceMap: EvidenceMap,
+  extractionId: string
 ): ExtractedField {
-  // Field with no value — mark as missing
-  if (field.value === null || field.value === undefined || field.value === '') {
-    return {
-      ...field,
-      status: 'missing',
-      confidence: field.confidence,
-    };
+  const state = field.state || 'candidate';
+  const spanIds = field.evidenceSpanIds || [];
+
+  // RULE 1: State Consistency
+  if (state === 'not_present') {
+    if (spanIds.length > 0) {
+      throw new Error('EVIDENCE_INVALID_STATE: not_present state cannot have evidence spans');
+    }
+    return { ...field, state: 'not_present', status: 'missing', value: null, confidence: null };
   }
 
-  const value = String(field.value);
-  const sourceText = field.sourceText;
-
-  // If no sourceText claimed, mark as uncertain
-  if (!sourceText) {
-    return {
-      ...field,
-      status: 'uncertain',
-      confidence: Math.min(field.confidence ?? 0.5, 0.5),
-    };
-  }
-
-  // Check if sourceText exists in OCR text
-  const evidenceFound = findEvidenceInText(sourceText, ocrText, normalizedOcrText);
-
-  if (evidenceFound === 'exact') {
-    return {
-      ...field,
-      status: 'verified',
-      confidence: Math.max(field.confidence ?? 0.8, 0.8),
-    };
-  }
-
-  if (evidenceFound === 'normalized') {
-    // Source text found after normalization — still good but slightly less certain
-    return {
-      ...field,
-      status: 'verified',
-      confidence: Math.max(field.confidence ?? 0.7, 0.7),
-    };
-  }
-
-  if (evidenceFound === 'partial') {
-    // Partial match — the value exists but sourceText doesn't exactly match
-    return {
-      ...field,
-      status: 'uncertain',
-      confidence: Math.min(field.confidence ?? 0.5, 0.5),
-    };
-  }
-
-  // No evidence found at all — possible hallucination
-  return {
-    ...field,
-    status: 'uncertain',
-    confidence: Math.min(field.confidence ?? 0.3, 0.3),
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Evidence Search
-// ---------------------------------------------------------------------------
-
-type EvidenceMatch = 'exact' | 'normalized' | 'partial' | 'none';
-
-function findEvidenceInText(
-  sourceText: string,
-  ocrText: string,
-  normalizedOcrText: string
-): EvidenceMatch {
-  if (!ocrText || !sourceText) return 'none';
-
-  // Exact match
-  if (ocrText.includes(sourceText)) {
-    return 'exact';
-  }
-
-  const normalizedSource = normalizeForComparison(sourceText);
-
-  // Normalized match (case-insensitive, whitespace-normalized)
-  if (normalizedOcrText.includes(normalizedSource)) {
-    return 'normalized';
-  }
-
-  // Partial match — check if the VALUE (not sourceText) appears
-  // This handles cases where sourceText might include surrounding context
-  // but the core value is present
-  const words = normalizedSource.split(/\s+/).filter(w => w.length > 2);
-  if (words.length > 0) {
-    const matchedWords = words.filter(word => normalizedOcrText.includes(word));
-    const matchRatio = matchedWords.length / words.length;
-    if (matchRatio >= 0.7) {
-      return 'partial';
+  if (state === 'candidate') {
+    if (spanIds.length === 0) {
+      throw new Error('EVIDENCE_INVALID_STATE: candidate state must have evidence spans');
+    }
+    if (field.value === null || field.value === undefined) {
+      throw new Error('EVIDENCE_INVALID_STATE: candidate state must have a value');
     }
   }
 
-  return 'none';
-}
+  if (state === 'unreadable' || state === 'ambiguous') {
+    return { ...field, state, status: 'uncertain', confidence: null };
+  }
+  
+  if (state === 'verified') {
+    // Zero-Trust Rule: verified is ONLY set by human approval (Layer 3).
+    // AI cannot mark something verified.
+    throw new Error('EVIDENCE_INVALID_STATE: AI cannot assert verified state');
+  }
 
-// ---------------------------------------------------------------------------
-// Text Normalization for Comparison
-// ---------------------------------------------------------------------------
+  // RULE 2: Validate Span Existence and Isolation
+  const resolvedSpans: EvidenceSpan[] = [];
+  for (const spanId of spanIds) {
+    const span = evidenceMap.getSpan(spanId);
+    if (!span) {
+      throw new Error('GEMINI_FABRICATED_EVIDENCE: Span ID does not exist in Canonical Evidence Map');
+    }
+    if (span.extractionId !== extractionId) {
+      throw new Error('EVIDENCE_EXTRACTION_MISMATCH: Span belongs to a different extraction');
+    }
+    resolvedSpans.push(span);
+  }
 
-/**
- * Normalizes text for evidence comparison.
- * Handles common OCR variations (0/O, 1/l, extra spaces, etc.)
- */
-function normalizeForComparison(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/\s+/g, ' ')    // Normalize whitespace
-    .replace(/['']/g, "'")    // Normalize quotes
-    .replace(/[""]/g, '"')    // Normalize double quotes
-    .replace(/[\u00A0]/g, ' ') // Non-breaking space
-    .trim();
+  // RULE 3: Value <-> Evidence Consistency
+  // Reconstruct the text exactly from spans
+  const combinedEvidenceText = resolvedSpans.map(s => s.text).join(' ');
+  const normalizedEvidence = normalizeForComparison(combinedEvidenceText);
+  
+  let stringValue = '';
+  if (typeof field.value === 'string') {
+    stringValue = field.value;
+  } else if (Array.isArray(field.value) || typeof field.value === 'object') {
+    stringValue = JSON.stringify(field.value);
+  } else {
+    stringValue = String(field.value);
+  }
+
+  const normalizedValue = normalizeForComparison(stringValue);
+
+  // For dates, we might need a specific normalizer. But for deterministic validation:
+  // We check if the normalized value is contained within the combined normalized evidence.
+  // We DO NOT allow semantic matching.
+  
+  // Example: Candidate Value = "pedro"
+  // Canonical Evidence = "juan dela cruz"
+  // -> REJECT
+  
+  if (!normalizedEvidence.includes(normalizedValue) && !normalizedValue.includes(normalizedEvidence)) {
+    // Allow a tiny bit of flexibility if it's a date formatting difference
+    // In a full production system, we'd use profile-specific normalizers.
+    // For now, if neither string includes the other, reject.
+    throw new Error('EVIDENCE_VALUE_MISMATCH: Candidate value is not supported by referenced spans');
+  }
+
+  // RULE 4: Discard AI Geometry & Confidence, Adopt Canonical
+  // We take the bounding box of the FIRST span as the primary, or merge them.
+  // For OCR confidence, we take the average or minimum.
+  const ocrConfidence = resolvedSpans.reduce((min, s) => Math.min(min, (s.ocrConfidence ?? 1.0)), 1.0);
+  const primaryBox = resolvedSpans[0].boundingBox;
+
+  return {
+    ...field,
+    state: 'candidate',
+    status: 'uncertain', // Always uncertain until human review
+    sourceText: combinedEvidenceText, // Enforce canonical text
+    boundingBox: primaryBox, // Enforce canonical box
+    confidence: ocrConfidence,
+    page: 1, // Enforce canonical page (mocked as 1 for now, or extracted from pageId)
+  };
 }

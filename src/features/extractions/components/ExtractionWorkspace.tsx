@@ -205,8 +205,7 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
     startTransition(async () => {
       await updateDocumentField({
         fieldId: field.id,
-        reviewedValue: null, // Accepting means we are fine with normalized/raw
-        status: 'Accepted',
+        action: 'accept',
         path
       })
     })
@@ -216,8 +215,8 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
     startTransition(async () => {
       await updateDocumentField({
         fieldId: field.id,
-        reviewedValue: editValue,
-        status: 'Corrected',
+        action: 'correct',
+        correctedValue: editValue,
         path
       })
       setIsEditing(false)
@@ -228,15 +227,14 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
     startTransition(async () => {
       await updateDocumentField({
         fieldId: field.id,
-        reviewedValue: null,
-        status: 'Rejected',
+        action: 'reject',
         path
       })
     })
   }
 
-  const isAcceptedOrCorrected = field.status === 'Accepted' || field.status === 'Corrected'
-  const isRejected = field.status === 'Rejected'
+  const isAcceptedOrCorrected = field.state === 'verified'
+  const isRejected = field.state === 'not_present' || field.state === 'unreadable' || field.state === 'ambiguous' || field.status === 'Rejected'
   
   const displayValue = field.reviewed_value || field.normalized_value || field.raw_value
 
@@ -259,40 +257,56 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
           {field.field_name.replace(/([a-z])([A-Z])/g, '$1 $2')}
         </span>
         
-        {(evidenceStatus || confidence !== undefined || pageNumber !== undefined) && (
-          <div className="flex flex-wrap items-center gap-sm text-xs text-text-secondary mb-xs">
-            {evidenceStatus && (
-              <div 
-                className={`flex items-center gap-xs ${
-                  evidenceStatus.toLowerCase() === 'verified' ? 'text-green-600' : 
-                  evidenceStatus.toLowerCase() === 'uncertain' ? 'text-amber-500' : 
-                  evidenceStatus.toLowerCase() === 'unreadable' ? 'text-red-500' : 'text-text-secondary'
-                }`}
-                title={
-                  evidenceStatus.toLowerCase() === 'verified' ? 'Evidence verified' :
-                  evidenceStatus.toLowerCase() === 'uncertain' ? 'Needs review — evidence uncertain' :
-                  evidenceStatus.toLowerCase() === 'missing' ? 'Field not found in document' :
-                  evidenceStatus.toLowerCase() === 'unreadable' ? 'Field unreadable' : ''
-                }
-              >
-                {evidenceStatus.toLowerCase() === 'verified' ? <Check size={12} /> :
-                 evidenceStatus.toLowerCase() === 'uncertain' ? <AlertTriangle size={12} /> :
-                 <span className="w-2 h-2 rounded-full bg-current inline-block" />}
-                <span className="font-medium capitalize">{evidenceStatus}</span>
-              </div>
-            )}
-            {confidence !== undefined && (
-              <div className={`flex items-center gap-xs ${evidenceStatus ? 'border-l border-default pl-sm' : ''}`}>
-                <span>{typeof confidence === 'number' && confidence <= 1 ? `${Math.round(confidence * 100)}%` : `${confidence}%`}</span>
-              </div>
-            )}
-            {pageNumber !== undefined && (
-              <div className={`flex items-center gap-xs ${(evidenceStatus || confidence !== undefined) ? 'border-l border-default pl-sm' : ''}`}>
-                <FileText size={12} /> <span>Page {pageNumber}</span>
-              </div>
-            )}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-sm text-xs text-text-secondary mb-xs">
+          {field.state && (
+            <div className={`flex items-center gap-xs ${
+              field.state === 'verified' ? 'text-green-600' : 
+              field.state === 'candidate' ? 'text-amber-500' : 
+              'text-red-500'
+            }`}>
+              {field.state === 'verified' ? <Check size={12} /> :
+               field.state === 'candidate' ? <AlertTriangle size={12} /> :
+               <X size={12} />}
+              <span className="font-medium capitalize">{field.state.replace('_', ' ')}</span>
+            </div>
+          )}
+          {field.metadata?.reliability && (
+            <>
+              {field.metadata.reliability.ocrConfidence !== null && (
+                <div className="flex items-center gap-xs border-l border-default pl-sm">
+                  <span>OCR: {Math.round(field.metadata.reliability.ocrConfidence * 100)}%</span>
+                </div>
+              )}
+              {field.metadata.reliability.profileRisk && (
+                <div className="flex items-center gap-xs border-l border-default pl-sm">
+                  <span className={`capitalize ${field.metadata.reliability.profileRisk === 'high' ? 'text-red-500 font-semibold' : ''}`}>
+                    {field.metadata.reliability.profileRisk} Risk
+                  </span>
+                </div>
+              )}
+              {field.metadata.reliability.evidenceCoverage && (
+                <div className="flex items-center gap-xs border-l border-default pl-sm">
+                  <span className="capitalize">{field.metadata.reliability.evidenceCoverage} Evidence</span>
+                </div>
+              )}
+              {field.metadata.reliability.extractionConsistency && field.metadata.reliability.extractionConsistency !== 'single_model' && (
+                <div className="flex items-center gap-xs border-l border-default pl-sm">
+                  <span className="capitalize">{field.metadata.reliability.extractionConsistency.replace(/_/g, ' ')}</span>
+                </div>
+              )}
+            </>
+          )}
+          {!field.metadata?.reliability && confidence !== undefined && (
+            <div className="flex items-center gap-xs border-l border-default pl-sm">
+              <span>{typeof confidence === 'number' && confidence <= 1 ? `${Math.round(confidence * 100)}%` : `${confidence}%`}</span>
+            </div>
+          )}
+          {pageNumber !== undefined && (
+            <div className="flex items-center gap-xs border-l border-default pl-sm">
+              <FileText size={12} /> <span>Page {pageNumber}</span>
+            </div>
+          )}
+        </div>
         
         {isEditing ? (
           <textarea 
@@ -349,8 +363,8 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
       </div>
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-md gap-sm sm:gap-0">
-        <Badge variant={field.status === 'NeedsReview' ? 'warning' : field.status === 'Rejected' ? 'error' : 'success'}>
-          {field.status}
+        <Badge variant={field.state === 'candidate' ? 'warning' : isRejected ? 'error' : 'success'}>
+          {field.state === 'candidate' ? 'Needs Review' : field.state}
         </Badge>
         
         <div className="flex items-center gap-xs w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
@@ -361,7 +375,7 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
             </>
           ) : (
             <>
-              {field.status === 'NeedsReview' && (
+              {field.state === 'candidate' && (
                 <Button variant="secondary" onClick={handleAccept} disabled={isPending} className="text-green-500 border-green-500/20 hover:bg-green-500/10">
                   <Check size={16} /> Accept
                 </Button>
@@ -369,7 +383,7 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
               <Button variant="secondary" onClick={() => setIsEditing(true)} disabled={isPending || isRejected}>
                 <Edit2 size={16} /> Edit
               </Button>
-              {field.status !== 'Rejected' && (
+              {!isRejected && (
                 <Button variant="secondary" onClick={handleReject} disabled={isPending} className="text-red-500 border-red-500/20 hover:bg-red-500/10">
                   <X size={16} /> Reject
                 </Button>

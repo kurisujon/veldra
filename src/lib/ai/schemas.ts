@@ -5,15 +5,13 @@ import { z } from 'zod';
 // ---------------------------------------------------------------------------
 
 /**
- * Zod schema for an evidence-grounded extracted field.
- * Every field extracted by the upgraded pipeline includes source evidence.
+ * Zod schema for a zero-trust extracted candidate field.
+ * AI can only return candidate state and reference existing evidence spans.
  */
 export const EvidenceFieldSchema = z.object({
   value: z.union([z.string(), z.null()]).catch(null).default(null),
-  sourceText: z.union([z.string(), z.null()]).catch(null).default(null),
-  page: z.union([z.number(), z.null()]).catch(null).default(null),
-  confidence: z.union([z.number(), z.null()]).catch(null).default(null),
-  status: z.enum(['verified', 'uncertain', 'missing', 'unreadable']).catch('uncertain').default('uncertain'),
+  state: z.enum(['candidate', 'not_present', 'unreadable', 'ambiguous']).catch('candidate').default('candidate'),
+  evidenceSpanIds: z.array(z.string()).catch([]).default([]),
 });
 
 export type EvidenceField = z.infer<typeof EvidenceFieldSchema>;
@@ -24,16 +22,12 @@ export type EvidenceField = z.infer<typeof EvidenceFieldSchema>;
 function evidenceField() {
   return EvidenceFieldSchema.catch({
     value: null,
-    sourceText: null,
-    page: null,
-    confidence: null,
-    status: 'uncertain' as const,
+    state: 'not_present' as const,
+    evidenceSpanIds: [],
   }).default({
     value: null,
-    sourceText: null,
-    page: null,
-    confidence: null,
-    status: 'uncertain' as const,
+    state: 'not_present' as const,
+    evidenceSpanIds: [],
   });
 }
 

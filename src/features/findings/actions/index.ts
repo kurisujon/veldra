@@ -9,7 +9,8 @@ import { compareDates } from '@/lib/comparison/compareDates'
 import { compareAddresses } from '@/lib/comparison/compareAddresses'
 import { compareTimeline } from '@/lib/comparison/compareTimeline'
 import { runCaseVerification } from '@/lib/comparison/engine'
-import type { DocumentMetadata, Sponsor } from '@/lib/comparison/types'
+import type { DocumentField, DocumentMetadata, Sponsor } from '@/lib/comparison/types'
+import { getVerifiedFields } from '@/lib/comparison/trust-boundary'
 
 const AnalyzeDocumentsSchema = z.object({
   caseId: z.string().uuid()
@@ -100,10 +101,16 @@ export async function analyzeDocuments(caseId: string) {
   let discrepancyFound = false
 
   if (fields && fields.length > 0) {
-    // Legacy applicant-only comparators
-    const applicantFields = fields.filter((f) => {
+    const typedFields = fields as unknown as DocumentField[];
+
+    // LAYER 3 ZERO-TRUST BOUNDARY
+    // Pre-filter to only verified fields before any comparison
+    const verifiedFields = getVerifiedFields(typedFields);
+
+    // Legacy applicant-only comparators (Layer 3 Verified Only)
+    const applicantFields = verifiedFields.filter((f) => {
       const meta = documentMetadata.find((d) => d.id === f.document_id)
-      return !meta || meta.owner_type === 'applicant'
+      return (!meta || meta.owner_type === 'applicant')
     })
 
     const legacyDiscrepancies = [
@@ -114,7 +121,7 @@ export async function analyzeDocuments(caseId: string) {
     ]
 
     // Phase 10: Three-Stage Verification Engine
-    const engineResult = await runCaseVerification(caseId, fields as any, documentMetadata, sponsors)
+    const engineResult = await runCaseVerification(caseId, verifiedFields, documentMetadata, sponsors)
 
     const discrepancies = [
       ...legacyDiscrepancies,

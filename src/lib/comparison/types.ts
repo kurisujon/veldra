@@ -49,6 +49,7 @@ export interface DocumentField {
   reviewed_value: string | null
   final_value: string | null
   confidence_score: number | null
+  state?: string | null
   created_at: string
   updated_at: string
 }

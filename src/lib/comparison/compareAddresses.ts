@@ -1,7 +1,9 @@
 import { DocumentField, Discrepancy } from './types'
+import { getVerifiedFields } from './trust-boundary'
 import { generateFindingDescription } from './formatters'
 
 export function compareAddresses(fields: DocumentField[]): Discrepancy[] {
+  fields = getVerifiedFields(fields);
   const discrepancies: Discrepancy[] = []
   
   const addressFields = fields.filter(f => {
