@@ -26,10 +26,12 @@ type DocumentType = typeof DOCUMENT_TYPES[number]['value']
 
 export function DocumentUpload({ 
   caseId,
-  documents = []
+  documents = [],
+  hasSponsors = false
 }: { 
   caseId: string
   documents?: any[]
+  hasSponsors?: boolean
 }) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -114,6 +116,9 @@ export function DocumentUpload({
         {DOCUMENT_TYPES.map(({ value, label }) => {
           const existingDoc = documents.find(d => d.type === value)
           const isUploading = isPending && uploadingType === value
+          const isSponsorDoc = value.startsWith('Sponsor')
+          const isDisabled = isSponsorDoc && !hasSponsors
+          const disabledMessage = isDisabled ? 'Add a sponsor first' : undefined
 
           return (
             <DocumentSlot
@@ -122,6 +127,8 @@ export function DocumentUpload({
               label={label}
               existingDoc={existingDoc}
               isUploading={isUploading}
+              isDisabled={isDisabled}
+              disabledMessage={disabledMessage}
               onFileSelected={handleUpload}
               fileInputRef={(el) => { fileInputRefs.current[value] = el }}
               onInputChange={(e) => handleFileSelect(e, value)}
@@ -139,6 +146,8 @@ interface DocumentSlotProps {
   label: string
   existingDoc: any
   isUploading: boolean
+  isDisabled?: boolean
+  disabledMessage?: string
   onFileSelected: (file: File, type: DocumentType) => void
   fileInputRef: (el: HTMLInputElement | null) => void
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -150,6 +159,8 @@ function DocumentSlot({
   label,
   existingDoc,
   isUploading,
+  isDisabled,
+  disabledMessage,
   onFileSelected,
   fileInputRef,
   onInputChange,
@@ -161,8 +172,8 @@ function DocumentSlot({
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsDragOver(true)
-  }, [])
+    if (!isDisabled) setIsDragOver(true)
+  }, [isDisabled])
 
   const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -175,19 +186,20 @@ function DocumentSlot({
       e.preventDefault()
       e.stopPropagation()
       setIsDragOver(false)
-      if (isUploading) return
+      if (isUploading || isDisabled) return
       const file = e.dataTransfer.files?.[0]
       if (file) {
         onFileSelected(file, docType)
       }
     },
-    [docType, isUploading, onFileSelected]
+    [docType, isUploading, isDisabled, onFileSelected]
   )
 
   return (
     <Card
       className={cn(
         'p-md flex flex-col justify-between h-32 border-dashed transition-colors group relative overflow-hidden',
+        isDisabled ? 'opacity-60 bg-surface/50 border-border/50 cursor-not-allowed' :
         isDragOver ? 'border-accent bg-accent/5' : 'hover:border-accent-muted'
       )}
       onDragOver={handleDragOver}
@@ -200,6 +212,8 @@ function DocumentSlot({
           <Badge variant="success" className="gap-xs font-medium tracking-normal text-[11px] shadow-sm">
             <CheckCircle size={12} /> Uploaded
           </Badge>
+        ) : isDisabled ? (
+           <Badge variant="neutral" className="text-text-secondary font-medium tracking-normal text-[11px] bg-background border border-border/50">Locked</Badge>
         ) : (
           <Badge variant="neutral" className="text-text-secondary font-medium tracking-normal text-[11px] bg-background border border-border/50">Missing</Badge>
         )}
@@ -207,10 +221,11 @@ function DocumentSlot({
       
       <div 
         className={cn(
-          'mt-auto flex items-center justify-center p-sm rounded-md transition-colors cursor-pointer',
-          isDragOver ? 'bg-accent/10' : isUploading ? 'bg-surface' : 'bg-surface hover:bg-background'
+          'mt-auto flex items-center justify-center p-sm rounded-md transition-colors',
+          isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
+          isDragOver && !isDisabled ? 'bg-accent/10' : isUploading ? 'bg-surface' : 'bg-surface hover:bg-background'
         )}
-        onClick={() => !isUploading && localInputRef.current?.click()}
+        onClick={() => !isUploading && !isDisabled && localInputRef.current?.click()}
       >
         <input 
           type="file" 
@@ -220,11 +235,15 @@ function DocumentSlot({
           }}
           onChange={onInputChange}
           className="hidden"
-          disabled={isUploading}
+          disabled={isUploading || isDisabled}
           accept=".pdf,.png,.jpg,.jpeg"
         />
         
-        {isUploading ? (
+        {isDisabled ? (
+          <div className="flex flex-col items-center gap-xs text-[11px] font-medium text-text-secondary">
+             <span>{disabledMessage || 'Not available'}</span>
+          </div>
+        ) : isUploading ? (
           <div className="flex flex-col items-center gap-xs text-small text-accent-muted">
             <Loader2 size={16} className="animate-spin mb-xs" /> Uploading...
           </div>
