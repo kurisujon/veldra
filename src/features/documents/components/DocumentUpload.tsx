@@ -17,13 +17,9 @@ const DOCUMENT_TYPES = [
   { value: 'SF10', label: 'Form 137 / SF10' },
   { value: 'Diploma', label: 'Diploma' },
   { value: 'ValidID', label: 'Valid ID' },
-  { value: 'BankStatement', label: 'Bank Statement (Sponsor)' },
-  { value: 'ProofOfBilling', label: 'Proof of Billing (Sponsor)' },
   { value: 'SponsorValidID', label: 'Valid ID / Passport (Sponsor)' },
-  { value: 'SponsorCOE', label: 'Cert. of Employment (Sponsor)' },
-  { value: 'SponsorITR', label: 'Income Tax Return (Sponsor)' },
   { value: 'SponsorPSABirth', label: 'PSA Birth Certificate (Sponsor)' },
-  { value: 'AffidavitOfSupport', label: 'Affidavit of Support' }
+  { value: 'SponsorPSAMarriage', label: 'PSA Marriage Certificate (Sponsor)' }
 ] as const
 
 type DocumentType = typeof DOCUMENT_TYPES[number]['value']
