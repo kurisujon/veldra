@@ -242,7 +242,7 @@ export async function runExtraction(documentId: string, caseId: string, document
     .single()
 
   if (docError || !docMetadata) {
-    throw new Error(`Failed to fetch document metadata: ${docError?.message}`)
+    return { success: false, error: `Failed to fetch document metadata: ${docError?.message}` }
   }
 
   // 2. Download the file from Supabase storage
@@ -251,7 +251,7 @@ export async function runExtraction(documentId: string, caseId: string, document
     .download(docMetadata.file_path)
 
   if (downloadError || !fileData) {
-    throw new Error(`Failed to download document: ${downloadError?.message}`)
+    return { success: false, error: `Failed to download document: ${downloadError?.message}` }
   }
 
   // 3. Convert Blob to Buffer and determine MIME type
@@ -311,7 +311,7 @@ export async function runExtraction(documentId: string, caseId: string, document
     }
 
     revalidatePath(`/cases/${caseId}/documents/${documentId}`)
-    throw new Error(`Extraction Failed: ${errorMessage}`)
+    return { success: false, error: `Extraction Failed: ${errorMessage}` }
   }
 
   // 5. Determine extraction status based on confidence

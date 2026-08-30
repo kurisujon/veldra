@@ -33,7 +33,10 @@ export function ExtractionWorkspace({
   const handleRunExtraction = () => {
     startTransition(async () => {
       try {
-        await runExtraction(document.id, document.case_id, document.type)
+        const result = await runExtraction(document.id, document.case_id, document.type)
+        if (result && 'success' in result && !result.success) {
+          alert(result.error || 'Unknown extraction error')
+        }
       } catch (err: unknown) {
         alert((err instanceof Error ? err.message : String(err)))
       }
