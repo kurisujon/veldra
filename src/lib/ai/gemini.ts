@@ -2,24 +2,24 @@ import { GoogleGenAI } from '@google/genai';
 
 /**
  * Returns the Gemini model name configured in environment variables,
- * or defaults to 'gemini-2.5-pro'.
+ * or defaults to 'gemini-1.5-pro'.
  */
 export function getGeminiModel(): string {
-  return process.env.GEMINI_MODEL || 'gemini-2.5-pro';
+  return process.env.GEMINI_MODEL || 'gemini-1.5-pro';
 }
 
 /**
  * Returns the Flash model name for cheaper operations (OCR, simple extraction).
  */
 export function getFlashModel(): string {
-  return process.env.GEMINI_FLASH_MODEL || 'gemini-2.5-flash';
+  return process.env.GEMINI_FLASH_MODEL || 'gemini-1.5-flash';
 }
 
 /**
  * Returns the Pro model name for escalated extraction on difficult documents.
  */
 export function getProModel(): string {
-  return process.env.GEMINI_PRO_MODEL || 'gemini-2.5-pro';
+  return process.env.GEMINI_PRO_MODEL || 'gemini-1.5-pro';
 }
 
 /**
