@@ -238,9 +238,9 @@ export const DEFAULT_PIPELINE_CONFIG: ExtractionPipelineConfig = {
   baseRetryDelayMs: 1000,
   reviewThreshold: 0.7,
   uncertainThreshold: 0.4,
-  enableModelEscalation: true,
-  primaryModel: 'gemini-2.5-flash',
-  escalationModel: 'gemini-2.5-pro',
+  enableModelEscalation: process.env.DISABLE_AI_ESCALATION !== 'true',
+  primaryModel: process.env.GEMINI_FLASH_MODEL || 'gemini-2.5-flash',
+  escalationModel: process.env.GEMINI_PRO_MODEL || 'gemini-2.5-pro',
   escalationThreshold: 0.5,
 };
 
