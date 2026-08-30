@@ -1,5 +1,6 @@
 import { DocumentProfile, DocumentProfileRegistry } from './types';
 import { PsaBirthCertificateProfile } from './psa-birth-certificate';
+import { PsaMarriageCertificateProfile } from './psa-marriage-certificate';
 import { SponsorValidIdProfile } from './sponsor-valid-id';
 import { AffidavitOfSupportProfile } from './affidavit-of-support';
 
@@ -11,6 +12,7 @@ function registerProfile(profile: DocumentProfile<any>) {
 
 // Register known profiles
 registerProfile(PsaBirthCertificateProfile);
+registerProfile(PsaMarriageCertificateProfile);
 registerProfile(SponsorValidIdProfile);
 registerProfile(AffidavitOfSupportProfile);
 
@@ -25,6 +27,13 @@ profiles.set('affidavit of support', AffidavitOfSupportProfile);
 export const Registry: DocumentProfileRegistry = {
   getProfile(documentType: string): DocumentProfile<any> | undefined {
     if (!documentType) return undefined;
-    return profiles.get(documentType.toLowerCase().trim());
+    const key = documentType.toLowerCase().trim();
+    // Directly handle the exact DB enum strings
+    if (key === 'psabirth' || key === 'sponsorpsabirth') return PsaBirthCertificateProfile;
+    if (key === 'psamarriage' || key === 'sponsorpsamarriage') return PsaMarriageCertificateProfile;
+    if (key === 'validid' || key === 'sponsorvalidid') return SponsorValidIdProfile;
+    if (key === 'affidavitofsupport') return AffidavitOfSupportProfile;
+    
+    return profiles.get(key);
   }
 };
