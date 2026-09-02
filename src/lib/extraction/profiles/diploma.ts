@@ -39,11 +39,7 @@ export const DiplomaProfile: DocumentProfile<any> = {
     honors: createEvidenceFieldDef('honors', 'Honors', 'string', false, 'low', true, 'TEXT'),
     remarks: createEvidenceFieldDef('remarks', 'Remarks', 'string', false, 'low', false, 'TEXT'),
   },
-  
-  extractionPrompt: `Extract information from the provided Diploma.
-Pay special attention to the exact spelling of the student's name, the institution, and the degree awarded.`,
-
-  zodSchema: z.object({
+  schema: z.object({
     documentType: EvidenceFieldSchema,
     studentFirstName: EvidenceFieldSchema,
     studentMiddleName: EvidenceFieldSchema,
@@ -55,10 +51,5 @@ Pay special attention to the exact spelling of the student's name, the instituti
     dateAwarded: EvidenceFieldSchema,
     honors: EvidenceFieldSchema,
     remarks: EvidenceFieldSchema,
-  }),
-
-  confidenceThresholds: {
-    minimumAcceptable: 0.70,
-    requiresHumanReview: 0.90,
-  }
+  })
 };
