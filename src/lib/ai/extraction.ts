@@ -323,12 +323,11 @@ export async function extractDocumentGrounded(
     }
 
     // Enforce state logic correctly
+    // If AI returns 'not_present' with evidence spans, the AI examined those spans
+    // to determine the field is absent. This is safe — strip the spans and continue.
     if (evidence.state === 'not_present' && spanIds.length > 0) {
-      throw new ExtractionError(
-        'GEMINI_INVALID_RESPONSE',
-        `AI returned state 'not_present' but supplied evidence spans.`,
-        { retryable: true }
-      );
+      evidence.evidenceSpanIds = [];
+      spanIds.length = 0; // Clear the local reference too
     }
     
     if (evidence.state === 'candidate' && spanIds.length === 0) {
@@ -459,6 +458,11 @@ export async function extractDocumentGrounded(
           if (fName === 'documentType') continue;
           
           const spanIds = evidence.evidenceSpanIds || [];
+          // Strip spans from not_present fields (same rule as primary extraction)
+          if (evidence.state === 'not_present' && spanIds.length > 0) {
+            evidence.evidenceSpanIds = [];
+            spanIds.length = 0;
+          }
           for (const spanId of spanIds) {
             if (!evidenceMap.hasSpan(spanId)) {
                throw new ExtractionError('GEMINI_FABRICATED_EVIDENCE', 'Pro fabricated evidence');

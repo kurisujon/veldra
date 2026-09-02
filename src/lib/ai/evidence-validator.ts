@@ -92,10 +92,8 @@ function validateSingleField(
 
   // RULE 1: State Consistency
   if (state === 'not_present') {
-    if (spanIds.length > 0) {
-      throw new Error('EVIDENCE_INVALID_STATE: not_present state cannot have evidence spans');
-    }
-    return { ...field, state: 'not_present', status: 'missing', value: null, confidence: null };
+    // If AI referenced spans to determine absence, strip them — this is safe.
+    return { ...field, state: 'not_present', status: 'missing', value: null, confidence: null, evidenceSpanIds: [] };
   }
 
   if (state === 'candidate') {

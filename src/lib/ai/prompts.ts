@@ -55,12 +55,13 @@ For EVERY field, return an object with:
 
 Status meanings:
 - "candidate": You found the value and have linked the exact evidence spans.
-- "not_present": The field does not appear on the document or is intentionally left blank.
+- "not_present": The field does not appear on the document or is intentionally left blank. Use an EMPTY "evidenceSpanIds" array [].
 - "unreadable": The field location is identified but the text cannot be read at all.
 - "ambiguous": The field exists but is ambiguous or partially illegible.
 
 CRITICAL ZERO-TRUST RULE:
 You MUST NOT invent, fabricate, or guess "evidenceSpanIds". You may ONLY use the exact span IDs provided in the Canonical Evidence Context below. If you cannot find a matching span ID for the text you are extracting, you must either omit the ID or mark the state as ambiguous.
+If a field is "not_present", you MUST return an empty "evidenceSpanIds" array.
 `.trim();
 
 // ---------------------------------------------------------------------------
