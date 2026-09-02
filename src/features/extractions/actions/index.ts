@@ -7,6 +7,7 @@ import { extractDocumentGrounded } from '@/lib/ai/extraction'
 import { ExtractionError } from '@/lib/ai/types'
 import type { FlattenedField, GroundedExtractionResult, EvidenceStatus } from '@/lib/ai/types'
 import type { ExtractedField } from '@/lib/ai/types'
+import type { Database } from '@/types/database'
 
 export async function getExtractionsByCaseId(caseId: string) {
   const supabase = await createClient()
@@ -86,7 +87,7 @@ export async function updateDocumentField(params: z.infer<typeof UpdateFieldSche
   const { error } = await supabase.rpc('verify_document_field', {
     p_field_id: fieldId,
     p_action: action,
-    p_corrected_value: correctedValue || null
+    p_corrected_value: correctedValue ?? undefined
   })
 
   if (error) throw new Error((error instanceof Error ? error.message : String(error)))
@@ -317,12 +318,11 @@ export async function runExtraction(documentId: string, caseId: string, document
   }
 
   // 5. Determine extraction status based on confidence
-  const hasUncertainFields = groundedResult.uncertainFieldCount > 0
   const status: 'NeedsReview' = 'NeedsReview' // Always NeedsReview for human verification
+  let extractionId: string | null = null
 
   // 6. Insert/update the document_extractions record
   try {
-    let extractionId: string
     const { data: existingExt } = await supabase
       .from('document_extractions')
       .select('id')
@@ -358,13 +358,13 @@ export async function runExtraction(documentId: string, caseId: string, document
 
       if (updateError) throw new Error(updateError.message)
 
-      // Delete existing fields to overwrite them
-      const { error: deleteFieldsError } = await supabase
-        .from('document_fields')
-        .delete()
-        .eq('document_extraction_id', extractionId)
+      // The RPC retains Admin-only table DELETE policies while allowing
+      // authorized Reviewers to replace this extraction's stale data.
+      const { error: replaceError } = await supabase.rpc('replace_document_extraction_data', {
+        p_extraction_id: extractionId,
+      })
 
-      if (deleteFieldsError) throw new Error(deleteFieldsError.message)
+      if (replaceError) throw new Error(replaceError.message)
     } else {
       const { data: newExt, error: insertError } = await supabase
         .from('document_extractions')
@@ -381,11 +381,16 @@ export async function runExtraction(documentId: string, caseId: string, document
       extractionId = newExt.id
     }
 
+    if (!extractionId) {
+      throw new Error('Extraction ID unavailable after persistence')
+    }
+    const persistedExtractionId = extractionId
+
     // 7. Persist Canonical Evidence Map
     if (groundedResult.canonicalMap) {
       const { persistCanonicalEvidence } = await import('@/lib/extraction/evidence/persistence');
       try {
-        await persistCanonicalEvidence(supabase as any, extractionId, groundedResult.canonicalMap);
+        await persistCanonicalEvidence(supabase, persistedExtractionId, groundedResult.canonicalMap);
       } catch (err) {
         console.warn('Failed to persist canonical evidence, continuing without it:', err);
       }
@@ -395,7 +400,7 @@ export async function runExtraction(documentId: string, caseId: string, document
     const fieldsToInsert = flattenedFields.map((f) => ({
       case_id: caseId,
       document_id: documentId,
-      document_extraction_id: extractionId,
+      document_extraction_id: persistedExtractionId,
       field_name: f.field_name,
       raw_value: f.raw_value,
       normalized_value: f.normalized_value,
@@ -413,14 +418,14 @@ export async function runExtraction(documentId: string, caseId: string, document
 
     const { data: insertedFields, error: fieldError } = await supabase
       .from('document_fields')
-      .insert(fieldsToInsert as any)
+      .insert(fieldsToInsert)
       .select('id, field_name')
 
     if (fieldError) throw new Error(fieldError.message)
 
     // 9. Insert field_evidence tracking
     if (insertedFields) {
-      const fieldEvidenceToInsert: any[] = [];
+      const fieldEvidenceToInsert: Database['public']['Tables']['field_evidence']['Insert'][] = [];
       for (const insertedField of insertedFields) {
          const flatField = flattenedFields.find(ff => ff.field_name === insertedField.field_name);
          if (flatField && flatField.evidenceSpanIds && flatField.state === 'candidate') {
@@ -435,7 +440,7 @@ export async function runExtraction(documentId: string, caseId: string, document
       }
       
       if (fieldEvidenceToInsert.length > 0) {
-        const { error: evidenceError } = await (supabase as any)
+        const { error: evidenceError } = await supabase
           .from('field_evidence')
           .insert(fieldEvidenceToInsert);
           
@@ -451,12 +456,27 @@ export async function runExtraction(documentId: string, caseId: string, document
     const errorMessage = writeError instanceof Error ? writeError.message : String(writeError)
     console.error(`[Extraction] DB write failed for document ${documentId}:`, errorMessage)
 
-    await supabase
-      .from('document_extractions')
-      .update({ status: 'Failed', error_message: `Write Failed: ${errorMessage}`, updated_at: new Date().toISOString() })
-      .eq('document_id', documentId)
-      .order('created_at', { ascending: false })
-      .limit(1)
+    const failedExtraction = {
+      status: 'Failed' as const,
+      error_message: `Write Failed: ${errorMessage}`,
+      updated_at: new Date().toISOString(),
+    }
+
+    if (extractionId) {
+      await supabase
+        .from('document_extractions')
+        .update(failedExtraction)
+        .eq('id', extractionId)
+    } else {
+      await supabase
+        .from('document_extractions')
+        .insert({
+          case_id: caseId,
+          document_id: documentId,
+          document_type: documentType,
+          ...failedExtraction,
+        })
+    }
 
     revalidatePath(`/cases/${caseId}/documents/${documentId}`)
     return { success: false, error: `Write Failed: ${errorMessage}` }

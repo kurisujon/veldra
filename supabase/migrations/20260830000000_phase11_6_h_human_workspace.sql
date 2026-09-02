@@ -51,7 +51,7 @@ BEGIN
     IF p_action = 'accept' THEN
         IF v_current_state NOT IN ('candidate') THEN
             RAISE EXCEPTION 'Only candidate fields can be accepted';
-        END IF
+        END IF;
         v_new_state := 'verified';
         
     ELSIF p_action = 'reject' THEN

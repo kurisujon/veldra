@@ -65,3 +65,10 @@ This document defines the core entities for Veldra's Case-centric architecture. 
 - **Required Fields**: `id`, `caseId`, `actionType`, `description`, `userId`, `role`, `timestamp`.
 - **Relationships**:
   - Belongs To: `Case`
+
+## 8. Extraction Evidence
+- **Purpose**: Stores the human-reviewable candidate data and its immutable OCR evidence for a document.
+- **Entities**: `document_extractions` owns `document_fields`, `ocr_pages`, and `ocr_spans`; `field_evidence` joins candidate fields to the canonical OCR spans that support them.
+- **Re-run Rule**: Direct deletion of extraction fields and canonical evidence remains Admin-only. An authenticated Admin or Reviewer must use the narrowly scoped `replace_document_extraction_data(p_extraction_id)` `SECURITY DEFINER` RPC before a re-run. It derives the caller from `auth.uid()`, checks `get_user_role()`, and deletes only the supplied extraction's dependent field and OCR data.
+- **Trust Boundary**: Re-runs replace candidate evidence only. They do not make any candidate field verified; verification remains exclusively controlled by `verify_document_field`.
+- **Invalid Evidence Rule**: A candidate whose evidence fails deterministic validation is persisted as `ambiguous`, never as an unrecognized `rejected` state. This preserves the database state constraint and requires human review.

@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '@/types/database';
+import { Database, Json } from '@/types/database';
 import { CanonicalEvidenceMap } from '../ocr/types';
 import { EvidenceMap, EvidenceSpan } from './EvidenceMap';
 import { v4 as uuidv4 } from 'uuid';
@@ -24,7 +24,7 @@ export async function persistCanonicalEvidence(
   const pageIds = pageInserts.map(p => p.id);
 
   // Insert pages
-  const { error: pagesError } = await (supabase as any)
+  const { error: pagesError } = await supabase
     .from('ocr_pages')
     .insert(pageInserts);
 
@@ -56,7 +56,7 @@ export async function persistCanonicalEvidence(
 
   // Supabase bulk insert limit is typically quite high, but for massive documents 
   // we might need chunking in a real production system. Assuming standard IDs here.
-  const { error: spansError } = await (supabase as any)
+  const { error: spansError } = await supabase
     .from('ocr_spans')
     .insert(spanInserts);
 
@@ -71,7 +71,7 @@ export async function hydrateEvidenceMap(
   supabase: SupabaseClient<Database>,
   extractionId: string
 ): Promise<EvidenceMap> {
-  const { data: spansData, error } = await (supabase as any)
+  const { data: spansData, error } = await supabase
     .from('ocr_spans')
     .select('*')
     .eq('extraction_id', extractionId);
@@ -82,19 +82,41 @@ export async function hydrateEvidenceMap(
 
   const evidenceMap = new EvidenceMap(extractionId);
 
-  spansData.forEach((row: any) => {
+  for (const row of spansData) {
+    if (!isBoundingBox(row.bounding_box) || !isEvidenceBlockType(row.block_type)) {
+      throw new Error(`Invalid canonical evidence span: ${row.id}`);
+    }
+
     const span: EvidenceSpan = {
       id: row.id,
       extractionId: row.extraction_id,
       pageId: row.page_id,
       text: row.text,
       normalizedText: row.normalized_text,
-      boundingBox: row.bounding_box as any, // Type cast for JSONB
+      boundingBox: row.bounding_box,
       ocrConfidence: row.ocr_confidence,
-      blockType: row.block_type as any
+      blockType: row.block_type
     };
     evidenceMap.registerSpan(span);
-  });
+  }
 
   return evidenceMap;
+}
+
+function isBoundingBox(value: Json | null): value is EvidenceSpan['boundingBox'] {
+  if (value === null) return true;
+  if (typeof value !== 'object' || Array.isArray(value)) return false;
+
+  return typeof value.x === 'number'
+    && typeof value.y === 'number'
+    && typeof value.width === 'number'
+    && typeof value.height === 'number';
+}
+
+function isEvidenceBlockType(value: string | null): value is EvidenceSpan['blockType'] {
+  return value === 'word'
+    || value === 'line'
+    || value === 'paragraph'
+    || value === 'key_value'
+    || value === 'table_cell';
 }

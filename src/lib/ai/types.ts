@@ -9,6 +9,8 @@
  * - OCR integration
  */
 
+import type { CanonicalEvidenceMap } from '@/lib/extraction/ocr/types';
+
 // ---------------------------------------------------------------------------
 // Bounding Box
 // ---------------------------------------------------------------------------
@@ -207,7 +209,7 @@ export interface GroundedExtractionResult {
   /** The document quality assessment */
   quality: DocumentQuality;
   /** 11.6-D Canonical Evidence Map */
-  canonicalMap?: any;
+  canonicalMap?: CanonicalEvidenceMap;
 }
 
 // ---------------------------------------------------------------------------

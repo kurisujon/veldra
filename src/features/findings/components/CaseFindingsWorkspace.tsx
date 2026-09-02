@@ -216,7 +216,9 @@ export function CaseFindingsWorkspace({
                         <div className="flex flex-col gap-xs">
                           <p className="text-xs font-semibold text-text-secondary uppercase">Missing Evidence</p>
                           <ul className="list-disc pl-4 text-small text-amber-600 space-y-1">
-                            {rel.missing_evidence.map((me: string, idx: number) => (
+                            {rel.missing_evidence
+                              .filter((evidence): evidence is string => typeof evidence === 'string')
+                              .map((me, idx) => (
                               <li key={idx}>{me}</li>
                             ))}
                           </ul>

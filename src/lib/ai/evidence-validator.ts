@@ -62,10 +62,11 @@ export function validateEvidence(
         rejectedCount++;
       }
     } catch (e) {
-      // Any error during validation means the field is rejected.
+      // Invalid candidate evidence is retained only as an ambiguous value for
+      // human review; `rejected` is not a valid persisted zero-trust state.
       validatedFields[fieldName] = {
         ...field,
-        state: 'rejected',
+        state: 'ambiguous',
         status: 'uncertain', // fallback for legacy compatibility
         value: null,
         evidenceSpanIds: [], // DO NOT persist invalid spans

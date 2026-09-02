@@ -551,6 +551,7 @@ export async function extractDocumentGrounded(
     overallConfidence,
     retryCount,
     quality: inspection.quality,
+    canonicalMap,
   };
 }
 

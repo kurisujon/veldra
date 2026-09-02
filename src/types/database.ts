@@ -56,7 +56,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_roles"
             referencedColumns: ["user_id"]
-          }
+          },
         ]
       }
       applicants: {
@@ -65,9 +65,9 @@ export type Database = {
           created_at: string
           date_of_birth: string
           first_name: string
-          middle_name: string | null
           id: string
           last_name: string
+          middle_name: string | null
           updated_at: string
         }
         Insert: {
@@ -75,9 +75,9 @@ export type Database = {
           created_at?: string
           date_of_birth: string
           first_name: string
-          middle_name?: string | null
           id?: string
           last_name: string
+          middle_name?: string | null
           updated_at?: string
         }
         Update: {
@@ -85,9 +85,9 @@ export type Database = {
           created_at?: string
           date_of_birth?: string
           first_name?: string
-          middle_name?: string | null
           id?: string
           last_name?: string
+          middle_name?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -129,136 +129,81 @@ export type Database = {
       }
       comparison_results: {
         Row: {
-          id: string
           case_id: string
           comparison_scope: string
-          rule_code: string
-          left_document_id: string | null
-          right_document_id: string | null
-          field_name: string
-          left_value: string | null
-          right_value: string | null
-          left_normalized: string | null
-          right_normalized: string | null
-          status: string
-          severity: string
-          explanation: string | null
-          method: string
           created_at: string
+          explanation: string | null
+          field_name: string
+          id: string
+          left_document_id: string | null
+          left_normalized: string | null
+          left_value: string | null
+          method: string
+          right_document_id: string | null
+          right_normalized: string | null
+          right_value: string | null
+          rule_code: string
+          severity: string
+          status: string
         }
         Insert: {
-          id?: string
           case_id: string
           comparison_scope: string
-          rule_code: string
-          left_document_id?: string | null
-          right_document_id?: string | null
-          field_name: string
-          left_value?: string | null
-          right_value?: string | null
-          left_normalized?: string | null
-          right_normalized?: string | null
-          status?: string
-          severity?: string
-          explanation?: string | null
-          method?: string
           created_at?: string
+          explanation?: string | null
+          field_name: string
+          id?: string
+          left_document_id?: string | null
+          left_normalized?: string | null
+          left_value?: string | null
+          method?: string
+          right_document_id?: string | null
+          right_normalized?: string | null
+          right_value?: string | null
+          rule_code: string
+          severity?: string
+          status?: string
         }
         Update: {
           case_id?: string
           comparison_scope?: string
-          rule_code?: string
-          left_document_id?: string | null
-          right_document_id?: string | null
-          field_name?: string
-          left_value?: string | null
-          right_value?: string | null
-          left_normalized?: string | null
-          right_normalized?: string | null
-          status?: string
-          severity?: string
+          created_at?: string
           explanation?: string | null
-          method?: string
-        }
-        Relationships: []
-      }
-      sponsor_relationships: {
-        Row: {
-          id: string
-          case_id: string
-          sponsor_id: string
-          declared_relationship: string
-          verified_relationship: string | null
-          verification_status: string
-          confidence: number
-          review_notes: string | null
-          missing_evidence: any
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          case_id: string
-          sponsor_id: string
-          declared_relationship: string
-          verified_relationship?: string | null
-          verification_status?: string
-          confidence?: number
-          review_notes?: string | null
-          missing_evidence?: any
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          case_id?: string
-          sponsor_id?: string
-          declared_relationship?: string
-          verified_relationship?: string | null
-          verification_status?: string
-          confidence?: number
-          review_notes?: string | null
-          missing_evidence?: any
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      relationship_evidence: {
-        Row: {
-          id: string
-          sponsor_relationship_id: string
-          document_id: string | null
-          field_name: string
-          extracted_value: string | null
-          normalized_value: string | null
-          evidence_role: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          sponsor_relationship_id: string
-          document_id?: string | null
-          field_name: string
-          extracted_value?: string | null
-          normalized_value?: string | null
-          evidence_role?: string
-          created_at?: string
-        }
-        Update: {
-          sponsor_relationship_id?: string
-          document_id?: string | null
           field_name?: string
-          extracted_value?: string | null
-          normalized_value?: string | null
-          evidence_role?: string
+          id?: string
+          left_document_id?: string | null
+          left_normalized?: string | null
+          left_value?: string | null
+          method?: string
+          right_document_id?: string | null
+          right_normalized?: string | null
+          right_value?: string | null
+          rule_code?: string
+          severity?: string
+          status?: string
         }
         Relationships: [
           {
-            foreignKeyName: "relationship_evidence_sponsor_relationship_id_fkey"
-            columns: ["sponsor_relationship_id"]
+            foreignKeyName: "comparison_results_case_id_fkey"
+            columns: ["case_id"]
             isOneToOne: false
-            referencedRelation: "sponsor_relationships"
+            referencedRelation: "cases"
             referencedColumns: ["id"]
-          }
+          },
+          {
+            foreignKeyName: "comparison_results_left_document_id_fkey"
+            columns: ["left_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comparison_results_right_document_id_fkey"
+            columns: ["right_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
         ]
       }
       document_extractions: {
@@ -267,75 +212,75 @@ export type Database = {
           confidence_score: number | null
           created_at: string
           document_id: string
+          document_quality: string | null
           document_type: string
           error_message: string | null
           extraction_method: string | null
           id: string
+          model_used: string | null
           notes: string | null
+          ocr_engine: string | null
+          ocr_text: string | null
+          page_count: number | null
+          processing_duration_ms: number | null
           raw_text: string | null
+          retry_count: number | null
           review_status: Database["public"]["Enums"]["extraction_review_status"]
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["extraction_status"]
-          updated_at: string
-          ocr_text: string | null
-          page_count: number | null
-          document_quality: string | null
-          model_used: string | null
-          processing_duration_ms: number | null
-          ocr_engine: string | null
-          retry_count: number | null
           uncertain_field_count: number | null
+          updated_at: string
         }
         Insert: {
           case_id: string
           confidence_score?: number | null
           created_at?: string
           document_id: string
+          document_quality?: string | null
           document_type: string
           error_message?: string | null
           extraction_method?: string | null
           id?: string
+          model_used?: string | null
           notes?: string | null
+          ocr_engine?: string | null
+          ocr_text?: string | null
+          page_count?: number | null
+          processing_duration_ms?: number | null
           raw_text?: string | null
+          retry_count?: number | null
           review_status?: Database["public"]["Enums"]["extraction_review_status"]
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["extraction_status"]
-          updated_at?: string
-          ocr_text?: string | null
-          page_count?: number | null
-          document_quality?: string | null
-          model_used?: string | null
-          processing_duration_ms?: number | null
-          ocr_engine?: string | null
-          retry_count?: number | null
           uncertain_field_count?: number | null
+          updated_at?: string
         }
         Update: {
           case_id?: string
           confidence_score?: number | null
           created_at?: string
           document_id?: string
+          document_quality?: string | null
           document_type?: string
           error_message?: string | null
           extraction_method?: string | null
           id?: string
+          model_used?: string | null
           notes?: string | null
+          ocr_engine?: string | null
+          ocr_text?: string | null
+          page_count?: number | null
+          processing_duration_ms?: number | null
           raw_text?: string | null
+          retry_count?: number | null
           review_status?: Database["public"]["Enums"]["extraction_review_status"]
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["extraction_status"]
-          updated_at?: string
-          ocr_text?: string | null
-          page_count?: number | null
-          document_quality?: string | null
-          model_used?: string | null
-          processing_duration_ms?: number | null
-          ocr_engine?: string | null
-          retry_count?: number | null
           uncertain_field_count?: number | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -356,73 +301,76 @@ export type Database = {
       }
       document_fields: {
         Row: {
+          bounding_box: Json | null
           case_id: string
           confidence_score: number | null
           created_at: string
           document_extraction_id: string
           document_id: string
+          evidence_status: string | null
           field_name: string
           final_value: string | null
           id: string
           normalized_value: string | null
+          ocr_confidence: number | null
+          page_number: number | null
           raw_value: string | null
           review_notes: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           reviewed_value: string | null
+          source_text: string | null
+          state: string | null
           status: Database["public"]["Enums"]["field_status"]
           updated_at: string
-          source_text: string | null
-          page_number: number | null
-          bounding_box: Json | null
-          ocr_confidence: number | null
-          evidence_status: string | null
         }
         Insert: {
+          bounding_box?: Json | null
           case_id: string
           confidence_score?: number | null
           created_at?: string
           document_extraction_id: string
           document_id: string
+          evidence_status?: string | null
           field_name: string
           final_value?: string | null
           id?: string
           normalized_value?: string | null
+          ocr_confidence?: number | null
+          page_number?: number | null
           raw_value?: string | null
           review_notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewed_value?: string | null
+          source_text?: string | null
+          state?: string | null
           status?: Database["public"]["Enums"]["field_status"]
           updated_at?: string
-          source_text?: string | null
-          page_number?: number | null
-          bounding_box?: Json | null
-          ocr_confidence?: number | null
-          evidence_status?: string | null
         }
         Update: {
+          bounding_box?: Json | null
           case_id?: string
           confidence_score?: number | null
           created_at?: string
           document_extraction_id?: string
           document_id?: string
+          evidence_status?: string | null
           field_name?: string
           final_value?: string | null
           id?: string
           normalized_value?: string | null
+          ocr_confidence?: number | null
+          page_number?: number | null
           raw_value?: string | null
           review_notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewed_value?: string | null
+          source_text?: string | null
+          state?: string | null
           status?: Database["public"]["Enums"]["field_status"]
           updated_at?: string
-          source_text?: string | null
-          page_number?: number | null
-          bounding_box?: Json | null
-          ocr_confidence?: number | null
-          evidence_status?: string | null
         }
         Relationships: [
           {
@@ -502,39 +450,11 @@ export type Database = {
             referencedRelation: "cases"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      sponsors: {
-        Row: {
-          id: string
-          case_id: string
-          first_name: string
-          last_name: string
-          relationship: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          case_id: string
-          first_name: string
-          last_name: string
-          relationship: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          case_id?: string
-          first_name?: string
-          last_name?: string
-          relationship?: string
-          created_at?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "sponsors_case_id_fkey"
-            columns: ["case_id"]
+            foreignKeyName: "documents_sponsor_id_fkey"
+            columns: ["sponsor_id"]
             isOneToOne: false
-            referencedRelation: "cases"
+            referencedRelation: "sponsors"
             referencedColumns: ["id"]
           },
         ]
@@ -571,7 +491,7 @@ export type Database = {
       }
       export_packages: {
         Row: {
-          case_id: string
+          case_id: string | null
           created_at: string
           deleted_at: string | null
           docx_path: string | null
@@ -581,9 +501,10 @@ export type Database = {
           pdf_path: string | null
           status: string | null
           title: string | null
+          updated_at: string
         }
         Insert: {
-          case_id: string
+          case_id?: string | null
           created_at?: string
           deleted_at?: string | null
           docx_path?: string | null
@@ -593,9 +514,10 @@ export type Database = {
           pdf_path?: string | null
           status?: string | null
           title?: string | null
+          updated_at?: string
         }
         Update: {
-          case_id?: string
+          case_id?: string | null
           created_at?: string
           deleted_at?: string | null
           docx_path?: string | null
@@ -605,6 +527,7 @@ export type Database = {
           pdf_path?: string | null
           status?: string | null
           title?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -612,6 +535,45 @@ export type Database = {
             columns: ["case_id"]
             isOneToOne: false
             referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      field_evidence: {
+        Row: {
+          created_at: string
+          document_field_id: string
+          evidence_role: string | null
+          id: string
+          ocr_span_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_field_id: string
+          evidence_role?: string | null
+          id?: string
+          ocr_span_id: string
+        }
+        Update: {
+          created_at?: string
+          document_field_id?: string
+          evidence_role?: string | null
+          id?: string
+          ocr_span_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_evidence_document_field_id_fkey"
+            columns: ["document_field_id"]
+            isOneToOne: false
+            referencedRelation: "document_fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_evidence_ocr_span_id_fkey"
+            columns: ["ocr_span_id"]
+            isOneToOne: false
+            referencedRelation: "ocr_spans"
             referencedColumns: ["id"]
           },
         ]
@@ -707,6 +669,7 @@ export type Database = {
           status: Database["public"]["Enums"]["finding_status"]
           title: string
           updated_at: string
+          verification_stage: string | null
         }
         Insert: {
           case_id: string
@@ -719,6 +682,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["finding_status"]
           title: string
           updated_at?: string
+          verification_stage?: string | null
         }
         Update: {
           case_id?: string
@@ -731,6 +695,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["finding_status"]
           title?: string
           updated_at?: string
+          verification_stage?: string | null
         }
         Relationships: [
           {
@@ -783,6 +748,235 @@ export type Database = {
           },
         ]
       }
+      ocr_pages: {
+        Row: {
+          created_at: string
+          extraction_id: string
+          height: number | null
+          id: string
+          page_number: number
+          provider_metadata: Json | null
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          extraction_id: string
+          height?: number | null
+          id?: string
+          page_number: number
+          provider_metadata?: Json | null
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          extraction_id?: string
+          height?: number | null
+          id?: string
+          page_number?: number
+          provider_metadata?: Json | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_pages_extraction_id_fkey"
+            columns: ["extraction_id"]
+            isOneToOne: false
+            referencedRelation: "document_extractions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocr_spans: {
+        Row: {
+          block_type: string | null
+          bounding_box: Json | null
+          created_at: string
+          extraction_id: string
+          id: string
+          normalized_text: string
+          ocr_confidence: number | null
+          page_id: string
+          text: string
+        }
+        Insert: {
+          block_type?: string | null
+          bounding_box?: Json | null
+          created_at?: string
+          extraction_id: string
+          id: string
+          normalized_text: string
+          ocr_confidence?: number | null
+          page_id: string
+          text: string
+        }
+        Update: {
+          block_type?: string | null
+          bounding_box?: Json | null
+          created_at?: string
+          extraction_id?: string
+          id?: string
+          normalized_text?: string
+          ocr_confidence?: number | null
+          page_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocr_spans_extraction_id_fkey"
+            columns: ["extraction_id"]
+            isOneToOne: false
+            referencedRelation: "document_extractions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocr_spans_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "ocr_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_evidence: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          evidence_role: string
+          extracted_value: string | null
+          field_name: string
+          id: string
+          normalized_value: string | null
+          sponsor_relationship_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          evidence_role?: string
+          extracted_value?: string | null
+          field_name: string
+          id?: string
+          normalized_value?: string | null
+          sponsor_relationship_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          evidence_role?: string
+          extracted_value?: string | null
+          field_name?: string
+          id?: string
+          normalized_value?: string | null
+          sponsor_relationship_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_evidence_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationship_evidence_sponsor_relationship_id_fkey"
+            columns: ["sponsor_relationship_id"]
+            isOneToOne: false
+            referencedRelation: "sponsor_relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_relationships: {
+        Row: {
+          case_id: string
+          confidence: number
+          created_at: string
+          declared_relationship: string
+          id: string
+          missing_evidence: Json | null
+          review_notes: string | null
+          sponsor_id: string
+          updated_at: string
+          verification_status: string
+          verified_relationship: string | null
+        }
+        Insert: {
+          case_id: string
+          confidence?: number
+          created_at?: string
+          declared_relationship: string
+          id?: string
+          missing_evidence?: Json | null
+          review_notes?: string | null
+          sponsor_id: string
+          updated_at?: string
+          verification_status?: string
+          verified_relationship?: string | null
+        }
+        Update: {
+          case_id?: string
+          confidence?: number
+          created_at?: string
+          declared_relationship?: string
+          id?: string
+          missing_evidence?: Json | null
+          review_notes?: string | null
+          sponsor_id?: string
+          updated_at?: string
+          verification_status?: string
+          verified_relationship?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_relationships_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsor_relationships_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsors: {
+        Row: {
+          case_id: string
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+          relationship: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          first_name: string
+          id?: string
+          last_name: string
+          relationship: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          relationship?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsors_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -812,14 +1006,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      verify_document_field: {
-        Args: {
-          p_field_id: string
-          p_action: string
-          p_corrected_value: string | null
-        }
-        Returns: void
-      }
       add_sponsor_to_case: {
         Args: {
           p_case_id: string
@@ -835,7 +1021,6 @@ export type Database = {
               p_date_of_birth: string
               p_first_name: string
               p_last_name: string
-              p_middle_name?: string | null
             }
             Returns: string
           }
@@ -844,7 +1029,15 @@ export type Database = {
               p_date_of_birth: string
               p_first_name: string
               p_last_name: string
-              p_middle_name?: string | null
+              p_middle_name?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_date_of_birth: string
+              p_first_name: string
+              p_last_name: string
               p_role: string
               p_user_id: string
             }
@@ -859,13 +1052,8 @@ export type Database = {
         }
         Returns: Json
       }
-      delete_employee_account: {
-        Args: {
-          p_user_id: string
-        }
-        Returns: undefined
-      }
       delete_document: { Args: { p_document_id: string }; Returns: undefined }
+      delete_employee_account: { Args: { p_user_id: string }; Returns: Json }
       get_all_employees: {
         Args: never
         Returns: {
@@ -877,14 +1065,15 @@ export type Database = {
         }[]
       }
       get_dashboard_analytics: {
-        Args: {
-          p_start_date?: string | null
-          p_end_date?: string | null
-        }
+        Args: { p_end_date?: string; p_start_date?: string }
         Returns: Json
       }
       get_email_by_username: { Args: { p_username: string }; Returns: string }
       get_user_role: { Args: never; Returns: string }
+      replace_document_extraction_data: {
+        Args: { p_extraction_id: string }
+        Returns: undefined
+      }
       upload_document_record: {
         Args: {
           p_case_id: string
@@ -895,6 +1084,14 @@ export type Database = {
           p_type: string
         }
         Returns: string
+      }
+      verify_document_field: {
+        Args: {
+          p_action: string
+          p_corrected_value?: string
+          p_field_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
@@ -1115,10 +1312,10 @@ export const Constants = {
         "Employment Mismatch",
         "Income Discrepancy",
         "Document Validity",
-        "Relationship Evidence"
+        "Relationship Evidence",
       ],
       finding_field_role: ["source_a", "source_b", "supporting"],
-      finding_severity: ["High", "Medium", "Low"],
+      finding_severity: ["High", "Medium", "Low", "Warning"],
       finding_status: ["Open", "Accepted", "Resolved", "Ignored"],
     },
   },
