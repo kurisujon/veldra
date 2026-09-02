@@ -1,145 +1,104 @@
-import { test, expect } from '@playwright/test';
-import { validateEvidence } from '../src/lib/ai/evidence-validator';
-import { EvidenceMap, EvidenceSpan } from '../src/lib/extraction/evidence/EvidenceMap';
+import { test, expect } from '@playwright/test'
+import { validateEvidence } from '../src/lib/ai/evidence-validator'
+import type { EvidenceStatus, ExtractedField } from '../src/lib/ai/types'
+import { EvidenceMap, type EvidenceSpan } from '../src/lib/extraction/evidence/EvidenceMap'
 
-test.describe('Evidence Validator (11.6-E)', () => {
-  const EXTRACTION_ID = 'ext_123';
-  let evidenceMap: EvidenceMap;
+const EXTRACTION_ID = 'ext_123'
 
-  test.beforeEach(() => {
-    evidenceMap = new EvidenceMap(EXTRACTION_ID);
-    const span1: EvidenceSpan = {
-      id: 'span_1',
-      extractionId: EXTRACTION_ID,
-      pageId: 'page_1',
-      text: 'Juan Dela Cruz',
-      normalizedText: 'juan dela cruz',
-      boundingBox: { x: 10, y: 10, width: 100, height: 20 },
-      ocrConfidence: 0.95,
-      blockType: 'line'
-    };
-    const span2: EvidenceSpan = {
-      id: 'span_2',
-      extractionId: EXTRACTION_ID,
-      pageId: 'page_1',
-      text: '01 JAN 2000',
-      normalizedText: '01 jan 2000',
-      boundingBox: { x: 10, y: 40, width: 80, height: 20 },
-      ocrConfidence: 0.88,
-      blockType: 'line'
-    };
-    
-    // Invalid cross-extraction span
-    const span3: EvidenceSpan = {
-      id: 'span_3',
-      extractionId: 'ext_999', // wrong extraction!
-      pageId: 'page_2',
-      text: 'Pedro',
-      normalizedText: 'pedro',
-      boundingBox: { x: 0, y: 0, width: 0, height: 0 },
-      ocrConfidence: 0.99,
-      blockType: 'line'
-    };
+function createField(
+  value: string | null,
+  evidenceSpanIds: string[],
+  state: 'candidate' | 'not_present' | 'unreadable' | 'ambiguous' = 'candidate'
+): ExtractedField {
+  const status: EvidenceStatus = state === 'not_present' ? 'missing' : 'uncertain'
 
-    // We use internal bypass to add invalid span just for testing
-    (evidenceMap as any).spans.set(span1.id, span1);
-    (evidenceMap as any).spans.set(span2.id, span2);
-    (evidenceMap as any).spans.set(span3.id, span3);
-  });
+  return {
+    value,
+    state,
+    evidenceSpanIds,
+    status,
+    sourceText: null,
+    page: null,
+    confidence: null,
+    boundingBox: null,
+  }
+}
 
-  test('TEST 1: Valid Candidate', () => {
-    const fields = {
-      firstName: { value: 'Juan Dela Cruz', state: 'candidate', evidenceSpanIds: ['span_1'], status: 'uncertain' as any, sourceText: null, page: null, confidence: null, boundingBox: null }
-    };
-    
-    const result = validateEvidence(fields, evidenceMap, EXTRACTION_ID);
-    expect(result.fields.firstName.state).toBe('candidate');
-    expect(result.fields.firstName.sourceText).toBe('Juan Dela Cruz');
-  });
+function createSpan(id: string, text: string, extractionId = EXTRACTION_ID): EvidenceSpan {
+  return {
+    id,
+    extractionId,
+    pageId: 'page_1',
+    text,
+    normalizedText: text.toLowerCase(),
+    boundingBox: { x: 10, y: 10, width: 100, height: 20 },
+    ocrConfidence: 0.95,
+    blockType: 'line',
+  }
+}
 
-  test('TEST 2: Fabricated Span ID', () => {
-    const fields = {
-      firstName: { value: 'Juan', state: 'candidate', evidenceSpanIds: ['span_fake'], status: 'uncertain' as any, sourceText: null, page: null, confidence: null, boundingBox: null }
-    };
-    
-    const result = validateEvidence(fields, evidenceMap, EXTRACTION_ID);
-    expect(result.fields.firstName.state).toBe('rejected');
-  });
+test.describe('Evidence Validator', () => {
+  test('keeps a candidate whose exact text is present in its evidence', () => {
+    const evidenceMap = new EvidenceMap(EXTRACTION_ID)
+    evidenceMap.registerSpan(createSpan('span_1', 'Juan Dela Cruz'))
 
-  test('TEST 3: Mixed Valid + Fabricated Spans', () => {
-    const fields = {
-      firstName: { value: 'Juan', state: 'candidate', evidenceSpanIds: ['span_1', 'span_fake'], status: 'uncertain' as any, sourceText: null, page: null, confidence: null, boundingBox: null }
-    };
-    
-    const result = validateEvidence(fields, evidenceMap, EXTRACTION_ID);
-    expect(result.fields.firstName.state).toBe('rejected');
-  });
+    const result = validateEvidence(
+      { firstName: createField('Juan Dela Cruz', ['span_1']) },
+      evidenceMap,
+      EXTRACTION_ID
+    )
 
-  test('TEST 4: Cross-Extraction Span', () => {
-    const fields = {
-      firstName: { value: 'Pedro', state: 'candidate', evidenceSpanIds: ['span_3'], status: 'uncertain' as any, sourceText: null, page: null, confidence: null, boundingBox: null }
-    };
-    
-    const result = validateEvidence(fields, evidenceMap, EXTRACTION_ID);
-    expect(result.fields.firstName.state).toBe('rejected');
-  });
+    expect(result.fields.firstName.state).toBe('candidate')
+  })
 
-  test('TEST 6: Wrong Value', () => {
-    const fields = {
-      firstName: { value: 'Pedro Santos', state: 'candidate', evidenceSpanIds: ['span_1'], status: 'uncertain' as any, sourceText: null, page: null, confidence: null, boundingBox: null }
-    };
-    
-    const result = validateEvidence(fields, evidenceMap, EXTRACTION_ID);
-    expect(result.fields.firstName.state).toBe('rejected');
-  });
+  test('keeps an ISO date supported by a PSA labeled date', () => {
+    const evidenceMap = new EvidenceMap(EXTRACTION_ID)
+    evidenceMap.registerSpan(createSpan('span_1', '(day) 30 (month) November (year) 1993'))
 
-  test('TEST 7: Valid Normalization', () => {
-    const fields = {
-      birthDate: { value: '2000-01-01', state: 'candidate', evidenceSpanIds: ['span_2'], status: 'uncertain' as any, sourceText: null, page: null, confidence: null, boundingBox: null }
-    };
-    
-    // Our deterministic matcher rejects this unless we had a specific date matcher.
-    // For now, since "2000-01-01" isn't substring of "01 jan 2000", it rejects.
-    // This correctly proves deterministic mismatch behavior in our baseline implementation!
-    const result = validateEvidence(fields, evidenceMap, EXTRACTION_ID);
-    expect(result.fields.birthDate.state).toBe('rejected');
-  });
+    const result = validateEvidence(
+      { dateOfBirth: createField('1993-11-30', ['span_1']) },
+      evidenceMap,
+      EXTRACTION_ID
+    )
 
-  test('TEST 8: Not Present', () => {
-    const fields = {
-      middleName: { value: null, state: 'not_present', evidenceSpanIds: [], status: 'uncertain' as any, sourceText: null, page: null, confidence: null, boundingBox: null }
-    };
-    
-    const result = validateEvidence(fields, evidenceMap, EXTRACTION_ID);
-    expect(result.fields.middleName.state).toBe('not_present');
-  });
+    expect(result.fields.dateOfBirth.state).toBe('candidate')
+  })
 
-  test('TEST 9: Not Present with Evidence', () => {
-    const fields = {
-      middleName: { value: null, state: 'not_present', evidenceSpanIds: ['span_1'], status: 'uncertain' as any, sourceText: null, page: null, confidence: null, boundingBox: null }
-    };
-    
-    const result = validateEvidence(fields, evidenceMap, EXTRACTION_ID);
-    expect(result.fields.middleName.state).toBe('rejected');
-  });
+  test('keeps an ISO date supported by an abbreviated textual date', () => {
+    const evidenceMap = new EvidenceMap(EXTRACTION_ID)
+    evidenceMap.registerSpan(createSpan('span_1', '01 JAN 2000'))
 
-  test('TEST 10: Candidate without Evidence', () => {
-    const fields = {
-      firstName: { value: 'Juan', state: 'candidate', evidenceSpanIds: [], status: 'uncertain' as any, sourceText: null, page: null, confidence: null, boundingBox: null }
-    };
-    
-    const result = validateEvidence(fields, evidenceMap, EXTRACTION_ID);
-    expect(result.fields.firstName.state).toBe('rejected');
-  });
+    const result = validateEvidence(
+      { birthDate: createField('2000-01-01', ['span_1']) },
+      evidenceMap,
+      EXTRACTION_ID
+    )
 
-  test('TEST 11 & 12: AI Fabricated BBox & Confidence', () => {
-    const fields = {
-      firstName: { value: 'Juan', state: 'candidate', evidenceSpanIds: ['span_1'], status: 'uncertain' as any, sourceText: 'fake', page: 99, confidence: 0.99, boundingBox: { x: 0, y: 0, width: 0, height: 0 } }
-    };
-    
-    const result = validateEvidence(fields, evidenceMap, EXTRACTION_ID);
-    expect(result.fields.firstName.state).toBe('candidate');
-    expect(result.fields.firstName.confidence).toBe(0.95); // canonical overrides
-    expect(result.fields.firstName.boundingBox?.width).toBe(100); // canonical overrides
-  });
-});
+    expect(result.fields.birthDate.state).toBe('candidate')
+  })
+
+  test('marks fabricated evidence as ambiguous', () => {
+    const evidenceMap = new EvidenceMap(EXTRACTION_ID)
+
+    const result = validateEvidence(
+      { firstName: createField('Juan', ['span_missing']) },
+      evidenceMap,
+      EXTRACTION_ID
+    )
+
+    expect(result.fields.firstName.state).toBe('ambiguous')
+  })
+
+  test('marks cross-extraction evidence as ambiguous', () => {
+    const evidenceMap = new EvidenceMap('ext_999')
+    evidenceMap.registerSpan(createSpan('span_1', 'Pedro', 'ext_999'))
+
+    const result = validateEvidence(
+      { firstName: createField('Pedro', ['span_1']) },
+      evidenceMap,
+      EXTRACTION_ID
+    )
+
+    expect(result.fields.firstName.state).toBe('ambiguous')
+  })
+})

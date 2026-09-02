@@ -7,6 +7,7 @@
 
 import type { ExtractedField, EvidenceStatus } from './types';
 import { EvidenceMap, EvidenceSpan } from '../extraction/evidence/EvidenceMap';
+import { normalizeDate } from '../extraction/profiles/normalizers';
 
 export interface EvidenceValidationResult {
   /** Updated fields with deterministic state/status applied */
@@ -49,7 +50,7 @@ export function validateEvidence(
 
   for (const [fieldName, field] of Object.entries(fields)) {
     try {
-      const validatedField = validateSingleField(field, evidenceMap, extractionId);
+      const validatedField = validateSingleField(fieldName, field, evidenceMap, extractionId);
       validatedFields[fieldName] = validatedField;
 
       if (validatedField.state === 'not_present') {
@@ -84,6 +85,7 @@ export function validateEvidence(
 }
 
 function validateSingleField(
+  fieldName: string,
   field: ExtractedField,
   evidenceMap: EvidenceMap,
   extractionId: string
@@ -153,10 +155,12 @@ function validateSingleField(
   // Canonical Evidence = "juan dela cruz"
   // -> REJECT
   
-  if (!normalizedEvidence.includes(normalizedValue) && !normalizedValue.includes(normalizedEvidence)) {
-    // Allow a tiny bit of flexibility if it's a date formatting difference
-    // In a full production system, we'd use profile-specific normalizers.
-    // For now, if neither string includes the other, reject.
+  const isExactTextMatch = normalizedEvidence.includes(normalizedValue)
+    || normalizedValue.includes(normalizedEvidence);
+  const isEquivalentDate = isDateField(fieldName)
+    && normalizeEvidenceDate(combinedEvidenceText) === normalizeEvidenceDate(stringValue);
+
+  if (!isExactTextMatch && !isEquivalentDate) {
     throw new Error('EVIDENCE_VALUE_MISMATCH: Candidate value is not supported by referenced spans');
   }
 
@@ -175,4 +179,20 @@ function validateSingleField(
     confidence: ocrConfidence,
     page: 1, // Enforce canonical page (mocked as 1 for now, or extracted from pageId)
   };
+}
+
+function isDateField(fieldName: string): boolean {
+  return fieldName.toLowerCase().includes('date');
+}
+
+function normalizeEvidenceDate(value: string): string | null {
+  const withoutLabels = value
+    .replace(/\(?\s*(day|month|year)\s*\)?/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const normalizedDate = normalizeDate(withoutLabels);
+
+  return normalizedDate && /^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)
+    ? normalizedDate
+    : null;
 }
