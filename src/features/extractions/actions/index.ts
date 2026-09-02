@@ -147,6 +147,8 @@ function flattenGroundedFields(
       confidence_score: field.confidence,
       ocr_confidence: _ocrAverageConfidence,
       evidence_status: field.status,
+      state: field.state,
+      evidenceSpanIds: field.evidenceSpanIds,
     })
   }
 
@@ -319,129 +321,144 @@ export async function runExtraction(documentId: string, caseId: string, document
   const status: 'NeedsReview' = 'NeedsReview' // Always NeedsReview for human verification
 
   // 6. Insert/update the document_extractions record
-  let extractionId: string
-  const { data: existingExt } = await supabase
-    .from('document_extractions')
-    .select('id')
-    .eq('document_id', documentId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  const extractionRecord = {
-    status: status,
-    raw_text: groundedResult.rawResponse,
-    extraction_method: groundedResult.modelUsed,
-    review_status: 'Unreviewed' as const,
-    error_message: null,
-    confidence_score: groundedResult.overallConfidence,
-    ocr_text: groundedResult.ocrText.substring(0, 50000), // Limit OCR text storage
-    page_count: groundedResult.inspection.pageCount,
-    document_quality: groundedResult.quality,
-    model_used: groundedResult.modelUsed,
-    processing_duration_ms: groundedResult.processingDurationMs,
-    ocr_engine: groundedResult.inspection.hasNativeText ? 'pdf-parse' : 'gemini-ocr',
-    retry_count: groundedResult.retryCount,
-    uncertain_field_count: groundedResult.uncertainFieldCount,
-    updated_at: new Date().toISOString(),
-  }
-
-  if (existingExt) {
-    extractionId = existingExt.id
-    const { error: updateError } = await supabase
+  try {
+    let extractionId: string
+    const { data: existingExt } = await supabase
       .from('document_extractions')
-      .update(extractionRecord)
-      .eq('id', extractionId)
-
-    if (updateError) throw new Error(updateError.message)
-
-    // Delete existing fields to overwrite them
-    const { error: deleteFieldsError } = await supabase
-      .from('document_fields')
-      .delete()
-      .eq('document_extraction_id', extractionId)
-
-    if (deleteFieldsError) throw new Error(deleteFieldsError.message)
-  } else {
-    const { data: newExt, error: insertError } = await supabase
-      .from('document_extractions')
-      .insert({
-        case_id: caseId,
-        document_id: documentId,
-        document_type: documentType,
-        ...extractionRecord,
-      })
       .select('id')
-      .single()
+      .eq('document_id', documentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-    if (insertError) throw new Error(insertError.message)
-    extractionId = newExt.id
-  }
-
-  // 7. Persist Canonical Evidence Map
-  if (groundedResult.canonicalMap) {
-    const { persistCanonicalEvidence } = await import('@/lib/extraction/evidence/persistence');
-    try {
-      await persistCanonicalEvidence(supabase as any, extractionId, groundedResult.canonicalMap);
-    } catch (err) {
-      console.warn('Failed to persist canonical evidence, continuing without it:', err);
+    const extractionRecord = {
+      status: status,
+      raw_text: groundedResult.rawResponse,
+      extraction_method: groundedResult.modelUsed,
+      review_status: 'Unreviewed' as const,
+      error_message: null,
+      confidence_score: groundedResult.overallConfidence,
+      ocr_text: groundedResult.ocrText.substring(0, 50000), // Limit OCR text storage
+      page_count: groundedResult.inspection.pageCount,
+      document_quality: groundedResult.quality,
+      model_used: groundedResult.modelUsed,
+      processing_duration_ms: groundedResult.processingDurationMs,
+      ocr_engine: groundedResult.inspection.hasNativeText ? 'pdf-parse' : 'gemini-ocr',
+      retry_count: groundedResult.retryCount,
+      uncertain_field_count: groundedResult.uncertainFieldCount,
+      updated_at: new Date().toISOString(),
     }
-  }
 
-  // 8. Insert the extracted fields with evidence metadata
-  const fieldsToInsert = flattenedFields.map((f) => ({
-    case_id: caseId,
-    document_id: documentId,
-    document_extraction_id: extractionId,
-    field_name: f.field_name,
-    raw_value: f.raw_value,
-    normalized_value: f.normalized_value,
-    source_text: f.source_text,
-    page_number: f.page_number,
-    bounding_box: f.bounding_box ? JSON.stringify(f.bounding_box) : null,
-    confidence_score: f.confidence_score,
-    ocr_confidence: f.ocr_confidence,
-    evidence_status: f.evidence_status,
-    state: f.state || 'candidate',
-    status: f.evidence_status === 'verified' && f.confidence_score !== null && f.confidence_score >= 0.85
-      ? 'NeedsReview' as const   // Even verified fields need human review
-      : 'NeedsReview' as const,  // All fields start as NeedsReview
-  }))
+    if (existingExt) {
+      extractionId = existingExt.id
+      const { error: updateError } = await supabase
+        .from('document_extractions')
+        .update(extractionRecord)
+        .eq('id', extractionId)
 
-  const { data: insertedFields, error: fieldError } = await supabase
-    .from('document_fields')
-    .insert(fieldsToInsert as any)
-    .select('id, field_name')
+      if (updateError) throw new Error(updateError.message)
 
-  if (fieldError) throw new Error(fieldError.message)
+      // Delete existing fields to overwrite them
+      const { error: deleteFieldsError } = await supabase
+        .from('document_fields')
+        .delete()
+        .eq('document_extraction_id', extractionId)
 
-  // 9. Insert field_evidence tracking
-  if (insertedFields) {
-    const fieldEvidenceToInsert: any[] = [];
-    for (const insertedField of insertedFields) {
-       const flatField = flattenedFields.find(ff => ff.field_name === insertedField.field_name);
-       if (flatField && flatField.evidenceSpanIds && flatField.state === 'candidate') {
-         for (const spanId of flatField.evidenceSpanIds) {
-           fieldEvidenceToInsert.push({
-             document_field_id: insertedField.id,
-             ocr_span_id: spanId,
-             evidence_role: 'value'
-           });
-         }
-       }
+      if (deleteFieldsError) throw new Error(deleteFieldsError.message)
+    } else {
+      const { data: newExt, error: insertError } = await supabase
+        .from('document_extractions')
+        .insert({
+          case_id: caseId,
+          document_id: documentId,
+          document_type: documentType,
+          ...extractionRecord,
+        })
+        .select('id')
+        .single()
+
+      if (insertError) throw new Error(insertError.message)
+      extractionId = newExt.id
     }
-    
-    if (fieldEvidenceToInsert.length > 0) {
-      const { error: evidenceError } = await (supabase as any)
-        .from('field_evidence')
-        .insert(fieldEvidenceToInsert);
-        
-      if (evidenceError) {
-        console.warn('Failed to insert field_evidence:', evidenceError);
+
+    // 7. Persist Canonical Evidence Map
+    if (groundedResult.canonicalMap) {
+      const { persistCanonicalEvidence } = await import('@/lib/extraction/evidence/persistence');
+      try {
+        await persistCanonicalEvidence(supabase as any, extractionId, groundedResult.canonicalMap);
+      } catch (err) {
+        console.warn('Failed to persist canonical evidence, continuing without it:', err);
       }
     }
-  }
 
-  revalidatePath(`/cases/${caseId}/documents/${documentId}`)
-  return { success: true }
+    // 8. Insert the extracted fields with evidence metadata
+    const fieldsToInsert = flattenedFields.map((f) => ({
+      case_id: caseId,
+      document_id: documentId,
+      document_extraction_id: extractionId,
+      field_name: f.field_name,
+      raw_value: f.raw_value,
+      normalized_value: f.normalized_value,
+      source_text: f.source_text,
+      page_number: f.page_number,
+      bounding_box: f.bounding_box ? JSON.stringify(f.bounding_box) : null,
+      confidence_score: f.confidence_score,
+      ocr_confidence: f.ocr_confidence,
+      evidence_status: f.evidence_status,
+      state: f.state || 'candidate',
+      status: f.evidence_status === 'verified' && f.confidence_score !== null && f.confidence_score >= 0.85
+        ? 'NeedsReview' as const   // Even verified fields need human review
+        : 'NeedsReview' as const,  // All fields start as NeedsReview
+    }))
+
+    const { data: insertedFields, error: fieldError } = await supabase
+      .from('document_fields')
+      .insert(fieldsToInsert as any)
+      .select('id, field_name')
+
+    if (fieldError) throw new Error(fieldError.message)
+
+    // 9. Insert field_evidence tracking
+    if (insertedFields) {
+      const fieldEvidenceToInsert: any[] = [];
+      for (const insertedField of insertedFields) {
+         const flatField = flattenedFields.find(ff => ff.field_name === insertedField.field_name);
+         if (flatField && flatField.evidenceSpanIds && flatField.state === 'candidate') {
+           for (const spanId of flatField.evidenceSpanIds) {
+             fieldEvidenceToInsert.push({
+               document_field_id: insertedField.id,
+               ocr_span_id: spanId,
+               evidence_role: 'value'
+             });
+           }
+         }
+      }
+      
+      if (fieldEvidenceToInsert.length > 0) {
+        const { error: evidenceError } = await (supabase as any)
+          .from('field_evidence')
+          .insert(fieldEvidenceToInsert);
+          
+        if (evidenceError) {
+          console.warn('Failed to insert field_evidence:', evidenceError);
+        }
+      }
+    }
+
+    revalidatePath(`/cases/${caseId}/documents/${documentId}`)
+    return { success: true }
+  } catch (writeError: unknown) {
+    const errorMessage = writeError instanceof Error ? writeError.message : String(writeError)
+    console.error(`[Extraction] DB write failed for document ${documentId}:`, errorMessage)
+
+    await supabase
+      .from('document_extractions')
+      .update({ status: 'Failed', error_message: `Write Failed: ${errorMessage}`, updated_at: new Date().toISOString() })
+      .eq('document_id', documentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    revalidatePath(`/cases/${caseId}/documents/${documentId}`)
+    return { success: false, error: `Write Failed: ${errorMessage}` }
+  }
 }
