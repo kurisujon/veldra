@@ -330,11 +330,14 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
               <tbody>
                 {parsedJsonArray.map((row, i) => (
                   <tr key={i} className="border-b border-default/50 last:border-none">
-                    {Object.values(row).map((val: any, j) => (
-                      <td key={j} className={`p-2 ${isRejected ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
-                        {val || '-'}
-                      </td>
-                    ))}
+                    {Object.values(row).map((val: any, j) => {
+                      const displayVal = typeof val === 'object' && val !== null ? JSON.stringify(val) : val;
+                      return (
+                        <td key={j} className={`p-2 ${isRejected ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
+                          {displayVal || '-'}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
