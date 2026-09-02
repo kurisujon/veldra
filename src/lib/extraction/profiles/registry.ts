@@ -3,6 +3,7 @@ import { PsaBirthCertificateProfile } from './psa-birth-certificate';
 import { PsaMarriageCertificateProfile } from './psa-marriage-certificate';
 import { SponsorValidIdProfile } from './sponsor-valid-id';
 import { AffidavitOfSupportProfile } from './affidavit-of-support';
+import { DiplomaProfile } from './diploma';
 
 const profiles = new Map<string, DocumentProfile<any>>();
 
@@ -15,6 +16,7 @@ registerProfile(PsaBirthCertificateProfile);
 registerProfile(PsaMarriageCertificateProfile);
 registerProfile(SponsorValidIdProfile);
 registerProfile(AffidavitOfSupportProfile);
+registerProfile(DiplomaProfile);
 
 // Also register alternative names if needed (e.g. from existing DB or document type selector)
 profiles.set('psa birth certificate', PsaBirthCertificateProfile);
@@ -33,6 +35,7 @@ export const Registry: DocumentProfileRegistry = {
     if (key === 'psamarriage' || key === 'sponsorpsamarriage') return PsaMarriageCertificateProfile;
     if (key === 'validid' || key === 'sponsorvalidid') return SponsorValidIdProfile;
     if (key === 'affidavitofsupport') return AffidavitOfSupportProfile;
+    if (key === 'diploma') return DiplomaProfile;
     
     return profiles.get(key);
   }
