@@ -17,6 +17,7 @@ Veldra is a Smart Document Verification Platform tailored for checking student v
 ## Workspace Skills & Commands
 - **`demo-video-recorder`** (`/demo-video-recorder`): Generates a captioned Playwright demo video of one UI flow at a time. Call using `/demo-video-recorder`, `"record a demo for <flow>"`, `"make a walkthrough video"`, or `Use the demo-video-recorder skill`.
 - **`project-progress-docs`** (`/project-progress-docs`): Reports progress and synchronizes project docs. Call using `/project-progress-docs`, `"update project status"`, or `Use the project-progress-docs skill`.
+- **`veldra-debugger`** (`/veldra-debugger`): Systematic root-cause debugging across Veldra's subsystems (extraction, findings/comparison, zero-trust RPC boundary, RLS, case state machine, design system, PDF export, audit logging). Trigger phrases: `/veldra-debugger`, `"debug this"`, `"why is this broken"`, `"investigate this bug"`, `"this isn't saving/showing up"`, or `Use the veldra-debugger skill`.
 
 ## Architecture Constraints
 - Veldra uses a strict Case-Centric Architecture.

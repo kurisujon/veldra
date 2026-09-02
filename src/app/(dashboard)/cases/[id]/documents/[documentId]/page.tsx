@@ -8,49 +8,36 @@ import { ArrowLeft } from "lucide-react"
 import { ExtractionWorkspace } from "@/features/extractions/components/ExtractionWorkspace"
 
 export default async function DocumentReviewPage({ params }: { params: Promise<{ id: string, documentId: string }> }) {
-  try {
-    const { id, documentId } = await params;
-    const caseData = await getCaseById(id)
-    const document = await getDocumentById(documentId)
+  const { id, documentId } = await params;
+  const caseData = await getCaseById(id)
+  const document = await getDocumentById(documentId)
 
-    if (!caseData || !document) return notFound()
+  if (!caseData || !document) return notFound()
 
-    const extraction = await getExtractionByDocumentId(document.id)
+  const extraction = await getExtractionByDocumentId(document.id)
 
-    // Get signed URL for document viewer
-    const urls = await getSignedUrlsForDocuments([document.file_path])
-    const documentUrl = urls[document.file_path] || null
+  // Get signed URL for document viewer
+  const urls = await getSignedUrlsForDocuments([document.file_path])
+  const documentUrl = urls[document.file_path] || null
 
-    return (
-      <PageContainer>
-        <Link href={`/cases/${caseData.id}`} className="mb-md inline-flex items-center gap-xs text-small font-medium text-text-secondary hover:text-text-primary">
-          <ArrowLeft size={16} /> Back to Case {caseData.id.slice(0, 8)}
-        </Link>
+  return (
+    <PageContainer>
+      <Link href={`/cases/${caseData.id}`} className="mb-md inline-flex items-center gap-xs text-small font-medium text-text-secondary hover:text-text-primary">
+        <ArrowLeft size={16} /> Back to Case {caseData.id.slice(0, 8)}
+      </Link>
 
-        <div className="mb-xl flex items-center justify-between">
-          <div>
-            <h1 className="text-title font-semibold text-text-primary">Document Review</h1>
-            <p className="text-small text-text-secondary mt-xs">{document.file_name} ({document.type})</p>
-          </div>
+      <div className="mb-xl flex items-center justify-between">
+        <div>
+          <h1 className="text-title font-semibold text-text-primary">Document Review</h1>
+          <p className="text-small text-text-secondary mt-xs">{document.file_name} ({document.type})</p>
         </div>
+      </div>
 
-        <ExtractionWorkspace 
-          document={document} 
-          documentUrl={documentUrl} 
-          extraction={extraction} 
-        />
-      </PageContainer>
-    )
-  } catch (error) {
-    return (
-      <PageContainer>
-        <div className="p-4 bg-red-100 text-red-900 rounded-md border border-red-300">
-          <h2 className="font-bold text-lg mb-2">Server Render Error</h2>
-          <pre className="whitespace-pre-wrap font-mono text-sm">
-            {error instanceof Error ? error.stack || error.message : String(error)}
-          </pre>
-        </div>
-      </PageContainer>
-    )
-  }
+      <ExtractionWorkspace 
+        document={document} 
+        documentUrl={documentUrl} 
+        extraction={extraction} 
+      />
+    </PageContainer>
+  )
 }

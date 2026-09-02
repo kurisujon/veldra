@@ -41,6 +41,8 @@ The following specialized skills are installed and available for this workspace:
     *   *Trigger phrases*: `/demo-video-recorder`, `"record a demo for <flow>"`, `"make a walkthrough video of <flow>"`, `"generate a demo video for <flow>"`, or `Use the demo-video-recorder skill for <flow>`.
 *   **`project-progress-docs`** (`/project-progress-docs`): Enforces progress reporting, zero-tolerance checks, and updates documentation set (`AGENTS.md`, `GEMINI.md`, `docs/`).
     *   *Trigger phrases*: `/project-progress-docs`, `"update project status"`, `"check repo state"`, or `Use the project-progress-docs skill`.
+*   **`veldra-debugger`** (`/veldra-debugger`): Systematic root-cause debugging across Veldra's subsystems (extraction, findings/comparison, zero-trust RPC boundary, RLS, case state machine, design system, PDF export, audit logging).
+    *   *Trigger phrases*: `/veldra-debugger`, `"debug this"`, `"why is this broken"`, `"investigate this bug"`, `"this isn't saving/showing up"`, or `Use the veldra-debugger skill`.
 
 
 
