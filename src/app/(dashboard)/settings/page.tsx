@@ -5,7 +5,7 @@ import { Settings as SettingsIcon, Shield, Bot, Database } from "lucide-react";
 
 export default async function Settings() {
   const userRole = await getCurrentUserRole();
-  const aiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const aiModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
   
   return (
     <PageContainer>

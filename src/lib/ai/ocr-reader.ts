@@ -68,9 +68,9 @@ If text is unclear or partially illegible, include your best reading with [?] ma
     while (attemptsMade < keysCount) {
       try {
         const client = getGeminiClient(currentKeyIndex);
-        // Using gemini-2.5-flash directly for text extraction, not the configured model
+        // Using gemini-3.6-flash directly for text extraction, not the configured model
         const response = await client.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.6-flash',
           contents: [
             { inlineData: { data: base64Data, mimeType: mimeType } },
             promptText
