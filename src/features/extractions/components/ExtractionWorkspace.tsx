@@ -245,7 +245,7 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
   if (!isEditing && displayValue && typeof displayValue === 'string' && displayValue.startsWith('[') && displayValue.endsWith(']')) {
     try {
       const parsed = JSON.parse(displayValue);
-      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
+      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object' && parsed[0] !== null && !Array.isArray(parsed[0])) {
         parsedJsonArray = parsed;
       }
     } catch (e) {
@@ -328,18 +328,21 @@ function FieldReviewRow({ field, path }: { field: any, path: string }) {
                 </tr>
               </thead>
               <tbody>
-                {parsedJsonArray.map((row, i) => (
-                  <tr key={i} className="border-b border-default/50 last:border-none">
-                    {Object.values(row).map((val: any, j) => {
-                      const displayVal = typeof val === 'object' && val !== null ? JSON.stringify(val) : val;
-                      return (
-                        <td key={j} className={`p-2 ${isRejected ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
-                          {displayVal || '-'}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                {parsedJsonArray.map((row, i) => {
+                  if (!row || typeof row !== 'object') return null;
+                  return (
+                    <tr key={i} className="border-b border-default/50 last:border-none">
+                      {Object.values(row).map((val: any, j) => {
+                        const displayVal = typeof val === 'object' && val !== null ? JSON.stringify(val) : val;
+                        return (
+                          <td key={j} className={`p-2 ${isRejected ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
+                            {displayVal || '-'}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
