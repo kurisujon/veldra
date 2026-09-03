@@ -207,7 +207,7 @@ function normalizeEvidenceDate(value: string): string | null {
 
 function normalizePsaBirthPlace(value: string): string | null {
   const labeledPlace = value.match(
-    /(?:^|\b4\.\s*)PLACE OF BIRTH\s*\(Name of Hospital\/Clinic\/Institution\/House No\.,\s*Street,\s*Barangay\)\s*(.*?)\s*\(City\/Municipality\)\s*(.*?)\s*,?\s*\(Province\)\s*(.*?)\s*$/i
+    /^\s*(?:4\.\s*PLACE OF BIRTH\s*)?\(Name of Hospital\s*\/\s*Clinic\s*\/\s*Institution\s*\/\s*House No\.,\s*Street,\s*Barangay\)\s*(.*?)\s*\(City\/Municipality\)\s*(.*?)\s*,?\s*\(Province\)\s*(.*?)\s*$/i
   );
 
   if (labeledPlace) {

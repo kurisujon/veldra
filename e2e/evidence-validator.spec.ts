@@ -93,6 +93,22 @@ test.describe('Evidence Validator', () => {
     expect(result.fields.placeOfBirth.state).toBe('candidate')
   })
 
+  test('keeps a normalized birthplace when OCR omits the PSA field heading', () => {
+    const evidenceMap = new EvidenceMap(EXTRACTION_ID)
+    evidenceMap.registerSpan(createSpan(
+      'span_1',
+      '(Name of Hospital/Clinic/Institution/ House No., Street, Barangay) San Jose Ayunan (City/Municipality) Lubao, (Province) Pampanga'
+    ))
+
+    const result = validateEvidence(
+      { placeOfBirth: createField('San Jose Ayunan, Lubao, Pampanga', ['span_1']) },
+      evidenceMap,
+      EXTRACTION_ID
+    )
+
+    expect(result.fields.placeOfBirth.state).toBe('candidate')
+  })
+
   test('keeps an ISO date supported by an abbreviated textual date', () => {
     const evidenceMap = new EvidenceMap(EXTRACTION_ID)
     evidenceMap.registerSpan(createSpan('span_1', '01 JAN 2000'))
