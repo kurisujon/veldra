@@ -64,6 +64,35 @@ test.describe('Evidence Validator', () => {
     expect(result.fields.dateOfBirth.state).toBe('candidate')
   })
 
+  test('keeps an ISO date supported by a numbered PSA birth-date field', () => {
+    const evidenceMap = new EvidenceMap(EXTRACTION_ID)
+    evidenceMap.registerSpan(createSpan('span_1', '3. DATE OF BIRTH (day) 16 (month) March (year) 1967'))
+
+    const result = validateEvidence(
+      { dateOfBirth: createField('1967-03-16', ['span_1']) },
+      evidenceMap,
+      EXTRACTION_ID
+    )
+
+    expect(result.fields.dateOfBirth.state).toBe('candidate')
+  })
+
+  test('keeps a normalized birthplace supported by the PSA labeled field', () => {
+    const evidenceMap = new EvidenceMap(EXTRACTION_ID)
+    evidenceMap.registerSpan(createSpan(
+      'span_1',
+      '4. PLACE OF BIRTH (Name of Hospital/Clinic/Institution/House No., Street, Barangay) San Jose Ayunan (City/Municipality) Lubao, (Province) Pampanga'
+    ))
+
+    const result = validateEvidence(
+      { placeOfBirth: createField('San Jose Ayunan, Lubao, Pampanga', ['span_1']) },
+      evidenceMap,
+      EXTRACTION_ID
+    )
+
+    expect(result.fields.placeOfBirth.state).toBe('candidate')
+  })
+
   test('keeps an ISO date supported by an abbreviated textual date', () => {
     const evidenceMap = new EvidenceMap(EXTRACTION_ID)
     evidenceMap.registerSpan(createSpan('span_1', '01 JAN 2000'))

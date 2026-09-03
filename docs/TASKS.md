@@ -10,6 +10,7 @@
 - [x] Hardened extraction re-runs for Reviewers: added the scoped `replace_document_extraction_data` RPC, preserved Admin-only direct DELETE policies, and retained persistent `Failed` extraction state for first-attempt write failures.
 - [x] Corrected invalid evidence fallback state from `rejected` to `ambiguous` so candidate extraction rows satisfy the zero-trust database constraint.
 - [x] Added deterministic PSA labeled-date evidence normalization for ISO date candidates.
+- [x] Added deterministic parsing for numbered PSA birth-date and labeled place-of-birth evidence.
 
 ## Completed
 - [x] Phase 11: Polish & QA (Production Maintenance & Operational Readiness).

@@ -7,7 +7,7 @@
 
 import type { ExtractedField, EvidenceStatus } from './types';
 import { EvidenceMap, EvidenceSpan } from '../extraction/evidence/EvidenceMap';
-import { normalizeDate } from '../extraction/profiles/normalizers';
+import { normalizeAddress, normalizeDate } from '../extraction/profiles/normalizers';
 
 export interface EvidenceValidationResult {
   /** Updated fields with deterministic state/status applied */
@@ -159,8 +159,10 @@ function validateSingleField(
     || normalizedValue.includes(normalizedEvidence);
   const isEquivalentDate = isDateField(fieldName)
     && normalizeEvidenceDate(combinedEvidenceText) === normalizeEvidenceDate(stringValue);
+  const isEquivalentPsaBirthPlace = fieldName === 'placeOfBirth'
+    && normalizePsaBirthPlace(combinedEvidenceText) === normalizePsaBirthPlace(stringValue);
 
-  if (!isExactTextMatch && !isEquivalentDate) {
+  if (!isExactTextMatch && !isEquivalentDate && !isEquivalentPsaBirthPlace) {
     throw new Error('EVIDENCE_VALUE_MISMATCH: Candidate value is not supported by referenced spans');
   }
 
@@ -186,13 +188,44 @@ function isDateField(fieldName: string): boolean {
 }
 
 function normalizeEvidenceDate(value: string): string | null {
-  const withoutLabels = value
-    .replace(/\(?\s*(day|month|year)\s*\)?/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  const normalizedDate = normalizeDate(withoutLabels);
+  const directDate = normalizeDate(value);
+  if (directDate && /^\d{4}-\d{2}-\d{2}$/.test(directDate)) {
+    return directDate;
+  }
+
+  const labeledDate = value.match(
+    /(?:\(\s*day\s*\)\s*)?(\d{1,2})\s*(?:\(\s*month\s*\)\s*)?([A-Za-z]+)\s*(?:\(\s*year\s*\)\s*)?(\d{4})/i
+  );
+  const normalizedDate = labeledDate
+    ? normalizeDate(`${labeledDate[1]} ${labeledDate[2]} ${labeledDate[3]}`)
+    : null;
 
   return normalizedDate && /^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)
     ? normalizedDate
     : null;
+}
+
+function normalizePsaBirthPlace(value: string): string | null {
+  const labeledPlace = value.match(
+    /(?:^|\b4\.\s*)PLACE OF BIRTH\s*\(Name of Hospital\/Clinic\/Institution\/House No\.,\s*Street,\s*Barangay\)\s*(.*?)\s*\(City\/Municipality\)\s*(.*?)\s*,?\s*\(Province\)\s*(.*?)\s*$/i
+  );
+
+  if (labeledPlace) {
+    return normalizePlaceComponents(labeledPlace[1], labeledPlace[2], labeledPlace[3]);
+  }
+
+  return normalizePlaceText(value);
+}
+
+function normalizePlaceComponents(
+  barangayOrAddress: string,
+  cityOrMunicipality: string,
+  province: string
+): string | null {
+  return normalizePlaceText(`${barangayOrAddress}, ${cityOrMunicipality}, ${province}`);
+}
+
+function normalizePlaceText(value: string): string | null {
+  const normalized = normalizeAddress(value);
+  return normalized?.replace(/[,.]/g, ' ').replace(/\s+/g, ' ').trim() || null;
 }
