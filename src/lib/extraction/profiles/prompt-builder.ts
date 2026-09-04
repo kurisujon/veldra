@@ -13,7 +13,7 @@ export function buildProfilePrompt(profile: DocumentProfile<any>, ocrText?: stri
       instruction += ` (format as YYYY-MM-DD if clear, otherwise verbatim)`;
     }
     if (field.key === 'documentType') {
-      instruction = `{"value": "${profile.documentType}", "state": "verified", "evidenceSpanIds": []}`;
+      instruction = `{"value": "${profile.documentType}", "state": "candidate", "evidenceSpanIds": []}`;
     }
     fieldsJson[key] = instruction;
   }

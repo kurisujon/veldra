@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { Registry } from '../src/lib/extraction/profiles/registry';
 import { applyNormalization } from '../src/lib/extraction/profiles/normalizers';
+import { buildProfilePrompt } from '../src/lib/extraction/profiles/prompt-builder';
 
 test.describe('Document Profile Registry (Phase 11.6-F)', () => {
   
@@ -14,6 +15,14 @@ test.describe('Document Profile Registry (Phase 11.6-F)', () => {
     const profile = Registry.getProfile('Sponsor Valid ID');
     expect(profile).toBeDefined();
     expect(profile?.documentType).toBe('Sponsor Valid ID');
+  });
+
+  test('TEST 2A: Profile prompt never pre-verifies document type', () => {
+    const profile = Registry.getProfile('PSA Birth Certificate');
+    const prompt = buildProfilePrompt(profile!, 'SPAN_ID: span_1\nTEXT: PSA Birth Certificate');
+
+    expect(prompt).toContain('"state": "candidate"');
+    expect(prompt).not.toContain('"state": "verified"');
   });
 
   test('TEST 3: Registry returns Affidavit of Support profile', () => {

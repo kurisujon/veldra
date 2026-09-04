@@ -1,7 +1,10 @@
 # Tasks Tracker
 
 ## Backlog
-- (None)
+- [ ] Implement a dedicated sponsor-ID expiry validator; `SPON-ID-001` is a threshold/date-validity rule, not a two-document comparison.
+- [ ] Add and register TOR, Sponsor COE, and Sponsor ITR extraction profiles before enabling their education, employment, and income comparison rules.
+- [ ] Define the COE-to-ITR income comparison contract (monthly/annual salary versus gross/taxable income) before mapping `SPON-INC-001`.
+- [ ] Refactor extended-family relationship verifiers (sibling, grandparent, aunt/uncle, cousin, niece/nephew) to use metadata and split parent-name components rather than UUID heuristics or combined name fields.
 
 ## In Progress
 - (None)
