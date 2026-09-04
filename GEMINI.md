@@ -12,6 +12,7 @@ Veldra is a Smart Document Verification Platform tailored for checking student v
 - Phase 11.5 Evidence-Grounded AI Extraction Upgrade completed. Pipeline rebuilt with decoupled OCR, Zod-grounded extraction, cross-reference validation, fallback API key rotation, multi-signal confidence scoring, and model escalation. `ExtractionWorkspace` now strictly surfaces OCR source evidence.
 - Phase 11.6 Zero-Trust Extraction Architecture completed (A through H). Full isolation of AI candidates from the verified Case Findings engine, deterministic AI boundaries, Document Profile Registries (added PSA Marriage Certificate and Diploma profiles), and a hardened Human Verification Workspace protected by RPC (`verify_document_field`).
 - Production Hotfixes Complete: Upgraded AI defaults from sunset models (`gemini-2.5-flash`/`gemini-2.5-pro`) to current (`gemini-3.6-flash`/`gemini-3.1-pro`), and implemented a Next.js `error.tsx` boundary for `DocumentReviewPage` to bypass SSR 500 error masking.
+- Extraction & Comparison Refinements Complete: Enforced zero-trust `candidate` state for document type extraction, enhanced PSA Birth profiles (`dateIssued`, `isDelayedRegistration`), and normalized sponsor name comparison resolution.
 
 **Current Phase:** Production Maintenance & Operational Readiness
 
