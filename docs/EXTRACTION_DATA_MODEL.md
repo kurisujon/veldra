@@ -81,7 +81,7 @@ A `Document` may have one active extraction record, or multiple historical extra
 - `ocrText` (Raw OCR text separated from JSON)
 - `pageCount`
 - `documentQuality` ('clear', 'degraded', 'poor')
-- `modelUsed` (e.g. gemini-2.5-pro)
+- `modelUsed` (e.g. gemini-3.1-pro)
 - `processingDurationMs`
 - `ocrEngine` ('pdf-parse' | 'gemini-ocr')
 - `retryCount`

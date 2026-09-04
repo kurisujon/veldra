@@ -75,8 +75,8 @@ GEMINI_API_KEY=AIzaSy...
 # Comma-separated list of Gemini API Keys for rotation (Alternative 2)
 GEMINI_API_KEYS=AIzaSyKey1,AIzaSyKey2,AIzaSyKey3
 
-# Model Name (Optional, defaults to gemini-2.5-flash)
-GEMINI_MODEL=gemini-2.5-flash
+# Model Name (Optional, defaults to gemini-3.6-flash)
+GEMINI_MODEL=gemini-3.6-flash
 ```
 
 ---

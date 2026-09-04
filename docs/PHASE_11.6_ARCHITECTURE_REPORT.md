@@ -1,7 +1,7 @@
 # Phase 11.6: Zero-Trust Philippine Document Extraction Architecture
 
 ## A. Current Architecture Assessment (Phase 11.5)
-The Phase 11.5 implementation successfully decoupled the OCR process from the structuring step. For native PDFs, it uses `pdf-parse`; for scans, it uses a zero-temperature `gemini-2.5-flash` pass. The extracted JSON is then cross-referenced against the OCR string by a deterministic `evidence-validator`, and all fields are forced into a `NeedsReview` state. 
+The Phase 11.5 implementation successfully decoupled the OCR process from the structuring step. For native PDFs, it uses `pdf-parse`; for scans, it uses a zero-temperature `gemini-3.6-flash` pass. The extracted JSON is then cross-referenced against the OCR string by a deterministic `evidence-validator`, and all fields are forced into a `NeedsReview` state. 
 
 **Strengths**: Separation of reading and structuring, strict Zod-schema constraints, cross-reference validation, hit-in-the-loop (HITL) enforcement.
 **Critical Weaknesses**: 
@@ -89,10 +89,10 @@ Move away from basic unit tests and implement a rigorous benchmark suite:
 ## Phase 11.6-F: Document Profile Registry
 
 Implemented strongly-typed Profile Registry replacing generic validation. 
-- Profiles (PSA Birth Certificate, Sponsor Valid ID, Affidavit of Support) define exact field metadata.
+- Profiles (PSA Birth Certificate, PSA Marriage Certificate, Sponsor Valid ID, Affidavit of Support, Diploma) define exact field metadata.
 - Zod validation and normalization boundaries strictly separate document semantics from evidence validation.
 - AI is dynamically prompted based on the profile, enforcing candidate states and zero-trust limits.
-- **Phase 11.6-G Complete:** Field Reliability & Dual Extraction implemented. Evaluates deterministic FieldReliability on a per-field basis (escalating high-risk or low-confidence to Gemini 2.5 Pro). Pro extraction strictly inherits EvidenceMap authority and conflicts are handled deterministically.
+- **Phase 11.6-G Complete:** Field Reliability & Dual Extraction implemented. Evaluates deterministic FieldReliability on a per-field basis (escalating high-risk or low-confidence to Gemini 3.1 Pro). Pro extraction strictly inherits EvidenceMap authority and conflicts are handled deterministically.
 
 ## Phase 11.6-H: Human Verification Workspace & RPC Security
 
