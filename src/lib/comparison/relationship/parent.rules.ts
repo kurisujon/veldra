@@ -1,4 +1,5 @@
-import { DocumentField, RelationshipResult } from '../types';
+import { DocumentField, DocumentMetadata, RelationshipResult } from '../types';
+import { resolveCanonicalFieldName } from '../canonical-fields';
 import { buildEvidenceItem, buildEvidenceChain } from '../evidence/build-evidence-chain';
 import { determineMissingEvidence } from '../evidence/missing-evidence';
 
@@ -9,31 +10,39 @@ import { determineMissingEvidence } from '../evidence/missing-evidence';
 export function verifyParentRelationship(
   applicantFields: DocumentField[],
   sponsorFields: DocumentField[],
-  relationship: 'mother' | 'father'
+  relationship: 'mother' | 'father',
+  documents: DocumentMetadata[]
 ): RelationshipResult {
-  const applicantPsaParentNameField = applicantFields.find(
-    (f) =>
-      f.document_id.includes('psa') && // Note: In reality, we might match by document type metadata
-      f.field_name === (relationship === 'mother' ? 'mother_name' : 'father_name')
-  );
+  const applicantPsaFields = applicantFields.filter((field) => {
+    const document = documents.find((item) => item.id === field.document_id)
+    return document?.type === 'PSABirth' || document?.type === 'SponsorPSABirth'
+  })
+  const sponsorIdFields = sponsorFields.filter((field) => {
+    const document = documents.find((item) => item.id === field.document_id)
+    return document?.type === 'ValidID' || document?.type === 'SponsorValidID'
+  })
 
-  const sponsorIdNameField = sponsorFields.find(
-    (f) => f.field_name === 'full_name' || f.field_name === 'name'
-  );
+  const parentPrefix = relationship === 'mother' ? 'mother_maiden' : 'father'
+  const applicantFirstNameField = applicantPsaFields.find((field) => field.field_name === resolveCanonicalFieldName('PSABirth', `${parentPrefix}_first_name`))
+  const applicantLastNameField = applicantPsaFields.find((field) => field.field_name === resolveCanonicalFieldName('PSABirth', `${parentPrefix}_last_name`))
+  const sponsorFirstNameField = sponsorIdFields.find((field) => field.field_name === resolveCanonicalFieldName('SponsorValidID', 'sponsor_first_name'))
+  const sponsorLastNameField = sponsorIdFields.find((field) => field.field_name === resolveCanonicalFieldName('SponsorValidID', 'sponsor_last_name'))
 
   const evidence = buildEvidenceChain([
-    buildEvidenceItem(applicantPsaParentNameField, 'Applicant PSA Birth Certificate'),
-    buildEvidenceItem(sponsorIdNameField, 'Sponsor Valid ID'),
+    buildEvidenceItem(applicantFirstNameField, 'Applicant PSA Birth Certificate parent first name'),
+    buildEvidenceItem(applicantLastNameField, 'Applicant PSA Birth Certificate parent last name'),
+    buildEvidenceItem(sponsorFirstNameField, 'Sponsor Valid ID first name'),
+    buildEvidenceItem(sponsorLastNameField, 'Sponsor Valid ID last name'),
   ]);
 
   const missing = determineMissingEvidence([
     {
       description: `Applicant PSA Birth Certificate with ${relationship}'s name`,
-      found: !!applicantPsaParentNameField?.raw_value,
+      found: !!applicantFirstNameField?.raw_value && !!applicantLastNameField?.raw_value,
     },
     {
-      description: 'Sponsor Valid ID with name',
-      found: !!sponsorIdNameField?.raw_value,
+      description: 'Sponsor Valid ID with first and last name',
+      found: !!sponsorFirstNameField?.raw_value && !!sponsorLastNameField?.raw_value,
     },
   ]);
 
@@ -43,9 +52,12 @@ export function verifyParentRelationship(
   if (missing.length > 0) {
     status = 'insufficient_evidence';
   } else if (
-    applicantPsaParentNameField?.normalized_value &&
-    sponsorIdNameField?.normalized_value &&
-    applicantPsaParentNameField.normalized_value === sponsorIdNameField.normalized_value
+    applicantFirstNameField?.normalized_value &&
+    applicantLastNameField?.normalized_value &&
+    sponsorFirstNameField?.normalized_value &&
+    sponsorLastNameField?.normalized_value &&
+    applicantFirstNameField.normalized_value === sponsorFirstNameField.normalized_value &&
+    applicantLastNameField.normalized_value === sponsorLastNameField.normalized_value
   ) {
     status = 'verified';
     confidence = 100;

@@ -37,6 +37,7 @@ import { normalizeName } from './normalization/normalize-name'
 import { normalizeDate } from './normalization/normalize-date'
 import { normalizeAddress } from './normalization/normalize-address'
 import { normalizeInstitution } from './normalization/normalize-institution'
+import { matchesRuleDocumentType, resolveCanonicalFieldName } from './canonical-fields'
 
 const ALL_APPLICANT_RULES = [
   ...applicantNameRules,
@@ -50,23 +51,6 @@ const ALL_SPONSOR_RULES = [
   ...sponsorIncomeRules,
   ...sponsorAffidavitRules
 ]
-
-const RELATIONSHIP_MODULES: Record<string, Function> = {
-  mother: verifyParentRelationship,
-  father: verifyParentRelationship,
-  sister: verifySiblingRelationship,
-  brother: verifySiblingRelationship,
-  grandmother: verifyGrandparentRelationship,
-  grandfather: verifyGrandparentRelationship,
-  maternal_aunt: verifyAuntUncleRelationship,
-  maternal_uncle: verifyAuntUncleRelationship,
-  paternal_aunt: verifyAuntUncleRelationship,
-  paternal_uncle: verifyAuntUncleRelationship,
-  niece: verifyNephewNieceRelationship,
-  nephew: verifyNephewNieceRelationship,
-  maternal_first_cousin: verifyCousinRelationship,
-  paternal_first_cousin: verifyCousinRelationship
-}
 
 export async function runCaseVerification(
   caseId: string,
@@ -131,13 +115,43 @@ async function verifyApplicantSponsorRelationship(
   if (!sponsor) return createBlockedRelationshipResult('unknown', 'No sponsor provided.')
 
   const normalizedRel = sponsor.relationship.toLowerCase().replace(/[\s-]/g, '_')
-  const verifier = RELATIONSHIP_MODULES[normalizedRel]
+  const applicantFields = fields.filter((field) => documents.find((document) => document.id === field.document_id)?.owner_type === 'applicant')
+  const sponsorFields = fields.filter((field) => documents.find((document) => document.id === field.document_id)?.owner_type === 'sponsor')
 
-  if (!verifier) {
+  if (!isSupportedRelationship(normalizedRel)) {
     return createBlockedRelationshipResult(sponsor.relationship, 'Relationship type not supported yet.')
   }
 
-  return verifier(fields, documents, sponsor)
+  switch (normalizedRel) {
+    case 'mother':
+    case 'father':
+      return verifyParentRelationship(applicantFields, sponsorFields, normalizedRel, documents)
+    case 'sister':
+    case 'brother':
+      return verifySiblingRelationship(applicantFields, sponsorFields, normalizedRel)
+    case 'grandmother':
+    case 'grandfather':
+      return verifyGrandparentRelationship(applicantFields, sponsorFields, normalizedRel)
+    case 'maternal_aunt':
+    case 'maternal_uncle':
+    case 'paternal_aunt':
+    case 'paternal_uncle':
+      return verifyAuntUncleRelationship(applicantFields, sponsorFields, normalizedRel)
+    case 'niece':
+    case 'nephew':
+      return verifyNephewNieceRelationship(applicantFields, sponsorFields, normalizedRel)
+    case 'maternal_first_cousin':
+    case 'paternal_first_cousin':
+      return verifyCousinRelationship(applicantFields, sponsorFields, normalizedRel)
+  }
+}
+
+function isSupportedRelationship(relationship: string): relationship is 'mother' | 'father' | 'sister' | 'brother' | 'grandmother' | 'grandfather' | 'maternal_aunt' | 'maternal_uncle' | 'paternal_aunt' | 'paternal_uncle' | 'niece' | 'nephew' | 'maternal_first_cousin' | 'paternal_first_cousin' {
+  return [
+    'mother', 'father', 'sister', 'brother', 'grandmother', 'grandfather',
+    'maternal_aunt', 'maternal_uncle', 'paternal_aunt', 'paternal_uncle',
+    'niece', 'nephew', 'maternal_first_cousin', 'paternal_first_cousin',
+  ].includes(relationship)
 }
 
 function createBlockedRelationshipResult(declared: string, notes: string): RelationshipResult {
@@ -166,16 +180,16 @@ function executeRules(
     // Collect fields matching the targets
     const leftMatches = leftSource.filter(f => {
       const meta = documents.find(d => d.id === f.document_id)
-      return f.field_name === rule.targetA.fieldName &&
+      return f.field_name === resolveCanonicalFieldName(meta?.type ?? '', rule.targetA.fieldName) &&
              meta?.owner_type === rule.targetA.owner &&
-             (!rule.targetA.docType || meta?.type === rule.targetA.docType)
+             matchesRuleDocumentType(meta?.type ?? '', rule.targetA.docType)
     })
 
     const rightMatches = rightSource.filter(f => {
       const meta = documents.find(d => d.id === f.document_id)
-      return f.field_name === rule.targetB.fieldName &&
+      return f.field_name === resolveCanonicalFieldName(meta?.type ?? '', rule.targetB.fieldName) &&
              meta?.owner_type === rule.targetB.owner &&
-             (!rule.targetB.docType || meta?.type === rule.targetB.docType)
+             matchesRuleDocumentType(meta?.type ?? '', rule.targetB.docType)
     })
 
     if (rule.condition && !rule.condition(leftMatches, rightMatches, { sponsor })) {

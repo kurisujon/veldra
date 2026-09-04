@@ -56,6 +56,8 @@ export const GroundedBirthCertificateSchema = z.object({
   motherMaidenMiddleName: evidenceField(),
   motherMaidenLastName: evidenceField(),
   dateOfRegistration: evidenceField(),
+  dateIssued: evidenceField(),
+  isDelayedRegistration: evidenceField(),
   issuingOffice: evidenceField(),
   remarks: evidenceField(),
 });

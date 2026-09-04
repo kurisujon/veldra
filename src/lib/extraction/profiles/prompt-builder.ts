@@ -1,7 +1,10 @@
 import { DocumentProfile } from './types';
-import { ANTI_HALLUCINATION_RULES, EVIDENCE_FIELD_SCHEMA, buildCanonicalEvidenceContext } from '../../ai/prompts';
+import { ANTI_HALLUCINATION_RULES, EVIDENCE_FIELD_SCHEMA, PSA_BIRTH_PROFILE_GUIDANCE, buildCanonicalEvidenceContext } from '../../ai/prompts';
 
 export function buildProfilePrompt(profile: DocumentProfile<any>, ocrText?: string): string {
+  const profileGuidance = profile.documentType === 'PSA Birth Certificate'
+    ? `\n${PSA_BIRTH_PROFILE_GUIDANCE}\n`
+    : '';
   const fieldsJson: Record<string, string> = {};
   
   for (const [key, field] of Object.entries(profile.fields)) {
@@ -22,6 +25,7 @@ export function buildProfilePrompt(profile: DocumentProfile<any>, ocrText?: stri
   return `You are a high-precision document extraction agent for ${profile.documentType} documents.
 
 ${ANTI_HALLUCINATION_RULES}
+${profileGuidance}
 
 ${EVIDENCE_FIELD_SCHEMA}
 

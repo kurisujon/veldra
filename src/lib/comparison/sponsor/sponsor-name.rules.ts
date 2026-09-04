@@ -1,24 +1,24 @@
 import { VerificationRule } from '../types';
 
 export const sponsorNameRules: VerificationRule[] = [
-  {
-    code: 'SPON-NAME-001',
-    category: 'Name Mismatch',
-    ruleName: 'Sponsor Name Consistency',
-    scope: 'sponsor_internal',
-    targetA: { owner: 'sponsor', fieldName: 'name' },
-    targetB: { owner: 'sponsor', fieldName: 'name' },
-    method: 'normalized',
-    severity: 'High',
-    explanation: (valA, valB) => `Sponsor name mismatch across documents: "${valA}" vs "${valB}".`
-  },
+  ...(['first', 'last'] as const).map((part) => ({
+    code: `SPON-NAME-${part.toUpperCase()}-001`,
+    category: 'Name Mismatch' as const,
+    ruleName: `Sponsor ${part[0].toUpperCase()}${part.slice(1)} Name Consistency`,
+    scope: 'sponsor_internal' as const,
+    targetA: { owner: 'sponsor' as const, fieldName: `sponsor_${part}_name` },
+    targetB: { owner: 'sponsor' as const, fieldName: `sponsor_${part}_name` },
+    method: 'normalized' as const,
+    severity: 'High' as const,
+    explanation: (valA: string, valB: string) => `Sponsor ${part} name mismatch across documents: "${valA}" vs "${valB}".`,
+  })),
   {
     code: 'SPON-ADDR-001',
     category: 'Address Mismatch',
     ruleName: 'Sponsor Address Consistency',
     scope: 'sponsor_internal',
-    targetA: { owner: 'sponsor', fieldName: 'address' },
-    targetB: { owner: 'sponsor', fieldName: 'address' },
+    targetA: { owner: 'sponsor', fieldName: 'sponsor_address' },
+    targetB: { owner: 'sponsor', fieldName: 'sponsor_address' },
     method: 'normalized',
     severity: 'Warning',
     explanation: (valA, valB) => `Sponsor address mismatch: "${valA}" vs "${valB}".`

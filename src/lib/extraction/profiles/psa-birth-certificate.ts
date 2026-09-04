@@ -44,6 +44,8 @@ export const PsaBirthCertificateProfile: DocumentProfile<any> = {
     motherMaidenMiddleName: createEvidenceFieldDef('motherMaidenMiddleName', 'Mother Maiden Middle Name', 'string', false, 'high', true, 'PERSON_NAME'),
     motherMaidenLastName: createEvidenceFieldDef('motherMaidenLastName', 'Mother Maiden Last Name', 'string', true, 'high', true, 'PERSON_NAME'),
     dateOfRegistration: createEvidenceFieldDef('dateOfRegistration', 'Date of Registration', 'date', false, 'low', true, 'DATE'),
+    dateIssued: createEvidenceFieldDef('dateIssued', 'Date Issued (PSA Copy)', 'date', false, 'medium', true, 'DATE'),
+    isDelayedRegistration: createEvidenceFieldDef('isDelayedRegistration', 'Delayed Registration Indicator', 'boolean', false, 'medium', true, 'EXACT'),
     issuingOffice: createEvidenceFieldDef('issuingOffice', 'Issuing Office', 'string', false, 'low', true, 'TEXT'),
     remarks: createEvidenceFieldDef('remarks', 'Remarks', 'string', false, 'low', false, 'TEXT'),
   },
@@ -65,6 +67,8 @@ export const PsaBirthCertificateProfile: DocumentProfile<any> = {
     motherMaidenMiddleName: EvidenceFieldSchema,
     motherMaidenLastName: EvidenceFieldSchema,
     dateOfRegistration: EvidenceFieldSchema,
+    dateIssued: EvidenceFieldSchema,
+    isDelayedRegistration: EvidenceFieldSchema,
     issuingOffice: EvidenceFieldSchema,
     remarks: EvidenceFieldSchema,
   })

@@ -55,3 +55,7 @@ With Phase 10, the engine now logs **every** rule evaluation (both passed and fa
 ## Layer 3 Zero-Trust Boundary
 
 Phase 11.6 introduced a strict trust boundary between document extraction and the comparison engine. The comparison engine is fundamentally restricted from processing any 'candidate', 'unreadable', 'ambiguous', or legacy 'null' state fields. All comparison modules automatically filter incoming DocumentField objects via the `getVerifiedFields` helper, ensuring only strictly human-verified ('state === verified') fields can generate findings.
+
+## Canonical Comparison Fields
+
+Comparison rules use canonical field names and resolve them against each document's extraction profile before matching persisted fields. For example, applicant `first_name` resolves to PSA `firstName` and Diploma `studentFirstName`; sponsor affidavit and Valid ID names remain split into first and last name comparisons. This prevents storage naming conventions from bypassing a rule while preserving the verified-fields-only boundary.

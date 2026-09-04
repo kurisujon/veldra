@@ -47,34 +47,28 @@ export const applicantNameRules: VerificationRule[] = [
       return `Last name mismatch. Found "${normA}" and "${normB}".`
     }
   },
-  {
-    code: 'APP-NAME-04',
-    category: 'Name Mismatch',
-    ruleName: 'Mother Name Consistency',
-    scope: 'applicant_internal',
-    targetA: { owner: 'applicant', fieldName: 'mother_name' },
-    targetB: { owner: 'applicant', fieldName: 'mother_name' },
-    method: 'normalized',
-    severity: 'Medium',
-    explanation: (valA, valB) => {
-      const normA = normalizeName(valA)?.normalized || valA
-      const normB = normalizeName(valB)?.normalized || valB
-      return `Mother's name mismatch. Found "${normA}" and "${normB}".`
-    }
-  },
-  {
-    code: 'APP-NAME-05',
-    category: 'Name Mismatch',
-    ruleName: 'Father Name Consistency',
-    scope: 'applicant_internal',
-    targetA: { owner: 'applicant', fieldName: 'father_name' },
-    targetB: { owner: 'applicant', fieldName: 'father_name' },
-    method: 'normalized',
-    severity: 'Medium',
-    explanation: (valA, valB) => {
-      const normA = normalizeName(valA)?.normalized || valA
-      const normB = normalizeName(valB)?.normalized || valB
-      return `Father's name mismatch. Found "${normA}" and "${normB}".`
-    }
-  }
+  ...(['first', 'middle', 'last'] as const).flatMap((part) => [
+    {
+      code: `APP-MOTHER-${part.toUpperCase()}-01`,
+      category: 'Name Mismatch' as const,
+      ruleName: `Mother Maiden ${part[0].toUpperCase()}${part.slice(1)} Name Consistency`,
+      scope: 'applicant_internal' as const,
+      targetA: { owner: 'applicant' as const, fieldName: `mother_maiden_${part}_name` },
+      targetB: { owner: 'applicant' as const, fieldName: `mother_maiden_${part}_name` },
+      method: 'normalized' as const,
+      severity: 'Medium' as const,
+      explanation: (valA: string, valB: string) => `Mother maiden ${part} name mismatch. Found "${valA}" and "${valB}".`,
+    },
+    {
+      code: `APP-FATHER-${part.toUpperCase()}-01`,
+      category: 'Name Mismatch' as const,
+      ruleName: `Father ${part[0].toUpperCase()}${part.slice(1)} Name Consistency`,
+      scope: 'applicant_internal' as const,
+      targetA: { owner: 'applicant' as const, fieldName: `father_${part}_name` },
+      targetB: { owner: 'applicant' as const, fieldName: `father_${part}_name` },
+      method: 'normalized' as const,
+      severity: 'Medium' as const,
+      explanation: (valA: string, valB: string) => `Father ${part} name mismatch. Found "${valA}" and "${valB}".`,
+    },
+  ])
 ]

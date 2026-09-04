@@ -31,6 +31,8 @@ test.describe('Document Profile Registry (Phase 11.6-F)', () => {
     const profile = Registry.getProfile('PSA Birth Certificate');
     expect(profile?.fields.firstName.required).toBe(true);
     expect(profile?.fields.dateOfBirth.required).toBe(true);
+    expect(profile?.fields.dateIssued.type).toBe('date');
+    expect(profile?.fields.isDelayedRegistration.type).toBe('boolean');
   });
 
   test('TEST 6: Optional fields are correctly represented', () => {

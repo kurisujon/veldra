@@ -12,6 +12,7 @@
 - [x] Added deterministic PSA labeled-date evidence normalization for ISO date candidates.
 - [x] Added deterministic parsing for numbered PSA birth-date and labeled place-of-birth evidence.
 - [x] Allowed valid PSA place-of-birth evidence whose OCR span omits the optional numbered field heading.
+- [x] Added PSA Copy `dateIssued` and delayed-registration extraction fields, plus canonical comparison-field resolution for installed document profiles.
 
 ## Completed
 - [x] Phase 11: Polish & QA (Production Maintenance & Operational Readiness).

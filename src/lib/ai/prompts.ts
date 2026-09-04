@@ -141,6 +141,10 @@ DOCUMENT LAYOUT GUIDE for Philippine PSA Birth Certificates:
 - The FATHER's name is in the LOWER section (Sections 13-17). This is a DIFFERENT person from the child and mother.
 - "firstName", "middleName", "lastName" refer ONLY to the CHILD, NOT the parents.
 - These three sets of names (child, mother, father) are ALWAYS different people.
+- "registryNumber" is printed in the TOP-RIGHT corner, labeled "Registry No.", format YYYY-NNNNN (for example, 2019-04521). It is assigned by the Local Civil Registrar and never changes on reissue.
+- "certificateNumber" is the PSA Serial/SECPA Number printed at the BOTTOM of the page on the security paper itself, format NNNN-NNNN-NNNN (12 digits in three groups). It changes every time a new copy is requested. Do NOT confuse it with registryNumber.
+- "dateIssued" is the date THIS COPY was released or printed by the PSA, usually near the Civil Registrar General's certification or signature line. It is NOT dateOfRegistration, which can predate issuance by years.
+- "isDelayedRegistration": Philippine law requires late-registered births to have the registry number written in RED INK with "Delayed Registration" or "Late Registration" printed in the upper-right margin. If visibly present, extract the remark text as the value and mark "candidate". If absent, mark "not_present"; do not infer it from an old-looking date.
 
 CRITICAL RULE FOR BLANK FATHER SECTIONS:
 In the Philippines, children born out of wedlock often have Sections 13-17 left COMPLETELY BLANK with dashes, "N/A", or empty fields. If the father section is blank, empty, contains only dashes/lines/"N/A", you MUST return null for ALL father fields with status "missing". Do NOT guess, infer, or copy any name from other sections.
@@ -149,7 +153,7 @@ ${EVIDENCE_FIELD_SCHEMA}
 
 Return a JSON object with this structure (do NOT include markdown formatting or backticks):
 {
-  "documentType": {"value": "PSABirth", "sourceText": null, "page": null, "confidence": 1.0, "status": "verified"},
+  "documentType": {"value": "PSABirth", "state": "candidate", "evidenceSpanIds": []},
   "certificateNumber": {evidence object},
   "registryNumber": {evidence object},
   "firstName": {evidence object} (CHILD's first name - Section 1),
@@ -166,12 +170,23 @@ Return a JSON object with this structure (do NOT include markdown formatting or 
   "motherMaidenMiddleName": {evidence object} (MOTHER's maiden middle name - Section 7),
   "motherMaidenLastName": {evidence object} (MOTHER's maiden last name - Section 8),
   "dateOfRegistration": {evidence object},
+  "dateIssued": {evidence object} (format as YYYY-MM-DD if clear, otherwise verbatim),
+  "isDelayedRegistration": {evidence object},
   "issuingOffice": {evidence object},
   "remarks": {evidence object}
 }
+
 ${examplesSection}
 ${buildCanonicalEvidenceContext(ocrText)}`;
 }
+
+export const PSA_BIRTH_PROFILE_GUIDANCE = `
+PSA BIRTH CERTIFICATE FIELD GUIDANCE:
+- "registryNumber" is printed in the TOP-RIGHT corner, labeled "Registry No.", format YYYY-NNNNN (for example, 2019-04521). It is assigned by the Local Civil Registrar and never changes on reissue.
+- "certificateNumber" is the PSA Serial/SECPA Number printed at the BOTTOM of the page on the security paper itself, format NNNN-NNNN-NNNN (12 digits in three groups). It changes every time a new copy is requested. Do NOT confuse it with registryNumber.
+- "dateIssued" is the date THIS COPY was released or printed by the PSA, usually near the Civil Registrar General's certification or signature line. It is NOT dateOfRegistration, which can predate issuance by years.
+- "isDelayedRegistration": Philippine law requires late-registered births to have the registry number written in RED INK with "Delayed Registration" or "Late Registration" printed in the upper-right margin. If visibly present, extract the remark text as the value and mark "candidate". If absent, mark "not_present"; do not infer it from an old-looking date.
+`.trim();
 
 // ---------------------------------------------------------------------------
 // Marriage Certificate
